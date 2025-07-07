@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>眼鏡処方計算ツール - 加入度数対応完全版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none !important; }
+        .number-input-group {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .long-press-button {
+            transition: all 0.15s ease;
+        }
+        .long-press-button:active {
+            transform: scale(0.95);
+        }
+        .prescription-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- ヘッダー -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <div class="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-lg">
+                    <div class="w-8 h-8 text-white flex items-center justify-center text-2xl">👁️</div>
+                </div>
+            </div>
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">
+                眼鏡処方計算ツール - 加入度数対応完全版
+            </h1>
+            <p class="text-gray-600">高精度処方計算・履歴保存・詳細分析・ADD対応機能搭載</p>
+            <div class="mt-2 text-xs text-gray-500">
+                乱視軸方向別処方法則・年齢別慣れ制限・不同視対応・KBからの変化量表示・処方履歴保存・加入度数対応
+            </div>
+            <!-- ツールボタン -->
+            <div class="flex justify-center space-x-4 mt-4">
+                <button onclick="toggleHistory()" class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-purple-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    📊 履歴表示
+                </button>
+                <button onclick="clearAllData()" class="px-4 py-2 bg-gradient-to-r from-red-400 to-pink-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    🗑️ 全削除
+                </button>
+            </div>
+        </div>
+
+        <!-- 履歴表示パネル -->
+        <div id="historyPanel" class="hidden mb-8">
+            <div class="prescription-card rounded-3xl shadow-xl p-6 border border-purple-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <span class="mr-2">📋</span>処方履歴
+                    </h2>
+                    <button onclick="toggleHistory()" class="text-gray-400 hover:text-gray-600">✕</button>
+                </div>
+                <div id="historyContent" class="space-y-3 max-h-64 overflow-y-auto">
+                    <!-- 履歴内容がここに表示される -->
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 左カラム - 入力フォーム -->
+            <div class="space-y-6">
+                <!-- 基本情報 -->
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-blue-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">👥</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">基本情報</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">年齢</label>
+                            <input
+                                type="number"
+                                min="10"
+                                max="100"
+                                id="age"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="10-100歳"
+                                onchange="updateAgeBasedAddPower()"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">患者名（任意）</label>
+                            <input
+                                type="text"
+                                id="patientName"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="田中太郎"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">主訴（選択順でA→B→C）</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="complaint1" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm flex-1">遠方視力低下</span>
+                                <span id="priority1" class="w-6 h-6 rounded-full text-xs font-bold items-center justify-center text-white hidden"></span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="complaint2" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm flex-1">近方視力低下</span>
+                                <span id="priority2" class="w-6 h-6 rounded-full text-xs font-bold items-center justify-center text-white hidden"></span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="complaint3" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm flex-1">眼精疲労</span>
+                                <span id="priority3" class="w-6 h-6 rounded-full text-xs font-bold items-center justify-center text-white hidden"></span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="complaint4" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm flex-1">ピント合わせ困難</span>
+                                <span id="priority4" class="w-6 h-6 rounded-full text-xs font-bold items-center justify-center text-white hidden"></span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="complaint5" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm flex-1">頭痛・肩こり</span>
+                                <span id="priority5" class="w-6 h-6 rounded-full text-xs font-bold items-center justify-center text-white hidden"></span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="complaint6" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm flex-1">夜間運転困難</span>
+                                <span id="priority6" class="w-6 h-6 rounded-full text-xs font-bold items-center justify-center text-white hidden"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">生活様式</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="lifestyle1" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm">🚗 運転</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="lifestyle2" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm">💻 デスクワーク</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="lifestyle3" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm">📚 読書</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="lifestyle4" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm">⚽ スポーツ</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="lifestyle5" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm">🏠 家事</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="lifestyle6" class="rounded text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm">🧵 手芸</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 裸眼視力 -->
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-green-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">👁️</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">裸眼視力</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">右眼</label>
+                            <select id="nakedVisionRight" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <option value="">選択</option>
+                                <option value="0.1">0.1</option>
+                                <option value="0.2">0.2</option>
+                                <option value="0.3">0.3</option>
+                                <option value="0.4">0.4</option>
+                                <option value="0.5">0.5</option>
+                                <option value="0.6">0.6</option>
+                                <option value="0.7">0.7</option>
+                                <option value="0.8">0.8</option>
+                                <option value="0.9">0.9</option>
+                                <option value="1.0">1.0</option>
+                                <option value="1.2">1.2</option>
+                                <option value="1.5">1.5</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">左眼</label>
+                            <select id="nakedVisionLeft" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <option value="">選択</option>
+                                <option value="0.1">0.1</option>
+                                <option value="0.2">0.2</option>
+                                <option value="0.3">0.3</option>
+                                <option value="0.4">0.4</option>
+                                <option value="0.5">0.5</option>
+                                <option value="0.6">0.6</option>
+                                <option value="0.7">0.7</option>
+                                <option value="0.8">0.8</option>
+                                <option value="0.9">0.9</option>
+                                <option value="1.0">1.0</option>
+                                <option value="1.2">1.2</option>
+                                <option value="1.5">1.5</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 現用眼鏡 (KB) -->
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-indigo-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">📊</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">現用眼鏡 (KB)</h2>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="hasKB" class="rounded text-indigo-600 focus:ring-indigo-500" />
+                            <span class="text-sm font-medium">現用眼鏡あり</span>
+                        </label>
+                    </div>
+
+                    <div id="kbSection" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">使用年数</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="10"
+                                id="kbUsageYears"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                placeholder="0-10年"
+                            />
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">右眼</h3>
+                            <div class="grid grid-cols-5 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">SPH</label>
+                                    <div class="number-input-container" data-field="kbRightSph">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-20" max="20" id="kbRightSph" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="SPH" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">CYL</label>
+                                    <div class="number-input-container" data-field="kbRightCyl">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-6" max="0" id="kbRightCyl" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="CYL" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">AXIS</label>
+                                    <div class="flex items-center space-x-1">
+                                        <button type="button" onclick="adjustAxis('kbRightAxis', -5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" min="0" max="180" step="5" id="kbRightAxis" class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="AXIS" />
+                                        <button type="button" onclick="adjustAxis('kbRightAxis', 5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">ADD</label>
+                                    <div class="number-input-container" data-field="kbRightAdd">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="0" max="3" id="kbRightAdd" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="ADD" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">視力</label>
+                                    <select id="kbRightVision" class="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <option value="">選択</option>
+                                        <option value="0.1">0.1</option>
+                                        <option value="0.2">0.2</option>
+                                        <option value="0.3">0.3</option>
+                                        <option value="0.4">0.4</option>
+                                        <option value="0.5">0.5</option>
+                                        <option value="0.6">0.6</option>
+                                        <option value="0.7">0.7</option>
+                                        <option value="0.8">0.8</option>
+                                        <option value="0.9">0.9</option>
+                                        <option value="1.0">1.0</option>
+                                        <option value="1.2">1.2</option>
+                                        <option value="1.5">1.5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">左眼</h3>
+                            <div class="grid grid-cols-5 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">SPH</label>
+                                    <div class="number-input-container" data-field="kbLeftSph">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-20" max="20" id="kbLeftSph" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="SPH" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">CYL</label>
+                                    <div class="number-input-container" data-field="kbLeftCyl">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-6" max="0" id="kbLeftCyl" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="CYL" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">AXIS</label>
+                                    <div class="flex items-center space-x-1">
+                                        <button type="button" onclick="adjustAxis('kbLeftAxis', -5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" min="0" max="180" step="5" id="kbLeftAxis" class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="AXIS" />
+                                        <button type="button" onclick="adjustAxis('kbLeftAxis', 5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">ADD</label>
+                                    <div class="number-input-container" data-field="kbLeftAdd">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="0" max="3" id="kbLeftAdd" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="ADD" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">視力</label>
+                                    <select id="kbLeftVision" class="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <option value="">選択</option>
+                                        <option value="0.1">0.1</option>
+                                        <option value="0.2">0.2</option>
+                                        <option value="0.3">0.3</option>
+                                        <option value="0.4">0.4</option>
+                                        <option value="0.5">0.5</option>
+                                        <option value="0.6">0.6</option>
+                                        <option value="0.7">0.7</option>
+                                        <option value="0.8">0.8</option>
+                                        <option value="0.9">0.9</option>
+                                        <option value="1.0">1.0</option>
+                                        <option value="1.2">1.2</option>
+                                        <option value="1.5">1.5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- レフ値 -->
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-purple-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">🧮</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">レフ値</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">右眼</h3>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">SPH</label>
+                                    <div class="number-input-container" data-field="refRightSph">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-20" max="20" id="refRightSph" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="SPH" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">CYL</label>
+                                    <div class="number-input-container" data-field="refRightCyl">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-6" max="0" id="refRightCyl" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="CYL" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">AXIS</label>
+                                    <div class="flex items-center space-x-1">
+                                        <button type="button" onclick="adjustAxis('refRightAxis', -5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" min="0" max="180" step="5" id="refRightAxis" class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="AXIS" />
+                                        <button type="button" onclick="adjustAxis('refRightAxis', 5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">左眼</h3>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">SPH</label>
+                                    <div class="number-input-container" data-field="refLeftSph">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-20" max="20" id="refLeftSph" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="SPH" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">CYL</label>
+                                    <div class="number-input-container" data-field="refLeftCyl">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-6" max="0" id="refLeftCyl" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="CYL" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">AXIS</label>
+                                    <div class="flex items-center space-x-1">
+                                        <button type="button" onclick="adjustAxis('refLeftAxis', -5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" min="0" max="180" step="5" id="refLeftAxis" class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="AXIS" />
+                                        <button type="button" onclick="adjustAxis('refLeftAxis', 5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 完全矯正値 -->
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-orange-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">🎯</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">完全矯正値</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">右眼</h3>
+                            <div class="grid grid-cols-5 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">SPH</label>
+                                    <div class="number-input-container" data-field="corrRightSph">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-20" max="20" id="corrRightSph" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="SPH" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">CYL</label>
+                                    <div class="number-input-container" data-field="corrRightCyl">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-6" max="0" id="corrRightCyl" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="CYL" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">AXIS</label>
+                                    <div class="flex items-center space-x-1">
+                                        <button type="button" onclick="adjustAxis('corrRightAxis', -5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" min="0" max="180" step="5" id="corrRightAxis" class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="AXIS" />
+                                        <button type="button" onclick="adjustAxis('corrRightAxis', 5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">ADD</label>
+                                    <div class="number-input-container" data-field="corrRightAdd">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="0" max="3" id="corrRightAdd" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="ADD" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">視力</label>
+                                    <select id="corrRightVision" class="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                        <option value="">選択</option>
+                                        <option value="0.1">0.1</option>
+                                        <option value="0.2">0.2</option>
+                                        <option value="0.3">0.3</option>
+                                        <option value="0.4">0.4</option>
+                                        <option value="0.5">0.5</option>
+                                        <option value="0.6">0.6</option>
+                                        <option value="0.7">0.7</option>
+                                        <option value="0.8">0.8</option>
+                                        <option value="0.9">0.9</option>
+                                        <option value="1.0">1.0</option>
+                                        <option value="1.2">1.2</option>
+                                        <option value="1.5">1.5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">左眼</h3>
+                            <div class="grid grid-cols-5 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">SPH</label>
+                                    <div class="number-input-container" data-field="corrLeftSph">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-20" max="20" id="corrLeftSph" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="SPH" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">CYL</label>
+                                    <div class="number-input-container" data-field="corrLeftCyl">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="-6" max="0" id="corrLeftCyl" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="CYL" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">AXIS</label>
+                                    <div class="flex items-center space-x-1">
+                                        <button type="button" onclick="adjustAxis('corrLeftAxis', -5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" min="0" max="180" step="5" id="corrLeftAxis" class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="AXIS" />
+                                        <button type="button" onclick="adjustAxis('corrLeftAxis', 5)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">ADD</label>
+                                    <div class="number-input-container" data-field="corrLeftAdd">
+                                        <button type="button" class="minus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">-</button>
+                                        <input type="number" step="0.25" min="0" max="3" id="corrLeftAdd" class="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="ADD" />
+                                        <button type="button" class="plus-btn long-press-button w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">視力</label>
+                                    <select id="corrLeftVision" class="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                        <option value="">選択</option>
+                                        <option value="0.1">0.1</option>
+                                        <option value="0.2">0.2</option>
+                                        <option value="0.3">0.3</option>
+                                        <option value="0.4">0.4</option>
+                                        <option value="0.5">0.5</option>
+                                        <option value="0.6">0.6</option>
+                                        <option value="0.7">0.7</option>
+                                        <option value="0.8">0.8</option>
+                                        <option value="0.9">0.9</option>
+                                        <option value="1.0">1.0</option>
+                                        <option value="1.2">1.2</option>
+                                        <option value="1.5">1.5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 年齢別推奨ADD表示 -->
+                <div id="ageAddHint" class="prescription-card rounded-3xl shadow-xl p-4 border border-yellow-100 hidden">
+                    <div class="flex items-center mb-2">
+                        <div class="p-2 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-lg mr-3">
+                            <div class="w-4 h-4 text-white flex items-center justify-center text-sm">💡</div>
+                        </div>
+                        <h3 class="text-lg font-semibold">年齢別推奨ADD</h3>
+                    </div>
+                    <div id="ageAddContent" class="text-sm text-gray-700">
+                        <!-- 年齢別推奨ADD内容がここに表示される -->
+                    </div>
+                </div>
+
+                <!-- 処方計算ボタン -->
+                <div class="flex space-x-3">
+                    <button onclick="calculatePrescription()" class="flex-1 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center justify-center">
+                        <span class="mr-2">✨</span>
+                        高精度処方計算（ADD対応）
+                    </button>
+                    <button onclick="savePrescription()" class="px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center justify-center">
+                        <span class="mr-2">💾</span>
+                        保存
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右カラム - 結果表示 -->
+            <div class="space-y-6" id="resultsColumn">
+                <div id="noResults" class="prescription-card rounded-3xl shadow-xl p-6 border border-gray-100 text-center text-gray-500">
+                    <div class="mb-4">
+                        <div class="w-16 h-16 mx-auto bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
+                            <span class="text-2xl text-white">📊</span>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">加入度数対応高機能処方計算システム</h3>
+                    <p class="text-sm mb-4">実践的な眼鏡処方法則に基づいた計算結果が表示されます</p>
+                    <div class="text-xs text-gray-400">
+                        <div>✓ 乱視軸方向別処方法則対応</div>
+                        <div>✓ 年齢別慣れ制限対応</div>
+                        <div>✓ 不同視・40代以降特別処理対応</div>
+                        <div>✓ KBからの変化量表示</div>
+                        <div>✓ 処方履歴保存機能</div>
+                        <div>✓ レフ値との比較分析</div>
+                        <div>✓ <strong>加入度数（ADD）対応</strong></div>
+                        <div>✓ <strong>年齢別推奨ADD計算</strong></div>
+                        <div>✓ <strong>遠近・中近・近々両用レンズ推奨</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let chiefComplaints = [];
+        let complaintsPriority = {};
+        let maxComplaints = 3;
+        let longPressInterval = null;
+        let longPressTimeout = null;
+        let isLongPressing = false;
+        let prescriptionHistory = JSON.parse(localStorage.getItem('prescriptionHistory')) || [];
+
+        // 年齢別推奨ADD（修正版）
+        function getRecommendedAddPower(age) {
+            if (age < 40) return 0;
+            if (age < 46) return 0.50;  // 40-45歳: +0.50D
+            if (age < 51) return 1.00;  // 46-50歳: +1.00D
+            if (age < 56) return 1.25;  // 51-55歳: +1.25D
+            if (age < 61) return 1.50;  // 56-60歳: +1.50D
+            if (age < 66) return 1.75;  // 61-65歳: +1.75D
+            return 2.00;                // 66歳以上: +2.00D
+        }
+
+        // 年齢変更時のADD推奨表示
+        function updateAgeBasedAddPower() {
+            const age = parseInt(document.getElementById('age').value);
+            const ageAddHint = document.getElementById('ageAddHint');
+            const ageAddContent = document.getElementById('ageAddContent');
+            
+            if (age && age >= 40) {
+                const recommendedAdd = getRecommendedAddPower(age);
+                ageAddHint.classList.remove('hidden');
+                ageAddContent.innerHTML = `
+                    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-xl">
+                        <div class="font-semibold text-yellow-800 mb-1">${age}歳の推奨ADD: +${recommendedAdd.toFixed(2)}D</div>
+                        <div class="text-yellow-700 text-xs">
+                            この値を参考に完全矯正値のADD欄に入力してください。
+                            ${age >= 66 ? '最大値に達しています。' : '年齢に応じてさらに進行する可能性があります。'}
+                        </div>
+                    </div>
+                `;
+                
+                // 自動でADD値を設定（完全矯正値）
+                document.getElementById('corrRightAdd').value = recommendedAdd.toFixed(2);
+                document.getElementById('corrLeftAdd').value = recommendedAdd.toFixed(2);
+            } else {
+                ageAddHint.classList.add('hidden');
+                // 40歳未満の場合はADD値をクリア
+                document.getElementById('corrRightAdd').value = '';
+                document.getElementById('corrLeftAdd').value = '';
+            }
+        }
+
+        // エラーハンドリング
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error('エラーが発生しました:', message, 'at', source, lineno, colno);
+            return false;
+        };
+
+        // 長押し機能の実装（エラー対策版）
+        function setupLongPressHandlers() {
+            try {
+                document.querySelectorAll('.number-input-container').forEach(container => {
+                    const field = container.dataset.field;
+                    if (!field) return;
+                    
+                    const input = document.getElementById(field);
+                    const minusBtn = container.querySelector('.minus-btn');
+                    const plusBtn = container.querySelector('.plus-btn');
+
+                    if (!input || !minusBtn || !plusBtn) return;
+
+                    function handleLongPress(direction) {
+                        try {
+                            isLongPressing = true;
+                            const step = input.step ? parseFloat(input.step) : 0.25;
+                            const min = input.min ? parseFloat(input.min) : -20;
+                            const max = input.max ? parseFloat(input.max) : 20;
+                            let currentValue = parseFloat(input.value) || 0;
+
+                            function updateValue() {
+                                if (direction === 'increase') {
+                                    currentValue = Math.min(currentValue + step, max);
+                                } else {
+                                    currentValue = Math.max(currentValue - step, min);
+                                }
+                                input.value = currentValue.toFixed(2);
+                                input.dispatchEvent(new Event('input'));
+                            }
+
+                            updateValue(); // 即座に1回実行
+
+                            longPressTimeout = setTimeout(() => {
+                                if (isLongPressing) {
+                                    longPressInterval = setInterval(updateValue, 100);
+                                }
+                            }, 500);
+                        } catch (error) {
+                            console.error('長押し処理エラー:', error);
+                        }
+                    }
+
+                    function stopLongPress() {
+                        isLongPressing = false;
+                        if (longPressTimeout) {
+                            clearTimeout(longPressTimeout);
+                            longPressTimeout = null;
+                        }
+                        if (longPressInterval) {
+                            clearInterval(longPressInterval);
+                            longPressInterval = null;
+                        }
+                    }
+
+                    // マウスイベント
+                    minusBtn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        handleLongPress('decrease');
+                    });
+                    plusBtn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        handleLongPress('increase');
+                    });
+                    document.addEventListener('mouseup', stopLongPress);
+
+                    // タッチイベント
+                    minusBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        handleLongPress('decrease');
+                    });
+                    plusBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        handleLongPress('increase');
+                    });
+                    document.addEventListener('touchend', stopLongPress);
+                });
+            } catch (error) {
+                console.error('長押し機能初期化エラー:', error);
+                // 長押し機能が失敗してもアプリは動作するように
+            }
+        }
+
+        // 主訴の処理
+        function handleComplaintChange(id) {
+            try {
+                const checkbox = document.getElementById('complaint' + id);
+                const prioritySpan = document.getElementById('priority' + id);
+                
+                if (!checkbox || !prioritySpan) {
+                    console.error('要素が見つかりません:', id);
+                    return;
+                }
+                
+                if (checkbox.checked) {
+                    if (chiefComplaints.length >= maxComplaints) {
+                        checkbox.checked = false;
+                        return;
+                    }
+                    chiefComplaints.push(id);
+                    const priority = ['A', 'B', 'C'][chiefComplaints.length - 1];
+                    complaintsPriority[id] = priority;
+                    prioritySpan.textContent = priority;
+                    
+                    let bgColor = '';
+                    if (priority === 'A') bgColor = 'bg-red-500';
+                    else if (priority === 'B') bgColor = 'bg-yellow-500';
+                    else bgColor = 'bg-green-500';
+                    
+                    prioritySpan.className = 'w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white ' + bgColor;
+                    prioritySpan.style.display = 'flex';
+                } else {
+                    const index = chiefComplaints.indexOf(id);
+                    if (index > -1) {
+                        chiefComplaints.splice(index, 1);
+                        delete complaintsPriority[id];
+                        prioritySpan.style.display = 'none';
+                        
+                        // 残りの主訴の優先度を再調整
+                        const priorities = ['A', 'B', 'C'];
+                        chiefComplaints.forEach((complaintId, idx) => {
+                            complaintsPriority[complaintId] = priorities[idx];
+                            const span = document.getElementById('priority' + complaintId);
+                            if (span) {
+                                span.textContent = priorities[idx];
+                                let bgColor = '';
+                                if (priorities[idx] === 'A') bgColor = 'bg-red-500';
+                                else if (priorities[idx] === 'B') bgColor = 'bg-yellow-500';
+                                else bgColor = 'bg-green-500';
+                                span.className = 'w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white ' + bgColor;
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('主訴処理エラー:', error);
+            }
+        }
+
+        // 軸度調整
+        function adjustAxis(elementId, increment) {
+            try {
+                const element = document.getElementById(elementId);
+                if (!element) {
+                    console.error('軸度要素が見つかりません:', elementId);
+                    return;
+                }
+                
+                const current = parseInt(element.value) || 0;
+                let newAxis = current + increment;
+                
+                if (newAxis < 0) {
+                    newAxis = 175;
+                } else if (newAxis > 180) {
+                    newAxis = 0;
+                }
+                
+                element.value = newAxis;
+            } catch (error) {
+                console.error('軸度調整エラー:', error);
+            }
+        }
+
+        // 処方計算関数群（元のコードから拡張）
+        function getAdditionPower(age) {
+            return getRecommendedAddPower(age);
+        }
+
+        function getAdjustmentPower(age) {
+            if (age < 20) return 10;
+            if (age < 25) return 8;
+            if (age < 30) return 6;
+            if (age < 35) return 5;
+            if (age < 40) return 4;
+            if (age < 45) return 3;
+            if (age < 50) return 2.5;
+            if (age < 55) return 2;
+            if (age < 60) return 1.5;
+            return 0.5;
+        }
+
+        function getAdaptationLimit(age) {
+            if (age <= 20) return 1.50;
+            if (age <= 30) return 1.25;
+            if (age <= 40) return 1.00;
+            if (age <= 50) return 0.75;
+            if (age <= 60) return 0.75;
+            return 1.00;
+        }
+
+        function getAstigmatismType(axis) {
+            if (axis >= 0 && axis <= 30) return 'direct';
+            if (axis >= 150 && axis <= 180) return 'direct';
+            if (axis >= 60 && axis <= 120) return 'inverse';
+            return 'oblique';
+        }
+
+        function getAstigmatismFactor(axis) {
+            const type = getAstigmatismType(axis);
+            switch(type) {
+                case 'direct':   return 1/3;
+                case 'inverse':  return 1/2;
+                case 'oblique':  return 1/3;
+                default:         return 1/3;
+            }
+        }
+
+        // レフ値との比較分析
+        function getRefractiveHint() {
+            const rightRefSph = parseFloat(getElementValue('refRightSph')) || 0;
+            const leftRefSph = parseFloat(getElementValue('refLeftSph')) || 0;
+            const rightCorrSph = parseFloat(getElementValue('corrRightSph')) || 0;
+            const leftCorrSph = parseFloat(getElementValue('corrLeftSph')) || 0;
+            
+            const rightDiff = Math.abs(rightRefSph - rightCorrSph);
+            const leftDiff = Math.abs(leftRefSph - leftCorrSph);
+            
+            if (rightDiff > 1.0 || leftDiff > 1.0) {
+                return {
+                    type: "warning",
+                    message: "レフ値と完全矯正値に大きな差があります。測定の再確認をお勧めします。"
+                };
+            } else if (rightDiff > 0.5 || leftDiff > 0.5) {
+                return {
+                    type: "info",
+                    message: "レフ値と完全矯正値に差があります。調節緊張の可能性を考慮してください。"
+                };
+            } else {
+                return {
+                    type: "success",
+                    message: "レフ値と完全矯正値が近似しており、良好な測定結果です。"
+                };
+            }
+        }
+
+        // KBからの変化量計算（ADD対応）
+        function calculateChanges(prescription) {
+            const hasKB = document.getElementById('hasKB').checked;
+            if (!hasKB) return null;
+
+            const rightChange = {
+                sph: prescription.right.sph - (parseFloat(getElementValue('kbRightSph')) || 0),
+                cyl: prescription.right.cyl - (parseFloat(getElementValue('kbRightCyl')) || 0),
+                axis: prescription.right.axis - (parseInt(getElementValue('kbRightAxis')) || 0),
+                add: prescription.right.add - (parseFloat(getElementValue('kbRightAdd')) || 0)
+            };
+
+            const leftChange = {
+                sph: prescription.left.sph - (parseFloat(getElementValue('kbLeftSph')) || 0),
+                cyl: prescription.left.cyl - (parseFloat(getElementValue('kbLeftCyl')) || 0),
+                axis: prescription.left.axis - (parseInt(getElementValue('kbLeftAxis')) || 0),
+                add: prescription.left.add - (parseFloat(getElementValue('kbLeftAdd')) || 0)
+            };
+
+            return { right: rightChange, left: leftChange };
+        }
+
+        // 明視域計算
+        function calculateNearPoint(sph, adjustmentPower) {
+            const refractivePower = parseFloat(sph) || 0;
+            const adjustment = parseFloat(adjustmentPower) || 0;
+            
+            const nearPointPower = refractivePower - adjustment;
+            
+            if (nearPointPower === 0) return "∞";
+            
+            const nearPointM = 1 / nearPointPower;
+            const nearPointCm = Math.abs(nearPointM * 100);
+            
+            if (nearPointCm > 1000) return "∞";
+            
+            return nearPointCm.toFixed(0) + "cm";
+        }
+
+        // 元の処方計算機能をベースに拡張（ADD対応）
+        function adjustAstigmatismPrescription(targetCyl, targetAxis, hasKB, kbCyl, kbAxis, usageYears, age) {
+            const targetCylValue = parseFloat(targetCyl) || 0;
+            const targetAxisValue = parseInt(targetAxis) || 0;
+            const kbCylValue = parseFloat(kbCyl) || 0;
+            const kbAxisValue = parseInt(kbAxis) || 0;
+            
+            let adjustedCyl = Math.round(targetCylValue * 4) / 4;
+            adjustedCyl = Math.max(adjustedCyl, -6.00);
+            
+            let adjustedAxis = Math.round(targetAxisValue / 5) * 5;
+            if (adjustedAxis === 180) adjustedAxis = 0;
+            
+            if (!hasKB) {
+                // 初回処方：軸方向別処方法則を適用（より保守的に）
+                const factor = getAstigmatismFactor(targetAxisValue);
+                adjustedCyl = targetCylValue * factor * 0.8; // より保守的に80%に抑制
+                adjustedCyl = Math.round(adjustedCyl * 4) / 4;
+                adjustedCyl = Math.max(adjustedCyl, -6.00);
+                
+                return { cyl: adjustedCyl, axis: adjustedAxis };
+            }
+            
+            const cylDifference = Math.abs(targetCylValue - kbCylValue);
+            
+            let axisDifference = Math.abs(targetAxisValue - kbAxisValue);
+            if (axisDifference > 90) {
+                axisDifference = 180 - axisDifference;
+            }
+            
+            // より保守的な適応係数設定
+            let adaptationFactor = 0.5; // デフォルトを50%に下げる
+            if (usageYears >= 5) adaptationFactor = 0.3; // 長期使用は30%
+            else if (usageYears >= 3) adaptationFactor = 0.4; // 3年以上は40%
+            else if (usageYears >= 1) adaptationFactor = 0.5; // 1年以上は50%
+            
+            // 年齢による追加制限（より厳格に）
+            if (age >= 60) adaptationFactor *= 0.6; // 60歳以上はさらに制限
+            else if (age >= 50) adaptationFactor *= 0.7; // 50歳以上も制限
+            else if (age >= 40) adaptationFactor *= 0.8; // 40歳以上も軽微な制限
+            
+            // 乱視度数変化の制限（より厳格に）
+            if (cylDifference <= 0.25) {
+                // 0.25D以下の変化は許可
+                adjustedCyl = targetCylValue;
+            } else if (cylDifference <= 0.5) {
+                // 0.5D以下は80%適用
+                adjustedCyl = kbCylValue + (targetCylValue - kbCylValue) * adaptationFactor * 0.8;
+            } else if (cylDifference <= 1.0) {
+                // 1.0D以下は60%適用
+                adjustedCyl = kbCylValue + (targetCylValue - kbCylValue) * adaptationFactor * 0.6;
+            } else {
+                // 1.0Dを超える大きな変化は最大40%まで
+                adjustedCyl = kbCylValue + (targetCylValue - kbCylValue) * adaptationFactor * 0.4;
+            }
+            
+            // 絶対的な変化量制限を追加
+            const maxCylChange = age >= 50 ? 0.5 : 0.75; // 50歳以上は0.5D、未満は0.75Dまで
+            const actualChange = adjustedCyl - kbCylValue;
+            if (Math.abs(actualChange) > maxCylChange) {
+                adjustedCyl = kbCylValue + Math.sign(actualChange) * maxCylChange;
+            }
+            
+            // 軸度変更の制限（より厳格に）
+            if (axisDifference <= 10) {
+                // 10度以内の変化は許可（15度から短縮）
+                adjustedAxis = targetAxisValue;
+            } else {
+                // 10度を超える変化は制限（段階的に5度まで）
+                let axisDiff = targetAxisValue - kbAxisValue;
+                
+                if (Math.abs(axisDiff) > 90) {
+                    if (axisDiff > 0) {
+                        axisDiff = axisDiff - 180;
+                    } else {
+                        axisDiff = axisDiff + 180;
+                    }
+                }
+                
+                // より保守的な軸度制限（10度まで）
+                if (axisDiff > 10) {
+                    adjustedAxis = kbAxisValue + 10;
+                } else if (axisDiff < -10) {
+                    adjustedAxis = kbAxisValue - 10;
+                } else {
+                    adjustedAxis = targetAxisValue;
+                }
+            }
+            
+            // 斜乱視の軸度は変更しない（絶対ルール）
+            const kbType = getAstigmatismType(kbAxisValue);
+            if (kbType === 'oblique' && usageYears >= 1) {
+                adjustedAxis = kbAxisValue;
+            }
+            
+            // 最終調整
+            adjustedCyl = Math.round(adjustedCyl * 4) / 4;
+            adjustedCyl = Math.max(adjustedCyl, -6.00);
+            adjustedAxis = Math.round(adjustedAxis / 5) * 5;
+            
+            // 軸度の範囲調整（0-179度）
+            while (adjustedAxis < 0) adjustedAxis += 180;
+            while (adjustedAxis >= 180) adjustedAxis -= 180;
+            
+            return { cyl: adjustedCyl, axis: adjustedAxis };
+        }
+
+        function adjustSpherePrescription(targetSph, hasKB, kbSph, usageYears, age, mainComplaint) {
+            const targetSphValue = parseFloat(targetSph) || 0;
+            const kbSphValue = parseFloat(kbSph) || 0;
+            
+            let adjustedSph = targetSphValue;
+            const adaptationLimit = getAdaptationLimit(age);
+            
+            // 主訴A（遠方重視）の特別処理
+            const isDistanceVisionPriority = mainComplaint === 1; // complaint1 = 遠方視力低下
+            
+            if (!hasKB) {
+                // 初回処方の調整
+                if (isDistanceVisionPriority) {
+                    // 主訴A（遠方重視）: 完全矯正値の80%で処方
+                    adjustedSph = targetSphValue * 0.8;
+                } else if (targetSphValue > 0) {
+                    // 通常の遠視処方: 初回は+0.50D以下
+                    if (targetSphValue > 0.50) {
+                        adjustedSph = 0.50;
+                    } else {
+                        adjustedSph = targetSphValue;
+                    }
+                } else {
+                    // 通常の近視処方: 75-80%で処方
+                    adjustedSph = targetSphValue * 0.75;
+                }
+            } else {
+                // KB有りの場合
+                const sphDifference = targetSphValue - kbSphValue;
+                let changeFactor;
+                
+                // 主訴A（遠方重視）の特別処理
+                if (isDistanceVisionPriority) {
+                    // KBからは4段階以内（1.00D以内）に制限
+                    const maxChangeForDistance = 1.00; // 4段階 = 1.00D
+                    const limitedDifference = Math.sign(sphDifference) * Math.min(Math.abs(sphDifference), maxChangeForDistance);
+                    
+                    // 完全矯正値の80%を目標とする
+                    const targetAdjusted = targetSphValue * 0.8;
+                    const targetDifference = targetAdjusted - kbSphValue;
+                    
+                    // 4段階制限と80%処方のうち、より保守的な方を採用
+                    if (Math.abs(targetDifference) <= maxChangeForDistance) {
+                        adjustedSph = targetAdjusted;
+                    } else {
+                        adjustedSph = kbSphValue + limitedDifference;
+                    }
+                } else {
+                    // 通常の処方（主訴A以外）
+                    // 使用年数による調整
+                    if (usageYears >= 5) changeFactor = 0.4;
+                    else if (usageYears >= 3) changeFactor = 0.6;
+                    else if (usageYears >= 1) changeFactor = 0.75;
+                    else changeFactor = 0.85;
+                    
+                    // 年齢による追加制限
+                    if (age >= 60) changeFactor *= 0.8;
+                    else if (age >= 50) changeFactor *= 0.9;
+                    
+                    // 年齢別慣れ制限の適用
+                    const maxChange = Math.min(Math.abs(sphDifference), adaptationLimit);
+                    const limitedChange = sphDifference > 0 ? maxChange : -maxChange;
+                    
+                    // 度数変化量の制限
+                    if (Math.abs(sphDifference) <= 0.5) {
+                        adjustedSph = targetSphValue;
+                    } else {
+                        adjustedSph = kbSphValue + limitedChange * changeFactor;
+                    }
+                }
+            }
+            
+            // 最終調整
+            adjustedSph = Math.round(adjustedSph * 4) / 4;
+            adjustedSph = Math.max(-20.00, Math.min(20.00, adjustedSph));
+            
+            return adjustedSph;
+        }
+
+        // ADD処方調整（新機能）
+        function adjustAddPrescription(targetAdd, hasKB, kbAdd, usageYears, age) {
+            const targetAddValue = parseFloat(targetAdd) || 0;
+            const kbAddValue = parseFloat(kbAdd) || 0;
+            
+            // 40歳未満はADD不要
+            if (age < 40) return 0;
+            
+            let adjustedAdd = targetAddValue;
+            
+            if (!hasKB) {
+                // 初回処方: 推奨値をそのまま使用
+                adjustedAdd = getRecommendedAddPower(age);
+            } else {
+                // KB有りの場合: 段階的増加
+                const addDifference = targetAddValue - kbAddValue;
+                let changeFactor = 1.0; // ADDは基本的に完全矯正に近づける
+                
+                // 使用年数による調整（ADDは慎重に）
+                if (usageYears >= 5) changeFactor = 0.8;
+                else if (usageYears >= 3) changeFactor = 0.9;
+                
+                // ADD変化量の制限（最大0.50Dまで）
+                if (Math.abs(addDifference) <= 0.25) {
+                    adjustedAdd = targetAddValue;
+                } else if (Math.abs(addDifference) <= 0.50) {
+                    adjustedAdd = kbAddValue + (addDifference * changeFactor);
+                } else {
+                    // 0.50Dを超える変化は段階的に
+                    adjustedAdd = kbAddValue + Math.sign(addDifference) * 0.50;
+                }
+            }
+            
+            // 最終調整
+            adjustedAdd = Math.round(adjustedAdd * 4) / 4;
+            adjustedAdd = Math.max(0, Math.min(3.00, adjustedAdd));
+            
+            return adjustedAdd;
+        }
+
+        function checkAnisometropia(rightVision, leftVision, hasKB) {
+            const rightVisionValue = parseFloat(rightVision) || 1.0;
+            const leftVisionValue = parseFloat(leftVision) || 1.0;
+            const visionDifference = Math.abs(rightVisionValue - leftVisionValue);
+            
+            if (hasKB && visionDifference >= 0.3) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function adjustBinocularBalance(rightSph, leftSph, rightCyl, leftCyl, age) {
+            const rightSE = rightSph + (rightCyl / 2);
+            const leftSE = leftSph + (leftCyl / 2);
+            const difference = Math.abs(rightSE - leftSE);
+            
+            if (difference >= 2.0 && age < 50) {
+                const avgSE = (rightSE + leftSE) / 2;
+                const adjustment = difference * 0.3;
+                
+                if (rightSE > leftSE) {
+                    rightSph -= adjustment;
+                    leftSph += adjustment;
+                } else {
+                    rightSph += adjustment;
+                    leftSph -= adjustment;
+                }
+            }
+            
+            return {
+                rightSph: Math.round(rightSph * 4) / 4,
+                leftSph: Math.round(leftSph * 4) / 4
+            };
+        }
+
+        function apply40PlusSpecialHandling(age, rightPrescription, leftPrescription, addPower, hasKB, kbUsageYears) {
+            if (age < 40) return { rightPrescription, leftPrescription };
+            
+            if (hasKB && kbUsageYears >= 2) {
+                const expectedAdd = getAdditionPower(age);
+                
+                const maxSphAdjustment = 0.75;
+                
+                rightPrescription.sph = Math.max(
+                    rightPrescription.sph - maxSphAdjustment,
+                    rightPrescription.sph
+                );
+                leftPrescription.sph = Math.max(
+                    leftPrescription.sph - maxSphAdjustment,
+                    leftPrescription.sph
+                );
+            }
+            
+            return { rightPrescription, leftPrescription };
+        }
+
+        function getElementValue(id) {
+            const element = document.getElementById(id);
+            return element ? element.value : '';
+        }
+
+        // メイン計算関数（ADD対応）
+        function calculatePrescription() {
+            try {
+                console.log('処方計算開始');
+                
+                const age = parseInt(getElementValue('age'));
+                if (!age || age < 10 || age > 100) {
+                    alert('年齢を正しく入力してください（10-100歳）');
+                    return;
+                }
+
+                console.log('年齢:', age);
+
+                const addPower = getAdditionPower(age);
+                const adjustmentPower = getAdjustmentPower(age);
+                
+                // 完全矯正値の取得（デフォルト値を設定）
+                const rightSph = parseFloat(getElementValue('corrRightSph')) || 0;
+                const rightCyl = parseFloat(getElementValue('corrRightCyl')) || 0;
+                const rightAxis = parseInt(getElementValue('corrRightAxis')) || 0;
+                const rightAdd = parseFloat(getElementValue('corrRightAdd')) || addPower; // 完全矯正値のADD
+                
+                const leftSph = parseFloat(getElementValue('corrLeftSph')) || 0;
+                const leftCyl = parseFloat(getElementValue('corrLeftCyl')) || 0;
+                const leftAxis = parseInt(getElementValue('corrLeftAxis')) || 0;
+                const leftAdd = parseFloat(getElementValue('corrLeftAdd')) || addPower; // 完全矯正値のADD
+
+                console.log('完全矯正値取得完了');
+
+                const hasKB = document.getElementById('hasKB') ? document.getElementById('hasKB').checked : false;
+                const kbUsageYears = parseInt(getElementValue('kbUsageYears')) || 0;
+                
+                const mainComplaint = chiefComplaints.length > 0 ? chiefComplaints[0] : 0;
+
+                console.log('基本情報取得完了');
+
+                const isAnisometropia = checkAnisometropia(
+                    getElementValue('kbRightVision'), 
+                    getElementValue('kbLeftVision'), 
+                    hasKB
+                );
+
+                let adjustedRightSph = adjustSpherePrescription(
+                    rightSph, hasKB, getElementValue('kbRightSph'), 
+                    kbUsageYears, age, mainComplaint
+                );
+                let adjustedLeftSph = adjustSpherePrescription(
+                    leftSph, hasKB, getElementValue('kbLeftSph'), 
+                    kbUsageYears, age, mainComplaint
+                );
+
+                console.log('球面度数調整完了');
+
+                if (isAnisometropia) {
+                    adjustedRightSph = parseFloat(getElementValue('kbRightSph')) || rightSph;
+                    adjustedLeftSph = parseFloat(getElementValue('kbLeftSph')) || leftSph;
+                }
+
+                const rightAstigmatism = adjustAstigmatismPrescription(
+                    rightCyl, rightAxis, hasKB, 
+                    getElementValue('kbRightCyl'), getElementValue('kbRightAxis'), 
+                    kbUsageYears, age
+                );
+                
+                const leftAstigmatism = adjustAstigmatismPrescription(
+                    leftCyl, leftAxis, hasKB, 
+                    getElementValue('kbLeftCyl'), getElementValue('kbLeftAxis'), 
+                    kbUsageYears, age
+                );
+
+                console.log('乱視調整完了');
+
+                // ADD調整（新機能）
+                const adjustedRightAdd = adjustAddPrescription(
+                    rightAdd, hasKB, getElementValue('kbRightAdd'), 
+                    kbUsageYears, age
+                );
+                const adjustedLeftAdd = adjustAddPrescription(
+                    leftAdd, hasKB, getElementValue('kbLeftAdd'), 
+                    kbUsageYears, age
+                );
+
+                console.log('ADD調整完了');
+
+                let balancedSphere = { rightSph: adjustedRightSph, leftSph: adjustedLeftSph };
+                if (!isAnisometropia) {
+                    balancedSphere = adjustBinocularBalance(
+                        adjustedRightSph, adjustedLeftSph, 
+                        rightAstigmatism.cyl, leftAstigmatism.cyl, age
+                    );
+                }
+
+                let rightPrescription = {
+                    sph: balancedSphere.rightSph,
+                    cyl: rightAstigmatism.cyl,
+                    axis: rightAstigmatism.axis,
+                    add: adjustedRightAdd
+                };
+                
+                let leftPrescription = {
+                    sph: balancedSphere.leftSph,
+                    cyl: leftAstigmatism.cyl,
+                    axis: leftAstigmatism.axis,
+                    add: adjustedLeftAdd
+                };
+
+                console.log('処方値計算完了');
+
+                const specialHandling = apply40PlusSpecialHandling(
+                    age, rightPrescription, leftPrescription, addPower, hasKB, kbUsageYears
+                );
+                rightPrescription = specialHandling.rightPrescription;
+                leftPrescription = specialHandling.leftPrescription;
+
+                if (rightPrescription.cyl === 0) rightPrescription.axis = 0;
+                if (leftPrescription.cyl === 0) leftPrescription.axis = 0;
+
+                const prescription = {
+                    right: rightPrescription,
+                    left: leftPrescription,
+                    addPower: Math.max(adjustedRightAdd, adjustedLeftAdd), // 左右の大きい方
+                    timestamp: new Date().toISOString(),
+                    patient: getElementValue('patientName') || '名前なし',
+                    age: age,
+                    chiefComplaints: chiefComplaints,
+                    hasKB: hasKB,
+                    isAnisometropia: isAnisometropia
+                };
+
+                console.log('処方オブジェクト作成完了');
+
+                // KBからの変化量計算（ADD対応）
+                const changes = calculateChanges(prescription);
+                if (changes) {
+                    prescription.changes = changes;
+                }
+
+                // レフ値比較
+                prescription.refHint = getRefractiveHint();
+
+                // 明視域計算
+                const rightSphericalEquivalent = rightPrescription.sph + (rightPrescription.cyl / 2);
+                const leftSphericalEquivalent = leftPrescription.sph + (leftPrescription.cyl / 2);
+                const averageSphericalEquivalent = (rightSphericalEquivalent + leftSphericalEquivalent) / 2;
+                
+                prescription.nearPoint = calculateNearPoint(averageSphericalEquivalent, adjustmentPower);
+
+                console.log('最終処方計算完了');
+
+                displayResults(prescription);
+                
+                console.log('処方計算完了');
+            } catch (error) {
+                console.error('処方計算エラー:', error);
+                alert('計算中にエラーが発生しました: ' + error.message + '\n\nブラウザのコンソールでさらに詳細なエラー情報を確認できます。');
+            }
+        }
+
+        // 処方データの保存
+        function savePrescription() {
+            const prescription = window.currentPrescription;
+            if (!prescription) {
+                alert('保存する処方データがありません。まず処方計算を実行してください。');
+                return;
+            }
+
+            prescriptionHistory.unshift(prescription);
+            if (prescriptionHistory.length > 20) {
+                prescriptionHistory = prescriptionHistory.slice(0, 20);
+            }
+
+            localStorage.setItem('prescriptionHistory', JSON.stringify(prescriptionHistory));
+            alert('処方データが保存されました（最新20件まで保存）');
+        }
+
+        // 履歴表示の切り替え
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            const content = document.getElementById('historyContent');
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                displayHistory();
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // 履歴表示
+        function displayHistory() {
+            const content = document.getElementById('historyContent');
+            
+            if (prescriptionHistory.length === 0) {
+                content.innerHTML = '<div class="text-center text-gray-500 py-4">保存された処方データはありません</div>';
+                return;
+            }
+
+            let historyHTML = '';
+            prescriptionHistory.forEach((item, index) => {
+                const date = new Date(item.timestamp).toLocaleString('ja-JP');
+                const addDisplay = item.addPower > 0 ? ` ADD +${item.addPower.toFixed(2)}` : '';
+                historyHTML += `
+                    <div class="bg-white/50 p-3 rounded-xl border border-gray-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="font-semibold text-sm">${item.patient} (${item.age}歳)</div>
+                                <div class="text-xs text-gray-500">${date}</div>
+                            </div>
+                            <button onclick="loadPrescription(${index})" class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                読込
+                            </button>
+                        </div>
+                        <div class="text-xs text-gray-600 grid grid-cols-2 gap-2">
+                            <div>右眼: SPH ${item.right.sph >= 0 ? '+' : ''}${item.right.sph.toFixed(2)} CYL ${item.right.cyl.toFixed(2)}${addDisplay}</div>
+                            <div>左眼: SPH ${item.left.sph >= 0 ? '+' : ''}${item.left.sph.toFixed(2)} CYL ${item.left.cyl.toFixed(2)}${addDisplay}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = historyHTML;
+        }
+
+        // 処方データの読み込み
+        function loadPrescription(index) {
+            const prescription = prescriptionHistory[index];
+            if (!prescription) return;
+
+            // 基本情報の復元は省略（必要に応じて実装）
+            alert(`処方データ「${prescription.patient}」の詳細情報を表示しました`);
+            displayResults(prescription);
+            toggleHistory();
+        }
+
+        // 全データ削除
+        function clearAllData() {
+            if (confirm('全ての処方履歴データを削除しますか？この操作は取り消せません。')) {
+                prescriptionHistory = [];
+                localStorage.removeItem('prescriptionHistory');
+                alert('全ての処方履歴データが削除されました');
+                if (!document.getElementById('historyPanel').classList.contains('hidden')) {
+                    displayHistory();
+                }
+            }
+        }
+
+        // 拡張された結果表示機能（ADD対応）
+        function displayResults(prescription) {
+            window.currentPrescription = prescription;
+            
+            try {
+                const resultsColumn = document.getElementById('resultsColumn');
+                const noResults = document.getElementById('noResults');
+                
+                if (noResults) {
+                    noResults.style.display = 'none';
+                }
+                
+                let resultsHTML = `
+                    <!-- 処方結果 -->
+                    <div class="prescription-card rounded-3xl shadow-xl p-6 border border-purple-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-lg mr-3">
+                                    <div class="w-5 h-5 text-white flex items-center justify-center">✅</div>
+                                </div>
+                                <h2 class="text-xl font-semibold">高精度処方結果（ADD対応）</h2>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${new Date(prescription.timestamp).toLocaleString('ja-JP')}
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-2xl">
+                                    <h3 class="font-semibold text-sm text-gray-700 mb-2">右眼 (OD)</h3>
+                                    <div class="space-y-1 text-sm">
+                                        <div class="flex justify-between">
+                                            <span>SPH:</span>
+                                            <span class="font-mono font-bold">${prescription.right.sph >= 0 ? '+' : ''}${prescription.right.sph.toFixed(2)}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>CYL:</span>
+                                            <span class="font-mono font-bold">${prescription.right.cyl.toFixed(2)}</span>
+                                        </div>
+                                        ${prescription.right.cyl !== 0 ? `
+                                        <div class="flex justify-between">
+                                            <span>AXIS:</span>
+                                            <span class="font-mono font-bold">${prescription.right.axis}°</span>
+                                        </div>` : ''}
+                                        ${prescription.right.add > 0 ? `
+                                        <div class="flex justify-between">
+                                            <span>ADD:</span>
+                                            <span class="font-mono font-bold text-orange-600">+${prescription.right.add.toFixed(2)}</span>
+                                        </div>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-2xl">
+                                    <h3 class="font-semibold text-sm text-gray-700 mb-2">左眼 (OS)</h3>
+                                    <div class="space-y-1 text-sm">
+                                        <div class="flex justify-between">
+                                            <span>SPH:</span>
+                                            <span class="font-mono font-bold">${prescription.left.sph >= 0 ? '+' : ''}${prescription.left.sph.toFixed(2)}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>CYL:</span>
+                                            <span class="font-mono font-bold">${prescription.left.cyl.toFixed(2)}</span>
+                                        </div>
+                                        ${prescription.left.cyl !== 0 ? `
+                                        <div class="flex justify-between">
+                                            <span>AXIS:</span>
+                                            <span class="font-mono font-bold">${prescription.left.axis}°</span>
+                                        </div>` : ''}
+                                        ${prescription.left.add > 0 ? `
+                                        <div class="flex justify-between">
+                                            <span>ADD:</span>
+                                            <span class="font-mono font-bold text-orange-600">+${prescription.left.add.toFixed(2)}</span>
+                                        </div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${prescription.addPower > 0 ? `
+                            <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-4 rounded-2xl border border-orange-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">推奨加入度数 (ADD):</span>
+                                    <span class="font-mono font-bold text-lg text-orange-600">+${prescription.addPower.toFixed(2)}</span>
+                                </div>
+                                <div class="text-xs text-orange-700 mt-1">
+                                    ${prescription.age}歳での標準的な加入度数です
+                                </div>
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+
+                // レンズ推奨機能（ADD対応）
+                const lensRecommendations = generateLensRecommendations(prescription);
+                resultsHTML += `
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-green-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">👁️</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">レンズ推奨（ADD対応）</h2>
+                    </div>
+                    
+                    <div class="space-y-3">`;
+                
+                lensRecommendations.forEach((lens, index) => {
+                    resultsHTML += `
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-200">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-700">${lens.type}</h4>
+                                    <p class="text-xs text-gray-600">${lens.note}</p>
+                                </div>
+                                <div class="text-xs text-gray-500">${lens.distance}</div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white/60 p-3 rounded-xl">
+                                    <h5 class="text-xs font-semibold text-gray-600 mb-2">右眼 (OD)</h5>
+                                    <div class="space-y-1 text-xs">
+                                        <div class="flex justify-between">
+                                            <span>SPH:</span>
+                                            <span class="font-mono font-bold">${lens.rightSph >= 0 ? '+' : ''}${lens.rightSph.toFixed(2)}D</span>
+                                        </div>
+                                        ${lens.rightCyl && lens.rightCyl !== 0 ? `
+                                        <div class="flex justify-between">
+                                            <span>CYL:</span>
+                                            <span class="font-mono font-bold">${lens.rightCyl.toFixed(2)}D</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>AX:</span>
+                                            <span class="font-mono font-bold">${lens.rightAxis}°</span>
+                                        </div>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white/60 p-3 rounded-xl">
+                                    <h5 class="text-xs font-semibold text-gray-600 mb-2">左眼 (OS)</h5>
+                                    <div class="space-y-1 text-xs">
+                                        <div class="flex justify-between">
+                                            <span>SPH:</span>
+                                            <span class="font-mono font-bold">${lens.leftSph >= 0 ? '+' : ''}${lens.leftSph.toFixed(2)}D</span>
+                                        </div>
+                                        ${lens.leftCyl && lens.leftCyl !== 0 ? `
+                                        <div class="flex justify-between">
+                                            <span>CYL:</span>
+                                            <span class="font-mono font-bold">${lens.leftCyl.toFixed(2)}D</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>AX:</span>
+                                            <span class="font-mono font-bold">${lens.leftAxis}°</span>
+                                        </div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${lens.add > 0 ? `
+                            <div class="mt-3 bg-orange-100 p-3 rounded-xl">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-orange-800">加入度数 (ADD):</span>
+                                    <span class="font-mono font-bold text-orange-800">+${lens.add.toFixed(2)}D</span>
+                                </div>
+                            </div>` : ''}
+                        </div>`;
+                });
+                
+                resultsHTML += `</div></div>`;
+
+                // アドバイス表示（ADD対応）
+                const advice = generateAdvice(prescription);
+                resultsHTML += `
+                <div class="prescription-card rounded-3xl shadow-xl p-6 border border-cyan-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-lg mr-3">
+                            <div class="w-5 h-5 text-white flex items-center justify-center">💡</div>
+                        </div>
+                        <h2 class="text-xl font-semibold">高精度処方アドバイス（ADD対応）</h2>
+                    </div>
+                    
+                    <div class="space-y-3">`;
+                
+                advice.forEach((item, index) => {
+                    resultsHTML += `
+                        <div class="bg-gradient-to-r from-cyan-50 to-blue-50 p-3 rounded-2xl border border-cyan-200">
+                            <p class="text-sm text-gray-700">${item}</p>
+                        </div>`;
+                });
+                
+                resultsHTML += `</div></div>`;
+                
+                if (resultsColumn) {
+                    resultsColumn.innerHTML = resultsHTML;
+                }
+            } catch (error) {
+                console.error('結果表示エラー:', error);
+                alert('結果表示中にエラーが発生しました。');
+            }
+        }
+
+        // レンズ推奨生成（ADD対応）
+        function generateLensRecommendations(prescription) {
+            let lensRecommendations = [];
+            
+            // 遠用単焦点
+            lensRecommendations.push({
+                type: "遠用単焦点",
+                rightSph: prescription.right.sph,
+                leftSph: prescription.left.sph,
+                rightCyl: prescription.right.cyl,
+                leftCyl: prescription.left.cyl,
+                rightAxis: prescription.right.axis,
+                leftAxis: prescription.left.axis,
+                add: 0,
+                distance: "運転・スポーツ・遠方作業",
+                note: "遠方視力重視、クリアな遠方視"
+            });
+            
+            // 老視がある場合の追加レンズ
+            if (prescription.age >= 40 && prescription.addPower > 0) {
+                // 近用単焦点
+                lensRecommendations.push({
+                    type: "近用単焦点",
+                    rightSph: prescription.right.sph + prescription.addPower,
+                    leftSph: prescription.left.sph + prescription.addPower,
+                    rightCyl: prescription.right.cyl,
+                    leftCyl: prescription.left.cyl,
+                    rightAxis: prescription.right.axis,
+                    leftAxis: prescription.left.axis,
+                    add: 0,
+                    distance: "読書・近作業専用",
+                    note: "近方専用、眼精疲労軽減"
+                });
+                
+                // 遠近両用
+                lensRecommendations.push({
+                    type: "遠近両用",
+                    rightSph: prescription.right.sph,
+                    leftSph: prescription.left.sph,
+                    rightCyl: prescription.right.cyl,
+                    leftCyl: prescription.left.cyl,
+                    rightAxis: prescription.right.axis,
+                    leftAxis: prescription.left.axis,
+                    add: prescription.addPower,
+                    distance: "遠方〜近方全域",
+                    note: "標準的な累進レンズ、全距離対応"
+                });
+            }
+            
+            return lensRecommendations;
+        }
+
+        // アドバイス生成（ADD対応）
+        function generateAdvice(prescription) {
+            let advice = [];
+            
+            // ADD関連のアドバイス
+            if (prescription.addPower > 0) {
+                advice.push(`【加入度数対応】${prescription.age}歳の推奨ADD（+${prescription.addPower.toFixed(2)}D）を適用しました。老視の進行に合わせて1-2年毎の定期的な度数調整が必要です`);
+                
+                // 累進レンズの推奨
+                if (prescription.chiefComplaints.includes(1) && prescription.chiefComplaints.includes(2)) {
+                    advice.push("遠方・近方両方の主訴があるため、遠近両用レンズを第一推奨とします。慣れに2-3週間かかる場合があります");
+                } else if (prescription.chiefComplaints.includes(2) || prescription.chiefComplaints.includes(3)) {
+                    advice.push("PC作業・近方作業が主体のため、中近両用レンズも検討をお勧めします。デスクワークでの快適性が向上します");
+                }
+            }
+            
+            // 主訴A（遠方重視）の特別処理アドバイス
+            const isDistanceVisionPriority = prescription.chiefComplaints.length > 0 && prescription.chiefComplaints[0] === 1;
+            if (isDistanceVisionPriority) {
+                if (!prescription.hasKB) {
+                    advice.push("【主訴A：遠方重視】完全矯正値の80%で処方しています。遠方視力を優先しつつ、慣れやすさを配慮した処方です");
+                } else {
+                    advice.push("【主訴A：遠方重視】KBから4段階（1.00D）以内かつ完全矯正値の80%を目標とした処方です。運転等の遠方視に配慮しています");
+                }
+            }
+            
+            // 基本的な処方アドバイス
+            if (!prescription.hasKB) {
+                advice.push("初回眼鏡処方のため、乱視軸方向別処方法則に基づいて段階的な度数調整を行っています");
+            }
+            
+            // 乱視軸方向別のアドバイス
+            const rightAxisType = getAstigmatismType(prescription.right.axis);
+            const leftAxisType = getAstigmatismType(prescription.left.axis);
+            
+            if (rightAxisType === 'direct' || leftAxisType === 'direct') {
+                advice.push("直乱視（180度方向）があります。目を細めれば見えるため、違和感を最小限に抑えた保守的な処方です");
+            }
+            if (rightAxisType === 'inverse' || leftAxisType === 'inverse') {
+                advice.push("倒乱視（90度方向）があります。目を細めても見えにくいため、適切な乱視処方を行っています");
+            }
+            if (rightAxisType === 'oblique' || leftAxisType === 'oblique') {
+                advice.push("斜乱視があります。平衡感覚への影響を考慮し、軸度変更は避けて慎重な処方です");
+            }
+            
+            return advice.length > 0 ? advice : ["実践的な眼鏡処方法則に基づく適切な処方により、良好な視力が期待できます"];
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                console.log('初期化開始');
+                
+                // 主訴のイベントリスナー設定
+                for (let i = 1; i <= 6; i++) {
+                    try {
+                        const checkbox = document.getElementById('complaint' + i);
+                        if (checkbox) {
+                            checkbox.addEventListener('change', function() {
+                                handleComplaintChange(i);
+                            });
+                        }
+                    } catch (error) {
+                        console.error('主訴イベントリスナー設定エラー (complaint' + i + '):', error);
+                    }
+                }
+
+                // KBセクションの表示/非表示
+                try {
+                    const hasKBCheckbox = document.getElementById('hasKB');
+                    if (hasKBCheckbox) {
+                        hasKBCheckbox.addEventListener('change', function() {
+                            const kbSection = document.getElementById('kbSection');
+                            if (kbSection) {
+                                if (this.checked) {
+                                    kbSection.classList.remove('hidden');
+                                } else {
+                                    kbSection.classList.add('hidden');
+                                }
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('KBセクション設定エラー:', error);
+                }
+
+                // 長押し機能の設定
+                try {
+                    setupLongPressHandlers();
+                } catch (error) {
+                    console.error('長押し機能設定エラー:', error);
+                }
+
+                // 履歴データの読み込み
+                try {
+                    prescriptionHistory = JSON.parse(localStorage.getItem('prescriptionHistory')) || [];
+                } catch (error) {
+                    console.error('履歴データ読み込みエラー:', error);
+                    prescriptionHistory = [];
+                }
+
+                console.log('眼鏡処方計算ツール - 加入度数対応完全版 初期化完了');
+            } catch (error) {
+                console.error('初期化エラー:', error);
+                alert('初期化中にエラーが発生しました: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
