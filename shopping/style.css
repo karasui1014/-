@@ -404,7 +404,9 @@ body {
 .recipe-del:active { background: var(--pink-soft); }
 
 /* 献立：検索・作り方・クックパッド */
-.recipe-search { margin: 4px 4px 10px; }
+.recipe-search { margin: 4px 4px 10px; display: flex; gap: 8px; align-items: stretch; }
+.recipe-search .text-input { flex: 1 1 auto; min-width: 0; }
+.recipe-search .pill-btn { flex: 0 0 auto; padding: 0 18px; }
 .recipe-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
 .recipe-add-btn, .recipe-how-btn {
   font-family: var(--font); font-weight: 900; font-size: 0.82rem;
@@ -946,6 +948,52 @@ body {
 
 /* コンプリート/称号の大きめバブル */
 .reward-bubble.reward-title { font-size: 1.2rem; padding: 16px 26px; background: linear-gradient(135deg, #ffd86b, #ff9ec4 60%, #9b8cff); color: #fff; }
+
+/* ====== 決定→材料の検索結果パネル ====== */
+.recipe-result {
+  margin: 0 4px 14px; padding: 14px;
+  background: var(--white); border: 2px solid var(--pink); border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+.recipe-result[hidden] { display: none; }
+.rr-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.rr-emoji { font-size: 1.7rem; line-height: 1; flex: 0 0 auto; }
+.rr-headtext { min-width: 0; flex: 1 1 auto; }
+.rr-title { font-weight: 900; font-size: 1rem; color: var(--ink); }
+.rr-sub { font-size: 0.74rem; font-weight: 800; color: var(--pink-deep); margin-top: 2px; }
+.rr-close { flex: 0 0 auto; width: 30px; height: 30px; border: none; background: transparent; color: var(--ink-soft); font-size: 0.95rem; cursor: pointer; border-radius: 8px; }
+.rr-ings { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.rr-ing {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px; border-radius: 999px; font-family: var(--font); font-weight: 800; font-size: 0.84rem;
+  background: var(--cream); border: 2px solid var(--pink-soft); color: var(--ink); cursor: pointer;
+}
+.rr-ing:active { transform: scale(0.95); }
+.rr-ing.is-added { background: var(--mint); border-color: var(--mint-deep); color: #1f7d63; }
+.rr-ing .rr-ing-emoji { font-size: 0.95rem; }
+.rr-actions { display: flex; flex-direction: column; gap: 8px; }
+.rr-actions .big-btn { text-decoration: none; text-align: center; }
+.rr-simhead { font-weight: 900; font-size: 0.86rem; color: var(--ink); margin: 14px 0 8px; }
+.rr-sims { display: flex; flex-wrap: wrap; gap: 7px; }
+.rr-sim {
+  padding: 8px 13px; border-radius: 999px; font-family: var(--font); font-weight: 800; font-size: 0.82rem;
+  background: var(--white); border: 2px solid var(--lav); color: var(--ink); cursor: pointer;
+}
+.rr-sim:active { transform: scale(0.95); }
+.rr-none { font-weight: 800; font-size: 0.9rem; color: var(--ink); margin: 0 0 12px; text-align: center; }
+
+/* ====== 位置情報の許可ガイド ====== */
+.perm-help {
+  margin: 8px 4px; padding: 16px;
+  background: linear-gradient(180deg, #fff, #fff3d9);
+  border: 2px solid #ffe6ad; border-radius: var(--radius); box-shadow: var(--shadow-soft);
+}
+.perm-title { font-weight: 900; font-size: 0.98rem; color: var(--ink); margin-bottom: 4px; }
+.perm-plat { font-weight: 800; font-size: 0.8rem; color: var(--pink-deep); margin-bottom: 8px; }
+.perm-steps { margin: 0 0 14px; padding-left: 1.3em; }
+.perm-steps li { font-size: 0.86rem; font-weight: 700; color: var(--ink); line-height: 1.6; margin-bottom: 4px; }
+.perm-help .big-btn { text-decoration: none; text-align: center; }
+.perm-note { font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; margin: 10px 0 0; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.05ms !important; }

@@ -665,6 +665,7 @@
    * ===================================================================== */
   var recipeArea = $('#recipeArea');
   var recipeNoMatch = $('#recipeNoMatch');
+  var recipeResult = $('#recipeResult');
   var recipeQuery = '';
 
   function allRecipes() {
@@ -675,6 +676,163 @@
   // クックパッドの検索URL（作り方を見る）。
   function cookpadUrl(name) {
     return 'https://cookpad.com/search/' + encodeURIComponent(name);
+  }
+
+  /* ---------- あいまい検索（完全一致でなくても近ければ出す） ---------- */
+  // カタカナ→ひらがな・小文字化・空白除去でゆるく正規化する。
+  function normJ(s) {
+    return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, '')
+      .replace(/[ァ-ヶ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+  }
+  function levenshtein(a, b) {
+    var m = a.length, n = b.length;
+    if (!m) return n; if (!n) return m;
+    var prev = [], cur = [], i, j;
+    for (j = 0; j <= n; j++) prev[j] = j;
+    for (i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (j = 1; j <= n; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      for (j = 0; j <= n; j++) prev[j] = cur[j];
+    }
+    return prev[n];
+  }
+  function simRatio(a, b) {
+    var max = Math.max(a.length, b.length);
+    return max ? 1 - levenshtein(a, b) / max : 0;
+  }
+  // 料理名クエリに対するレシピの一致スコア（0なら不一致）。
+  function recipeScore(r, qNorm) {
+    if (!qNorm) return 1;
+    var name = normJ(r.name);
+    if (name === qNorm) return 100;
+    if (name.indexOf(qNorm) !== -1) return 80;   // 例：かれー → カレーライス
+    if (qNorm.indexOf(name) !== -1) return 75;   // 例：カレーライス → カレー
+    var best = 0;
+    for (var i = 0; i < r.items.length; i++) {
+      var inm = normJ(r.items[i].name);
+      if (inm && (inm.indexOf(qNorm) !== -1 || qNorm.indexOf(inm) !== -1)) best = Math.max(best, 45);
+    }
+    var ratio = simRatio(name, qNorm);           // タイプミス・言い回しのゆれ
+    if (ratio >= 0.5) best = Math.max(best, Math.round(ratio * 60));
+    return best;
+  }
+  function scoredRecipes(q) {
+    var qN = normJ(q);
+    return allRecipes().map(function (r) { return { r: r, s: recipeScore(r, qN) }; })
+      .filter(function (x) { return x.s > 0; })
+      .sort(function (a, b) { return b.s - a.s; });
+  }
+  function bestRecipe(q) {
+    var arr = scoredRecipes(q);
+    return arr.length ? arr[0] : null;
+  }
+  // 材料の重なりが多い献立を「似ているメニュー」として返す。
+  function ingredientSet(r) {
+    var s = {}; r.items.forEach(function (it) { s[normJ(it.name)] = true; }); return s;
+  }
+  function similarRecipes(target, n) {
+    var ts = ingredientSet(target);
+    return allRecipes().filter(function (r) { return recipeKey(r) !== recipeKey(target); })
+      .map(function (r) {
+        var rs = ingredientSet(r), shared = 0;
+        for (var k in rs) if (ts[k]) shared++;
+        return { r: r, shared: shared };
+      })
+      .filter(function (x) { return x.shared > 0; })
+      .sort(function (a, b) { return b.shared - a.shared; })
+      .slice(0, n).map(function (x) { return x.r; });
+  }
+
+  /* ---------- 「決定」：入力した料理名の材料を検索して表示 ---------- */
+  function decideRecipe(query) {
+    var q = (query || '').trim();
+    if (!q) { toast('作りたい料理を入れてね'); return; }
+    recipeQuery = q;
+    if (recipeSearch) recipeSearch.value = q;
+    var top = bestRecipe(q);
+    if (top) {
+      var approx = top.s < 75 || normJ(top.r.name) !== normJ(q);
+      renderRecipeResult(top.r, q, approx);
+    } else {
+      renderRecipeResultNone(q);
+    }
+    renderRecipes();
+    if (recipeResult && recipeResult.scrollIntoView) {
+      recipeResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function renderRecipeResult(r, query, approx) {
+    if (!recipeResult) return;
+    recipeResult.hidden = false;
+    recipeResult.innerHTML = '';
+
+    var head = el('div', 'rr-head');
+    head.appendChild(el('span', 'rr-emoji', r.emoji || '🍽️'));
+    var ht = el('div', 'rr-headtext');
+    ht.appendChild(el('div', 'rr-title', r.name + ' の材料'));
+    if (approx) ht.appendChild(el('div', 'rr-sub', '「' + query + '」に近い献立だよ'));
+    head.appendChild(ht);
+    var close = el('button', 'rr-close', '✕'); close.type = 'button';
+    close.addEventListener('click', function () { recipeResult.hidden = true; });
+    head.appendChild(close);
+    recipeResult.appendChild(head);
+
+    // 材料（タップで1つずつ追加）
+    var chips = el('div', 'rr-ings');
+    r.items.forEach(function (it) {
+      var cat = CAT.getCategory(CAT.classify(it.name));
+      var chip = el('button', 'rr-ing'); chip.type = 'button';
+      chip.appendChild(el('span', 'rr-ing-emoji', cat.emoji));
+      chip.appendChild(el('span', null, it.name));
+      chip.addEventListener('click', function () {
+        addItem(it.name, it.qty || 1, { unit: it.unit });
+        chip.classList.add('is-added');
+        toast(it.name + ' を追加🛒');
+      });
+      chips.appendChild(chip);
+    });
+    recipeResult.appendChild(chips);
+
+    var acts = el('div', 'rr-actions');
+    var addAll = el('button', 'big-btn', '🛒 材料をぜんぶリストに追加'); addAll.type = 'button';
+    addAll.addEventListener('click', function () { addRecipeToList(r); });
+    acts.appendChild(addAll);
+    var cp = el('a', 'big-btn ghost', '👩‍🍳 作り方を見る（クックパッド ↗）');
+    cp.href = cookpadUrl(r.name); cp.target = '_blank'; cp.rel = 'noopener noreferrer';
+    acts.appendChild(cp);
+    recipeResult.appendChild(acts);
+
+    // 似ているメニュー（タップでその料理の材料に切り替え）
+    var sims = similarRecipes(r, 4);
+    if (sims.length) {
+      recipeResult.appendChild(el('div', 'rr-simhead', '🍳 似ているメニューもどうぞ'));
+      var simWrap = el('div', 'rr-sims');
+      sims.forEach(function (s) {
+        var b = el('button', 'rr-sim', (s.emoji || '🍽️') + ' ' + s.name); b.type = 'button';
+        b.addEventListener('click', function () { decideRecipe(s.name); });
+        simWrap.appendChild(b);
+      });
+      recipeResult.appendChild(simWrap);
+    }
+  }
+
+  function renderRecipeResultNone(query) {
+    if (!recipeResult) return;
+    recipeResult.hidden = false;
+    recipeResult.innerHTML = '';
+    recipeResult.appendChild(el('p', 'rr-none', '「' + query + '」に近い献立が見つかりませんでした。'));
+    var cp = el('a', 'big-btn', '🍳 クックパッドで「' + query + '」の材料・作り方を見る ↗');
+    cp.href = cookpadUrl(query); cp.target = '_blank'; cp.rel = 'noopener noreferrer';
+    recipeResult.appendChild(cp);
+    var mk = el('button', 'big-btn ghost', '✏️ この名前で自分の献立をつくる'); mk.type = 'button';
+    mk.addEventListener('click', function () {
+      if (recipeName) { recipeName.value = query; recipeName.scrollIntoView({ behavior: 'smooth' }); recipeItems.focus(); }
+    });
+    recipeResult.appendChild(mk);
   }
 
   function recipeCard(r) {
@@ -768,10 +926,9 @@
   function renderRecipes() {
     if (!recipeArea) return;
     recipeArea.innerHTML = '';
-    var q = recipeQuery.trim().toLowerCase();
-    var list = allRecipes().filter(function (r) {
-      return !q || r.name.toLowerCase().indexOf(q) !== -1;
-    });
+    var q = recipeQuery.trim();
+    // 完全一致でなくても、近い名前・材料・タイプミスでもヒットする。
+    var list = q ? scoredRecipes(q).map(function (x) { return x.r; }) : allRecipes();
     list.forEach(function (r) { recipeArea.appendChild(recipeCard(r)); });
 
     // 検索したのに見つからない → クックパッド導線＋自作のおすすめ
@@ -936,9 +1093,10 @@
     var maxed = idx >= TITLES.length - 1;
     if (cpBarFill) cpBarFill.style.width = maxed ? '100%' :
       Math.min(100, ((n - idx * 3) / 3) * 100) + '%';
+    // 次の称号の名前はまだ見せない（獲得したときのお楽しみ）。
     if (cpNext) cpNext.textContent = maxed
       ? '最高位の称号を達成！もう料理の神さまです✨'
-      : 'あと ' + ((idx + 1) * 3 - n) + ' 種類で「' + TITLES[idx + 1].name + '」🌟';
+      : 'あと ' + ((idx + 1) * 3 - n) + ' 種類で 次の称号 をゲット🌟（名前はお楽しみ）';
 
     stampCard.innerHTML = '';
     // 今のサイクル（3つ）のスタンプ
@@ -950,13 +1108,13 @@
     }
     stampCard.appendChild(row);
 
-    // 称号コレクション（獲得済み＝カラー、未獲得＝グレー）
+    // 称号コレクション（獲得済み＝名前を表示／未獲得＝名前は「？？？」で伏せる）
     var chips = el('div', 'title-chips');
     TITLES.forEach(function (t, i) {
       var unlocked = i <= idx;
       var chip = el('div', 'title-chip' + (i === idx ? ' is-current' : (unlocked ? '' : ' is-locked')));
       chip.appendChild(el('span', 'tc-ico', unlocked ? t.icon : '🔒'));
-      chip.appendChild(el('span', null, t.name));
+      chip.appendChild(el('span', null, unlocked ? t.name : '？？？'));
       chips.appendChild(chip);
     });
     stampCard.appendChild(chips);
@@ -1334,6 +1492,14 @@
   if (recipeSearch) recipeSearch.addEventListener('input', function () {
     recipeQuery = recipeSearch.value;
     renderRecipes();
+  });
+  // 「決定」ボタン／Enterで、入力した料理名の材料を検索して表示。
+  var recipeDecideBtn = $('#recipeDecideBtn');
+  if (recipeDecideBtn) recipeDecideBtn.addEventListener('click', function () {
+    decideRecipe(recipeSearch ? recipeSearch.value : '');
+  });
+  if (recipeSearch) recipeSearch.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); decideRecipe(recipeSearch.value); }
   });
 
   /* =====================================================================

@@ -202,7 +202,7 @@
   function handleError(err) {
     var code = err && err.code;
     if (code === 1) {            // PERMISSION_DENIED
-      setStatus('位置情報が許可されていません。ブラウザの設定から許可してね。', 'warn');
+      renderPermissionHelp();
     } else if (code === 2 || code === 3) {
       setStatus('現在地を取得できませんでした。電波の良い場所で試してね。', 'warn');
     } else if (err && err.message === 'no-geo') {
@@ -210,6 +210,66 @@
     } else {
       setStatus('検索に失敗しました。オンラインのときに試してね。', 'warn');
     }
+  }
+
+  /* ---------- 位置情報が許可されていないときの案内 ---------- */
+  function platform() {
+    var ua = navigator.userAgent || '';
+    if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+    if (/android/i.test(ua)) return 'android';
+    return 'pc';
+  }
+  var STEP_GUIDE = {
+    ios: {
+      label: 'iPhone / iPad',
+      steps: [
+        '「設定」アプリを開く',
+        '「プライバシーとセキュリティ」→「位置情報サービス」をオン',
+        'アプリ一覧で「Safari（またはこのアプリ）」→「このAppの使用中のみ許可」',
+        'このページに戻って、もう一度「近くのお店を探す」'
+      ]
+    },
+    android: {
+      label: 'Android',
+      steps: [
+        'アドレスバーの🔒（鍵）アイコンをタップ',
+        '「権限」→「位置情報」を「許可」に',
+        '出ないときは「設定」→「アプリ」→ブラウザ →「権限」→「位置情報」を許可',
+        'このページに戻って、もう一度「近くのお店を探す」'
+      ]
+    },
+    pc: {
+      label: 'パソコン',
+      steps: [
+        'アドレスバー左の🔒（鍵）アイコンをクリック',
+        '「位置情報」を「許可」に変更',
+        'ページを再読み込み',
+        'もう一度「近くのお店を探す」'
+      ]
+    }
+  };
+
+  function renderPermissionHelp() {
+    setStatus('位置情報が許可されていません。下の手順でオンにしてね。', 'warn');
+    if (mapWrap) mapWrap.hidden = true;
+    resultsBox.innerHTML = '';
+
+    var g = STEP_GUIDE[platform()];
+    var box = el('div', 'perm-help');
+    box.appendChild(el('div', 'perm-title', '📍 位置情報をオンにする手順'));
+    box.appendChild(el('div', 'perm-plat', g.label + ' の場合'));
+    var ol = el('ol', 'perm-steps');
+    g.steps.forEach(function (s) { ol.appendChild(el('li', null, s)); });
+    box.appendChild(ol);
+
+    var retry = el('button', 'big-btn', '🔄 設定したら、もう一度ためす');
+    retry.type = 'button';
+    retry.addEventListener('click', onFind);
+    box.appendChild(retry);
+
+    box.appendChild(el('p', 'perm-note',
+      '※ アプリから端末のOS設定を直接ひらくことはできないため、上の手順で設定をひらいてください。'));
+    resultsBox.appendChild(box);
   }
 
   /* ---------- 検索結果の描画 ---------- */
