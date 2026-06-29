@@ -118,8 +118,16 @@
     <!-- 献立タブ -->
     <section id="tab-menu" class="tab-panel" data-tab="menu" hidden>
       <h2 class="section-title">🍳 献立から材料をまとめて追加</h2>
-      <p class="section-note">作りたい献立をタップすると、材料がリストに入ります。自分の献立も登録できます。</p>
+      <p class="section-note">作りたい料理を入力 or タップで、材料がリストに入ります。「作り方」からクックパッドも見られます。</p>
+
+      <div class="recipe-search">
+        <input id="recipeSearch" class="text-input" type="text" inputmode="text"
+               placeholder="🔍 作りたい料理で探す（例：カレー）" maxlength="24" />
+      </div>
+
       <div id="recipeArea" class="recipe-grid"></div>
+
+      <div id="recipeNoMatch" class="recipe-nomatch" hidden></div>
 
       <h2 class="section-title" style="margin-top:18px;">✏️ 自分の献立をつくる</h2>
       <label class="field" style="margin-bottom:8px;">
@@ -160,8 +168,9 @@
           <button id="routeBtn" class="big-btn ghost" type="button">🧭 効率ルートを計算</button>
         </div>
         <div id="routeArea" class="route-area" hidden>
-          <div class="route-head">🧭 おすすめの回り方</div>
+          <div class="route-head">🧭 お店をまわる順番</div>
           <div id="routeList"></div>
+          <div id="inStoreRoute" class="instore-route"></div>
         </div>
       </div>
     </section>
@@ -216,7 +225,7 @@
         データはこの端末の中だけに保存されます（ログイン不要・無料・オフラインOK）。<br />
         ブラウザのデータを消すと、リストも消えるのでご注意ください。
       </p>
-      <p class="settings-ver">おかいものメモ Phase 3 · v1.2</p>
+      <p class="settings-ver">おかいものメモ Phase 3 · v1.3</p>
     </section>
   </main>
 

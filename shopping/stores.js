@@ -39,7 +39,7 @@
   }
   function toast(msg) { if (window.okaimonoToast) window.okaimonoToast(msg); }
 
-  var findBtn, statusBox, mapWrap, resultsBox, savedWrap, savedBox, routeBtn, routeArea, routeList;
+  var findBtn, statusBox, mapWrap, resultsBox, savedWrap, savedBox, routeBtn, routeArea, routeList, inStoreRoute;
 
   /* ---------- 距離（ハバーサイン, m） ---------- */
   function distance(a, b) {
@@ -345,7 +345,49 @@
     routeList.appendChild(totalRow);
 
     drawRoute(result.order);
+    renderInStoreRoute();
     setStatus(chosen.length + '店の回り方を提案しました🧭', 'ok');
+  }
+
+  /* ---------- 店内の回り方（売り場順） ---------- */
+  function currentListItems() {
+    try {
+      return JSON.parse(localStorage.getItem('okaimono.items') || '[]')
+        .filter(function (it) { return !it.checked; });
+    } catch (e) { return []; }
+  }
+
+  function renderInStoreRoute() {
+    if (!inStoreRoute) return;
+    inStoreRoute.innerHTML = '';
+    inStoreRoute.appendChild(el('div', 'instore-head', '🏪 店内の回り方（売り場順）'));
+
+    var CAT = window.OKAIMONO_CATEGORIES;
+    var items = currentListItems();
+    if (!CAT || !items.length) {
+      inStoreRoute.appendChild(el('p', 'instore-empty',
+        'お買い物リストが空です。リストに入れると、売り場順の回り方が出ます🧺'));
+      return;
+    }
+    // 売り場ごとにまとめ、売り場の並び順にステップ表示
+    var groups = {};
+    items.forEach(function (it) {
+      var key = it.category || (CAT.classify ? CAT.classify(it.name) : 'other');
+      (groups[key] = groups[key] || []).push(it);
+    });
+    var step = 0;
+    CAT.list.slice().sort(function (a, b) { return a.order - b.order; }).forEach(function (cat) {
+      var arr = groups[cat.key];
+      if (!arr || !arr.length) return;
+      step++;
+      var row = el('div', 'instore-row');
+      row.appendChild(el('span', 'instore-num', String(step)));
+      var body = el('div', 'instore-body');
+      body.appendChild(el('span', 'instore-aisle', cat.emoji + ' ' + cat.label));
+      body.appendChild(el('span', 'instore-items', arr.map(function (i) { return i.name; }).join('、')));
+      row.appendChild(body);
+      inStoreRoute.appendChild(row);
+    });
   }
 
   function drawRoute(order) {
@@ -371,6 +413,7 @@
     routeBtn = $('#routeBtn');
     routeArea = $('#routeArea');
     routeList = $('#routeList');
+    inStoreRoute = $('#inStoreRoute');
     if (!findBtn) return;
 
     findBtn.addEventListener('click', onFind);

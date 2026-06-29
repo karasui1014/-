@@ -4,19 +4,18 @@
       <stop offset="0" stop-color="#ffbece"/>
       <stop offset="1" stop-color="#ff96af"/>
     </linearGradient>
+    <linearGradient id="bag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff7e9"/>
+      <stop offset="1" stop-color="#ffe9cf"/>
+    </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#bg)"/>
-  <!-- 耳 -->
-  <path d="M20 22 L15 10 L29 18 Z" fill="#ffd9a0"/>
-  <path d="M44 22 L49 10 L35 18 Z" fill="#ffd9a0"/>
-  <!-- 顔 -->
-  <circle cx="32" cy="34" r="19" fill="#fff7e9"/>
-  <!-- ほっぺ -->
-  <circle cx="22" cy="37" r="3.5" fill="#ffc2cf"/>
-  <circle cx="42" cy="37" r="3.5" fill="#ffc2cf"/>
-  <!-- 目 -->
-  <circle cx="25.5" cy="32" r="2.3" fill="#5b4636"/>
-  <circle cx="38.5" cy="32" r="2.3" fill="#5b4636"/>
-  <!-- 鼻 -->
-  <circle cx="32" cy="37" r="1.5" fill="#ff8fac"/>
+  <!-- 持ち手 -->
+  <path d="M24 27 C24 15 32 15 32 15 C32 15 40 15 40 27" fill="none" stroke="#e79aae" stroke-width="3.4" stroke-linecap="round"/>
+  <!-- バッグ本体 -->
+  <path d="M17 26 h30 l-2.5 24 a3 3 0 0 1 -3 2.7 H22.5 a3 3 0 0 1 -3 -2.7 Z" fill="url(#bag)" stroke="#e9a86a" stroke-width="2"/>
+  <!-- 口の縁 -->
+  <rect x="15.5" y="24" width="33" height="4.5" rx="2.2" fill="#ffd9a0" stroke="#e9a86a" stroke-width="1.4"/>
+  <!-- ハート -->
+  <path d="M32 46 c-3.4 -3 -6 -4.6 -6 -7.3 c0 -1.8 1.4 -3 3 -3 c1.2 0 2.3 0.8 3 1.9 c0.7 -1.1 1.8 -1.9 3 -1.9 c1.6 0 3 1.2 3 3 c0 2.7 -2.6 4.3 -6 7.3 Z" fill="#ff8fac"/>
 </svg>

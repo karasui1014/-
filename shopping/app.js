@@ -609,39 +609,107 @@
   }
 
   /* =====================================================================
-   * 献立（レシピ）（Phase 2）
+   * 献立（レシピ）（Phase 2 / 作り方・検索を追加）
    * ===================================================================== */
   var recipeArea = $('#recipeArea');
+  var recipeNoMatch = $('#recipeNoMatch');
+  var recipeQuery = '';
 
   function allRecipes() {
     var base = (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.list) || [];
     return state.recipes.concat(base);   // 自作を先頭に
   }
 
+  // クックパッドの検索URL（作り方を見る）。
+  function cookpadUrl(name) {
+    return 'https://cookpad.com/search/' + encodeURIComponent(name);
+  }
+
+  function recipeCard(r) {
+    var card = el('div', 'recipe-card' + (r.custom ? ' is-custom' : ''));
+    card.appendChild(el('div', 'recipe-emoji', r.emoji || '🍽️'));
+    card.appendChild(el('div', 'recipe-name', r.name));
+    card.appendChild(el('div', 'recipe-items',
+      r.items.map(function (it) { return it.name; }).join('、')));
+
+    var actions = el('div', 'recipe-actions');
+    var addBtn = el('button', 'recipe-add-btn', '＋ 材料を追加');
+    addBtn.type = 'button';
+    addBtn.addEventListener('click', function () { addRecipeToList(r); });
+    actions.appendChild(addBtn);
+
+    var howBtn = el('button', 'recipe-how-btn', '👩‍🍳 作り方');
+    howBtn.type = 'button';
+    actions.appendChild(howBtn);
+    card.appendChild(actions);
+
+    // 作り方（手順＋クックパッド）— トグルで開閉
+    var how = el('div', 'recipe-how');
+    how.hidden = true;
+    if (r.steps && r.steps.length) {
+      var ol = el('ol', 'recipe-steps');
+      r.steps.forEach(function (s) { ol.appendChild(el('li', null, s)); });
+      how.appendChild(ol);
+    } else {
+      how.appendChild(el('p', 'recipe-steps-none', 'かんたんな手順は未登録。クックパッドで探してね👇'));
+    }
+    var link = el('a', 'recipe-cookpad', '🍳 クックパッドで作り方を見る ↗');
+    link.href = cookpadUrl(r.name);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    how.appendChild(link);
+    card.appendChild(how);
+
+    howBtn.addEventListener('click', function () {
+      how.hidden = !how.hidden;
+      howBtn.classList.toggle('is-open', !how.hidden);
+    });
+
+    if (r.custom) {
+      var del = el('button', 'recipe-del', '✕');
+      del.type = 'button';
+      del.setAttribute('aria-label', r.name + 'を削除');
+      del.addEventListener('click', function (e) {
+        e.stopPropagation();
+        state.recipes = state.recipes.filter(function (x) { return x.id !== r.id; });
+        persist(); renderRecipes();
+      });
+      card.appendChild(del);
+    }
+    return card;
+  }
+
   function renderRecipes() {
     if (!recipeArea) return;
     recipeArea.innerHTML = '';
-    allRecipes().forEach(function (r) {
-      var card = el('div', 'recipe-card' + (r.custom ? ' is-custom' : ''));
-      card.appendChild(el('div', 'recipe-emoji', r.emoji || '🍽️'));
-      card.appendChild(el('div', 'recipe-name', r.name));
-      card.appendChild(el('div', 'recipe-items',
-        r.items.map(function (it) { return it.name; }).join('、')));
-      card.appendChild(el('div', 'recipe-add', '＋ 材料を追加'));
-      card.addEventListener('click', function () { addRecipeToList(r); });
-      if (r.custom) {
-        var del = el('button', 'recipe-del', '✕');
-        del.type = 'button';
-        del.setAttribute('aria-label', r.name + 'を削除');
-        del.addEventListener('click', function (e) {
-          e.stopPropagation();
-          state.recipes = state.recipes.filter(function (x) { return x.id !== r.id; });
-          persist(); renderRecipes();
-        });
-        card.appendChild(del);
-      }
-      recipeArea.appendChild(card);
+    var q = recipeQuery.trim().toLowerCase();
+    var list = allRecipes().filter(function (r) {
+      return !q || r.name.toLowerCase().indexOf(q) !== -1;
     });
+    list.forEach(function (r) { recipeArea.appendChild(recipeCard(r)); });
+
+    // 検索したのに見つからない → クックパッド導線＋自作のおすすめ
+    if (recipeNoMatch) {
+      if (q && list.length === 0) {
+        recipeNoMatch.hidden = false;
+        recipeNoMatch.innerHTML = '';
+        recipeNoMatch.appendChild(el('p', 'nomatch-title',
+          '「' + recipeQuery.trim() + '」の献立はまだ登録がないよ'));
+        var cp = el('a', 'big-btn', '🍳 クックパッドで「' + recipeQuery.trim() + '」の作り方を見る ↗');
+        cp.href = cookpadUrl(recipeQuery.trim());
+        cp.target = '_blank'; cp.rel = 'noopener noreferrer';
+        recipeNoMatch.appendChild(cp);
+        var mk = el('button', 'ghost-btn', '✏️ この名前で自分の献立をつくる');
+        mk.type = 'button';
+        mk.style.marginTop = '8px';
+        mk.addEventListener('click', function () {
+          if (recipeName) { recipeName.value = recipeQuery.trim(); recipeName.focus(); }
+        });
+        recipeNoMatch.appendChild(mk);
+      } else {
+        recipeNoMatch.hidden = true;
+      }
+    }
   }
 
   function addRecipeToList(r) {
@@ -878,6 +946,12 @@
   var recipeName = $('#recipeName');
   var recipeItems = $('#recipeItems');
   $('#saveRecipeBtn').addEventListener('click', saveCustomRecipe);
+
+  var recipeSearch = $('#recipeSearch');
+  if (recipeSearch) recipeSearch.addEventListener('input', function () {
+    recipeQuery = recipeSearch.value;
+    renderRecipes();
+  });
 
   /* =====================================================================
    * ホーム画面に追加（スマホでアプリ化）
