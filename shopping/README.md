@@ -18,6 +18,11 @@
 
 データはすべて端末内（`localStorage`）に保存され、外部に送信されません。
 
+## ✨ できること（Phase 2 / 便利機能）
+
+- **献立から材料を自動追加** … 「🍳献立」タブで作りたい献立（カレー・肉じゃが・お鍋…）をタップすると、材料がまとめてリストに入ります。**自分の献立**も名前＋材料を入れて保存でき、ワンタップで呼び出せます。
+- **買い忘れリマインド / 在庫** … カゴに入れた品を自動で記録し、**買う周期を学習**。周期を過ぎると「🔔 そろそろ買い忘れ？」をリスト上部に提案（タップで再追加）。周期は手動でも調整でき、設定タブの「買い忘れ・在庫」で一覧管理できます。
+
 ---
 
 ## 📁 ファイル構成
@@ -26,8 +31,9 @@
 shopping/
 ├── index.html       … 画面（ヘッダー／リスト／追加バー／タブ）
 ├── style.css        … パステルテーマ（CSS変数）＋丸ゴシック
-├── app.js           … リストCRUD・localStorage・予測学習・予算・演出
+├── app.js           … リストCRUD・localStorage・予測学習・予算・在庫・演出
 ├── categories.js    … 売り場カテゴリ定義＋自動分類辞書
+├── recipes.js       … 献立（レシピ）→ 材料 の初期データ
 ├── manifest.json    … PWAマニフェスト
 ├── sw.js            … Service Worker（オフライン・キャッシュ）
 ├── icons/
@@ -42,10 +48,12 @@ shopping/
 | `okaimono.items` | 今のリスト `[{id,name,category,qty,unit,price,checked,addedAt}]` |
 | `okaimono.catalog` | 学習辞書 `[{name,category,count,lastUsed,defaultUnit,defaultPrice}]` |
 | `okaimono.staples` | 「いつもの」定番品（ワンタップ追加用） |
+| `okaimono.inventory` | 在庫/購入周期 `[{name,lastBought,intervalDays,history,manual}]` |
+| `okaimono.recipes` | ユーザー自作の献立 |
 | `okaimono.budget` | 予算設定 |
-| `okaimono.settings` | 売り場順ON/OFF・合計表示ON/OFF など |
+| `okaimono.settings` | 売り場順・合計表示・買い忘れ提案のON/OFF など |
 
-> Phase 2（献立・在庫）/ Phase 3（お店検索・ルート）で `inventory` / `stores` などを追加予定。
+> Phase 3（位置情報でお店検索・効率ルート）で `stores` などを追加予定。
 
 ---
 
@@ -93,13 +101,16 @@ python3 -m http.server 8000
 - **売り場順**：野菜・肉・日用品を混ぜて追加 → カテゴリ順に並ぶこと（設定でON/OFF切替）。
 - **予算**：単価入力 → 合計とバーがリアルタイム更新、予算超過でやさしい警告。
 - **PWA**：`manifest.json` / `sw.js` 認識・「ホーム画面に追加」可・機内モードでコア機能が動くこと。
+- **献立**：献立をタップ → 材料がまとめて追加。自作の献立を保存 → 呼び出せること。
+- **買い忘れ/在庫**：カゴに入れる → 記録され、周期を過ぎると「そろそろ」提案が出ること。
 
 ---
 
 ## 🗺 今後（別PR予定）
 
-- **Phase 2** … 献立から材料を自動追加 / 買い忘れリマインド・在庫メモ
-- **Phase 3** … 位置情報で近くのスーパー検索 ＆ 効率よく回るルート提案（OpenStreetMap・Leaflet）
+- ✅ **Phase 1** … リスト・予測入力・売り場順・予算・PWA（完了）
+- ✅ **Phase 2** … 献立から材料を自動追加 / 買い忘れリマインド・在庫メモ（完了）
+- ⏳ **Phase 3** … 位置情報で近くのスーパー検索 ＆ 効率よく回るルート提案（OpenStreetMap・Leaflet）
 
 ---
 

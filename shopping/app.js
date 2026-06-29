@@ -14,21 +14,27 @@
 
   /* ---------- localStorage キー ---------- */
   var KEYS = {
-    items:    'okaimono.items',
-    catalog:  'okaimono.catalog',
-    staples:  'okaimono.staples',
-    budget:   'okaimono.budget',
-    settings: 'okaimono.settings'
+    items:     'okaimono.items',
+    catalog:   'okaimono.catalog',
+    staples:   'okaimono.staples',
+    budget:    'okaimono.budget',
+    settings:  'okaimono.settings',
+    inventory: 'okaimono.inventory',
+    recipes:   'okaimono.recipes'
   };
 
   /* ---------- 状態 ---------- */
   var state = {
-    items:    load(KEYS.items, []),
-    catalog:  load(KEYS.catalog, []),
-    staples:  load(KEYS.staples, []),
-    budget:   load(KEYS.budget, { amount: 0 }),
-    settings: load(KEYS.settings, { sortByAisle: true, showBudget: true })
+    items:     load(KEYS.items, []),
+    catalog:   load(KEYS.catalog, []),
+    staples:   load(KEYS.staples, []),
+    budget:    load(KEYS.budget, { amount: 0 }),
+    settings:  load(KEYS.settings, { sortByAisle: true, showBudget: true }),
+    inventory: load(KEYS.inventory, []),   // [{name,lastBought,intervalDays,history,manual}]
+    recipes:   load(KEYS.recipes, [])      // ユーザー自作の献立
   };
+  // 後から増えた設定のデフォルト
+  if (state.settings.showReminder === undefined) state.settings.showReminder = true;
 
   // 初回起動なら「いつもの」のおすすめを少しだけ用意（消してもOK）。
   if (state.staples.length === 0 && state.items.length === 0 && state.catalog.length === 0) {
@@ -54,6 +60,8 @@
     save(KEYS.staples, state.staples);
     save(KEYS.budget, state.budget);
     save(KEYS.settings, state.settings);
+    save(KEYS.inventory, state.inventory);
+    save(KEYS.recipes, state.recipes);
   }
 
   /* ---------- DOM ヘルパ ---------- */
@@ -175,7 +183,11 @@
     var it = findItem(id);
     if (!it) return;
     it.checked = !it.checked;
-    if (it.checked) { it.checkedAt = Date.now(); reward(); }
+    if (it.checked) {
+      it.checkedAt = Date.now();
+      recordPurchase(it.name);   // 在庫・購入周期を学習
+      reward();
+    }
     persist();
     render();
   }
@@ -225,6 +237,9 @@
     renderList();
     updateBudget();
     renderStaples();
+    renderDue();
+    renderInventory();
+    renderRecipes();
   }
 
   function renderList() {
@@ -461,6 +476,216 @@
   }
 
   /* =====================================================================
+   * 買い忘れ・在庫（Phase 2）
+   * ===================================================================== */
+  var dueArea = $('#dueArea');
+  var dueChips = $('#dueChips');
+  var inventoryArea = $('#inventoryArea');
+  var dueHidden = false;   // この起動中だけ非表示（リロードで戻る）
+
+  function invEntry(name) {
+    for (var i = 0; i < state.inventory.length; i++) {
+      if (state.inventory[i].name === name) return state.inventory[i];
+    }
+    return null;
+  }
+
+  // カゴに入れた（＝買った）ときに在庫・購入周期を記録／学習する。
+  function recordPurchase(name) {
+    var inv = invEntry(name);
+    if (!inv) {
+      inv = { name: name, lastBought: 0, intervalDays: 7, history: [], manual: false };
+      state.inventory.push(inv);
+    }
+    var now = Date.now();
+    var last = inv.history.length ? inv.history[inv.history.length - 1] : 0;
+    // 直近12時間以内のチェックは同じ買い物とみなし、履歴を増やさない。
+    if (now - last > 12 * 3600 * 1000) {
+      inv.history.push(now);
+      if (inv.history.length > 8) inv.history = inv.history.slice(-8);
+    }
+    inv.lastBought = now;
+    // 手動設定がなければ、購入間隔の平均から周期を自動推定。
+    if (!inv.manual && inv.history.length >= 2) {
+      var gaps = [];
+      for (var i = 1; i < inv.history.length; i++) {
+        gaps.push((inv.history[i] - inv.history[i - 1]) / 86400000);
+      }
+      var avg = gaps.reduce(function (a, b) { return a + b; }, 0) / gaps.length;
+      inv.intervalDays = Math.max(2, Math.min(90, Math.round(avg)));
+    }
+  }
+
+  function catKeyOf(name) {
+    var e = catalogEntry(name);
+    return (e && e.category) || CAT.classify(name);
+  }
+
+  // 周期を過ぎていて、今リストに無いものを「そろそろ」候補に。
+  function dueItems() {
+    if (!state.settings.showReminder) return [];
+    var now = Date.now();
+    var inList = {};
+    state.items.forEach(function (it) { if (!it.checked) inList[it.name] = true; });
+    return state.inventory.filter(function (inv) {
+      if (inv.lastBought <= 0 || inList[inv.name]) return false;
+      return (now - inv.lastBought) >= inv.intervalDays * 86400000;
+    }).sort(function (a, b) {
+      // より「遅れている」ものを上に
+      return (now - b.lastBought) / (b.intervalDays * 86400000) -
+             (now - a.lastBought) / (a.intervalDays * 86400000);
+    }).slice(0, 8);
+  }
+
+  function renderDue() {
+    if (!dueArea) return;
+    var due = dueHidden ? [] : dueItems();
+    if (!due.length) { dueArea.hidden = true; return; }
+    dueArea.hidden = false;
+    dueChips.innerHTML = '';
+    var now = Date.now();
+    due.forEach(function (inv) {
+      var cat = CAT.getCategory(catKeyOf(inv.name));
+      var days = Math.floor((now - inv.lastBought) / 86400000);
+      var chip = el('button', 'chip');
+      chip.type = 'button';
+      chip.appendChild(el('span', 'chip-cat', cat.emoji));
+      chip.appendChild(el('span', null, inv.name));
+      chip.appendChild(el('span', 'chip-sub', '(' + days + '日前)'));
+      chip.addEventListener('click', function () { addItem(inv.name, 1); });
+      dueChips.appendChild(chip);
+    });
+  }
+
+  function renderInventory() {
+    if (!inventoryArea) return;
+    inventoryArea.innerHTML = '';
+    if (!state.inventory.length) {
+      inventoryArea.appendChild(el('p', 'inv-empty',
+        'まだ記録がありません。カゴに入れると、ここに記録されます🧺'));
+      return;
+    }
+    var now = Date.now();
+    state.inventory.slice().sort(function (a, b) { return b.lastBought - a.lastBought; })
+      .forEach(function (inv) {
+        var cat = CAT.getCategory(catKeyOf(inv.name));
+        var row = el('div', 'inv-row');
+        row.appendChild(el('span', 'inv-emoji', cat.emoji));
+
+        var body = el('div', 'inv-body');
+        body.appendChild(el('div', 'inv-name', inv.name));
+        var days = inv.lastBought ? Math.floor((now - inv.lastBought) / 86400000) : null;
+        var due = days != null && days >= inv.intervalDays;
+        var when = (days == null) ? '' :
+          ('前回 ' + (days === 0 ? '今日' : days + '日前') + ' · ');
+        var meta = el('div', 'inv-meta' + (due ? ' is-due' : ''),
+          (due ? '🔔 そろそろ · ' : '') + when + '約' + inv.intervalDays + '日ごと');
+        body.appendChild(meta);
+        row.appendChild(body);
+
+        var iv = el('div', 'inv-interval');
+        var ivInput = el('input');
+        ivInput.type = 'number'; ivInput.inputMode = 'numeric'; ivInput.min = '1';
+        ivInput.value = inv.intervalDays;
+        ivInput.addEventListener('change', function () {
+          var v = parseInt(ivInput.value, 10);
+          if (v > 0) { inv.intervalDays = v; inv.manual = true; persist(); render(); }
+        });
+        iv.appendChild(ivInput);
+        iv.appendChild(el('span', null, '日'));
+        row.appendChild(iv);
+
+        var del = el('button', 'inv-del', '🗑');
+        del.type = 'button';
+        del.setAttribute('aria-label', inv.name + 'を在庫から削除');
+        del.addEventListener('click', function () {
+          state.inventory = state.inventory.filter(function (x) { return x !== inv; });
+          persist(); render();
+        });
+        row.appendChild(del);
+
+        inventoryArea.appendChild(row);
+      });
+  }
+
+  /* =====================================================================
+   * 献立（レシピ）（Phase 2）
+   * ===================================================================== */
+  var recipeArea = $('#recipeArea');
+
+  function allRecipes() {
+    var base = (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.list) || [];
+    return state.recipes.concat(base);   // 自作を先頭に
+  }
+
+  function renderRecipes() {
+    if (!recipeArea) return;
+    recipeArea.innerHTML = '';
+    allRecipes().forEach(function (r) {
+      var card = el('div', 'recipe-card' + (r.custom ? ' is-custom' : ''));
+      card.appendChild(el('div', 'recipe-emoji', r.emoji || '🍽️'));
+      card.appendChild(el('div', 'recipe-name', r.name));
+      card.appendChild(el('div', 'recipe-items',
+        r.items.map(function (it) { return it.name; }).join('、')));
+      card.appendChild(el('div', 'recipe-add', '＋ 材料を追加'));
+      card.addEventListener('click', function () { addRecipeToList(r); });
+      if (r.custom) {
+        var del = el('button', 'recipe-del', '✕');
+        del.type = 'button';
+        del.setAttribute('aria-label', r.name + 'を削除');
+        del.addEventListener('click', function (e) {
+          e.stopPropagation();
+          state.recipes = state.recipes.filter(function (x) { return x.id !== r.id; });
+          persist(); renderRecipes();
+        });
+        card.appendChild(del);
+      }
+      recipeArea.appendChild(card);
+    });
+  }
+
+  function addRecipeToList(r) {
+    var added = 0;
+    r.items.forEach(function (it) {
+      var exists = state.items.some(function (x) { return x.name === it.name && !x.checked; });
+      if (!exists) { addItem(it.name, it.qty || 1, { unit: it.unit }); added++; }
+    });
+    toast(added > 0 ? (r.name + ' の材料を ' + added + '品 追加したよ🛒')
+                    : (r.name + ' の材料はもう全部リストにあるよ😊'));
+  }
+
+  function saveCustomRecipe() {
+    var name = recipeName.value.trim();
+    var raw = recipeItems.value.trim();
+    if (!name) { toast('献立の名前を入れてね'); return; }
+    var parts = raw.split(/[、,，\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!parts.length) { toast('材料を入れてね'); return; }
+    state.recipes.unshift({
+      id: 'u' + uid(), name: name, emoji: '🍽️', custom: true,
+      items: parts.map(function (p) { return { name: p, qty: 1 }; })
+    });
+    persist();
+    recipeName.value = ''; recipeItems.value = '';
+    renderRecipes();
+    toast('「' + name + '」を保存したよ✨');
+  }
+
+  /* ---------- 小さなトースト ---------- */
+  var toastTimer = null;
+  function toast(msg) {
+    var t = document.getElementById('appToast');
+    if (!t) {
+      t = el('div', 'app-toast');
+      t.id = 'appToast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('is-show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('is-show'); }, 1900);
+  }
+
+  /* =====================================================================
    * ご褒美演出
    * ===================================================================== */
   var rewardLayer = $('#rewardLayer');
@@ -633,6 +858,25 @@
   newStapleInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); $('#addStapleBtn').click(); }
   });
+
+  /* ---------- Phase 2 の配線 ---------- */
+  var reminderToggle = $('#reminderToggle');
+  reminderToggle.checked = !!state.settings.showReminder;
+  reminderToggle.addEventListener('change', function () {
+    state.settings.showReminder = reminderToggle.checked;
+    save(KEYS.settings, state.settings);
+    renderDue();
+  });
+
+  var dueClose = $('#dueClose');
+  if (dueClose) dueClose.addEventListener('click', function () {
+    dueHidden = true;
+    dueArea.hidden = true;
+  });
+
+  var recipeName = $('#recipeName');
+  var recipeItems = $('#recipeItems');
+  $('#saveRecipeBtn').addEventListener('click', saveCustomRecipe);
 
   /* =====================================================================
    * ホーム画面に追加（スマホでアプリ化）

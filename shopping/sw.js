@@ -3,7 +3,7 @@
  * アプリシェルをキャッシュして、機内モード/電波が弱くてもコア機能を動かす。
  * バージョンを上げると古いキャッシュを掃除して更新される。
  * ========================================================================= */
-var CACHE = 'okaimono-v1';
+var CACHE = 'okaimono-v2';
 
 // アプリの土台になる静的ファイル一式（同一ディレクトリ相対）。
 var APP_SHELL = [
@@ -11,6 +11,7 @@ var APP_SHELL = [
   './index.html',
   './style.css',
   './categories.js',
+  './recipes.js',
   './app.js',
   './manifest.json',
   './icons/icon-192.png',

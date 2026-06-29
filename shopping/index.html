@@ -81,6 +81,14 @@
   <main class="app-main">
     <!-- リストタブ -->
     <section id="tab-list" class="tab-panel is-active" data-tab="list">
+      <!-- 買い忘れ提案（購入周期から「そろそろ？」） -->
+      <div id="dueArea" class="due-area" hidden>
+        <div class="due-head">
+          <span>🔔 そろそろ買い忘れ？</span>
+          <button id="dueClose" class="due-close" type="button" aria-label="閉じる">✕</button>
+        </div>
+        <div id="dueChips" class="chip-wrap"></div>
+      </div>
       <div id="listArea"></div>
       <div id="emptyState" class="empty-state" hidden>
         <div class="empty-emoji">🧺</div>
@@ -99,6 +107,27 @@
                placeholder="「いつもの」に登録（例：牛乳）" maxlength="30" />
         <button id="addStapleBtn" class="pill-btn" type="button">登録</button>
       </div>
+    </section>
+
+    <!-- 献立タブ -->
+    <section id="tab-menu" class="tab-panel" data-tab="menu" hidden>
+      <h2 class="section-title">🍳 献立から材料をまとめて追加</h2>
+      <p class="section-note">作りたい献立をタップすると、材料がリストに入ります。自分の献立も登録できます。</p>
+      <div id="recipeArea" class="recipe-grid"></div>
+
+      <h2 class="section-title" style="margin-top:18px;">✏️ 自分の献立をつくる</h2>
+      <label class="field" style="margin-bottom:8px;">
+        <span class="field-label">献立の名前</span>
+        <input id="recipeName" class="text-input" type="text" maxlength="20"
+               placeholder="例：わが家の鍋" style="margin-top:8px;" />
+      </label>
+      <label class="field">
+        <span class="field-label">材料（読点「、」や改行で区切る）</span>
+        <textarea id="recipeItems" class="text-input" rows="3"
+                  placeholder="例：白菜、鶏もも肉、豆腐、ねぎ、ポン酢"
+                  style="margin-top:8px; resize:vertical; line-height:1.6;"></textarea>
+      </label>
+      <button id="saveRecipeBtn" class="ghost-btn" type="button" style="margin:0 4px;">＋ この献立を保存</button>
     </section>
 
     <!-- 設定タブ -->
@@ -130,6 +159,18 @@
         <input id="budgetToggle" type="checkbox" class="switch" checked />
       </label>
 
+      <label class="toggle-field">
+        <span>
+          <span class="field-label">買い忘れ提案</span>
+          <span class="field-sub">買った周期から「そろそろ？」をお知らせ</span>
+        </span>
+        <input id="reminderToggle" type="checkbox" class="switch" checked />
+      </label>
+
+      <h2 class="section-title" style="margin-top:18px;">🧺 買い忘れ・在庫</h2>
+      <p class="section-note">カゴに入れた品は自動で記録され、買う周期を学習します。周期は調整できます。</p>
+      <div id="inventoryArea" class="inventory-area"></div>
+
       <div class="settings-actions">
         <button id="clearCheckedBtn" class="ghost-btn" type="button">✅ 完了したものを消す</button>
         <button id="clearAllBtn" class="ghost-btn danger" type="button">🗑 リストを全部消す</button>
@@ -139,7 +180,7 @@
         データはこの端末の中だけに保存されます（ログイン不要・無料・オフラインOK）。<br />
         ブラウザのデータを消すと、リストも消えるのでご注意ください。
       </p>
-      <p class="settings-ver">おかいものメモ Phase 1 · v1.0</p>
+      <p class="settings-ver">おかいものメモ Phase 2 · v1.1</p>
     </section>
   </main>
 
@@ -160,6 +201,9 @@
     <button class="tab-btn is-active" data-target="list" role="tab" aria-selected="true">
       <span class="tab-ico">🧺</span><span class="tab-lbl">リスト</span>
     </button>
+    <button class="tab-btn" data-target="menu" role="tab" aria-selected="false">
+      <span class="tab-ico">🍳</span><span class="tab-lbl">献立</span>
+    </button>
     <button class="tab-btn" data-target="staples" role="tab" aria-selected="false">
       <span class="tab-ico">⭐</span><span class="tab-lbl">よく買う</span>
     </button>
@@ -172,6 +216,7 @@
   <div id="rewardLayer" class="reward-layer" aria-hidden="true"></div>
 
   <script src="categories.js"></script>
+  <script src="recipes.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
