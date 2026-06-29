@@ -97,6 +97,8 @@
   <main class="app-main">
     <!-- リストタブ -->
     <section id="tab-list" class="tab-panel" data-tab="list" hidden>
+      <!-- 作る献立（上部に表示・人数で量を調整・材料は下にまとめる） -->
+      <div id="planArea" class="plan-area" hidden></div>
       <!-- 買い忘れ提案（購入周期から「そろそろ？」） -->
       <div id="dueArea" class="due-area" hidden>
         <div class="due-head">
@@ -148,34 +150,52 @@
         <div id="stampCard" class="stamp-card"></div>
       </div>
 
-      <h2 class="section-title">🍳 作りたい料理から材料を検索</h2>
-      <p class="section-note">料理の名前を入力 or タップすると、材料がリストに入ります。「作った！」で称号がたまり、写真ものせられます。</p>
-
-      <div class="recipe-search">
-        <input id="recipeSearch" class="text-input" type="text" inputmode="text"
-               placeholder="🔍 作りたい料理で探す（例：カレー）" maxlength="24" />
-        <button id="recipeDecideBtn" class="pill-btn" type="button">決定</button>
+      <!-- 献立／ズボラメシ の切り替え -->
+      <div class="menu-seg">
+        <button id="segRecipes" class="seg-btn is-active" type="button">🍳 献立</button>
+        <button id="segZubora" class="seg-btn" type="button">😋 ズボラメシ</button>
       </div>
 
-      <div id="recipeResult" class="recipe-result" hidden></div>
+      <!-- 献立ペイン -->
+      <div id="recipesPane">
+        <h2 class="section-title">🍳 作りたい料理から材料を検索</h2>
+        <p class="section-note">料理名を入力して「決定」を押すと、必要な材料を自動で検索。「これを作る」でお買い物リストに入ります（登録にない料理も自動で推定）。</p>
 
-      <div id="recipeArea" class="recipe-grid"></div>
+        <div class="recipe-search">
+          <input id="recipeSearch" class="text-input" type="text" inputmode="text"
+                 placeholder="🔍 作りたい料理を入力（例：カレー）" maxlength="24" />
+          <button id="recipeDecideBtn" class="pill-btn" type="button">決定</button>
+        </div>
 
-      <div id="recipeNoMatch" class="recipe-nomatch" hidden></div>
+        <div id="recipeResult" class="recipe-result" hidden></div>
 
-      <h2 class="section-title" style="margin-top:18px;">✏️ 自分の献立をつくる</h2>
-      <label class="field" style="margin-bottom:8px;">
-        <span class="field-label">献立の名前</span>
-        <input id="recipeName" class="text-input" type="text" maxlength="20"
-               placeholder="例：わが家の鍋" style="margin-top:8px;" />
-      </label>
-      <label class="field">
-        <span class="field-label">材料（読点「、」や改行で区切る）</span>
-        <textarea id="recipeItems" class="text-input" rows="3"
-                  placeholder="例：白菜、鶏もも肉、豆腐、ねぎ、ポン酢"
-                  style="margin-top:8px; resize:vertical; line-height:1.6;"></textarea>
-      </label>
-      <button id="saveRecipeBtn" class="ghost-btn" type="button" style="margin:0 4px;">＋ この献立を保存</button>
+        <div id="recipeArea" class="recipe-grid"></div>
+
+        <div id="recipeNoMatch" class="recipe-nomatch" hidden></div>
+
+        <h2 class="section-title" style="margin-top:18px;">✏️ 自分の献立をつくる</h2>
+        <p class="section-note">保存すると献立の上部に表示され、「これを作る」で材料がリストに入ります。</p>
+        <label class="field" style="margin-bottom:8px;">
+          <span class="field-label">献立の名前</span>
+          <input id="recipeName" class="text-input" type="text" maxlength="20"
+                 placeholder="例：わが家の鍋" style="margin-top:8px;" />
+        </label>
+        <label class="field">
+          <span class="field-label">材料（読点「、」や改行で区切る）</span>
+          <textarea id="recipeItems" class="text-input" rows="3"
+                    placeholder="例：白菜、鶏もも肉、豆腐、ねぎ、ポン酢"
+                    style="margin-top:8px; resize:vertical; line-height:1.6;"></textarea>
+        </label>
+        <button id="saveRecipeBtn" class="ghost-btn" type="button" style="margin:0 4px;">＋ この献立を保存</button>
+      </div>
+
+      <!-- ズボラメシペイン -->
+      <div id="zuboraPane" hidden>
+        <h2 class="section-title">😋 ズボラメシ（時短・節約）</h2>
+        <p class="section-note">米類・麺類・一人暮らし飯・節約飯から、かんたんメニューを「これを作る」でリストに追加できます。</p>
+        <div id="zuboraCats" class="chip-wrap"></div>
+        <div id="zuboraArea" class="recipe-grid"></div>
+      </div>
     </section>
 
     <!-- お店タブ（Phase 3：位置情報・オンライン時のみ） -->
@@ -259,7 +279,7 @@
         データはこの端末の中だけに保存されます（ログイン不要・無料・オフラインOK）。<br />
         ブラウザのデータを消すと、リストも消えるのでご注意ください。
       </p>
-      <p class="settings-ver">おかいものメモ Phase 3 · v1.6</p>
+      <p class="settings-ver">おかいものメモ Phase 3 · v1.7</p>
     </section>
   </main>
 

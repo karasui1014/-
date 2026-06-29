@@ -22,7 +22,8 @@
     inventory: 'okaimono.inventory',
     recipes:   'okaimono.recipes',
     cooks:     'okaimono.cooks',     // 献立ごとの「作った回数」
-    photos:    'okaimono.photos'     // 献立ごとの料理写真（dataURL）
+    photos:    'okaimono.photos',    // 献立ごとの料理写真（dataURL）
+    plans:     'okaimono.plans'      // これから作る献立 [{id,name,emoji,servings,items}]
   };
 
   // このアプリのURL（SNSシェアのフォールバック用）
@@ -38,7 +39,8 @@
     inventory: load(KEYS.inventory, []),   // [{name,lastBought,intervalDays,history,manual}]
     recipes:   load(KEYS.recipes, []),     // ユーザー自作の献立
     cooks:     load(KEYS.cooks, {}),       // { recipeId: {count,last} }
-    photos:    load(KEYS.photos, {})       // { recipeId: dataURL }
+    photos:    load(KEYS.photos, {}),      // { recipeId: dataURL }
+    plans:     load(KEYS.plans, [])        // これから作る献立
   };
   // 後から増えた設定のデフォルト
   if (state.settings.showReminder === undefined) state.settings.showReminder = true;
@@ -74,6 +76,7 @@
     save(KEYS.inventory, state.inventory);
     save(KEYS.recipes, state.recipes);
     save(KEYS.cooks, state.cooks);
+    save(KEYS.plans, state.plans);
   }
   // 写真は容量が大きいので persist() とは分けて保存する。
   function savePhotos() {
@@ -266,12 +269,14 @@
   var wasComplete = isAllComplete();   // 起動時にすでに完了済みなら演出はスキップ
 
   function render() {
+    renderPlan();
     renderList();
     updateBudget();
     renderStaples();
     renderDue();
     renderInventory();
     renderRecipes();
+    renderZubora();
     renderTitleBadge();
     renderCookProgress();
   }
@@ -668,9 +673,18 @@
   var recipeResult = $('#recipeResult');
   var recipeQuery = '';
 
+  function baseRecipes() {
+    return (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.list) || [];
+  }
+  function zuboraRecipes() {
+    return (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.zubora) || [];
+  }
   function allRecipes() {
-    var base = (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.list) || [];
-    return state.recipes.concat(base);   // 自作を先頭に
+    return state.recipes.concat(baseRecipes());   // 自作を先頭に（献立グリッド用）
+  }
+  // 検索・推定・似ているメニューでは ズボラメシも対象にする。
+  function searchPool() {
+    return state.recipes.concat(baseRecipes(), zuboraRecipes());
   }
 
   // クックパッドの検索URL（作り方を見る）。
@@ -721,7 +735,7 @@
   }
   function scoredRecipes(q) {
     var qN = normJ(q);
-    return allRecipes().map(function (r) { return { r: r, s: recipeScore(r, qN) }; })
+    return searchPool().map(function (r) { return { r: r, s: recipeScore(r, qN) }; })
       .filter(function (x) { return x.s > 0; })
       .sort(function (a, b) { return b.s - a.s; });
   }
@@ -735,7 +749,7 @@
   }
   function similarRecipes(target, n) {
     var ts = ingredientSet(target);
-    return allRecipes().filter(function (r) { return recipeKey(r) !== recipeKey(target); })
+    return searchPool().filter(function (r) { return recipeKey(r) !== recipeKey(target); })
       .map(function (r) {
         var rs = ingredientSet(r), shared = 0;
         for (var k in rs) if (ts[k]) shared++;
@@ -746,16 +760,41 @@
       .slice(0, n).map(function (x) { return x.r; });
   }
 
+  // 入力した料理名を「作れるレシピ」に解決する。
+  //  1) 登録レシピ/ズボラメシに近いものがあればそれ
+  //  2) 無ければ材料を自動推定（recipes.js の guess）して仮レシピを作る
+  //  3) それも無ければ null（クックパッド導線へ）
+  function resolveRecipe(query) {
+    var q = (query || '').trim();
+    if (!q) return null;
+    var top = bestRecipe(q);
+    if (top && top.s >= 45) {
+      return { recipe: top.r, approx: top.s < 75 || normJ(top.r.name) !== normJ(q), inferred: false };
+    }
+    var guess = (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.guess)
+      ? window.OKAIMONO_RECIPES.guess(q) : null;
+    if (guess && guess.length) {
+      return {
+        recipe: { id: 'g:' + q, name: q, emoji: '🍳',
+                  items: guess.map(function (nm) { return { name: nm, qty: 1 }; }) },
+        approx: true, inferred: true
+      };
+    }
+    if (top) {   // スコアは低いが一応の候補
+      return { recipe: top.r, approx: true, inferred: false };
+    }
+    return null;
+  }
+
   /* ---------- 「決定」：入力した料理名の材料を検索して表示 ---------- */
   function decideRecipe(query) {
     var q = (query || '').trim();
     if (!q) { toast('作りたい料理を入れてね'); return; }
     recipeQuery = q;
     if (recipeSearch) recipeSearch.value = q;
-    var top = bestRecipe(q);
-    if (top) {
-      var approx = top.s < 75 || normJ(top.r.name) !== normJ(q);
-      renderRecipeResult(top.r, q, approx);
+    var res = resolveRecipe(q);
+    if (res) {
+      renderRecipeResult(res.recipe, q, res.approx, res.inferred);
     } else {
       renderRecipeResultNone(q);
     }
@@ -765,7 +804,7 @@
     }
   }
 
-  function renderRecipeResult(r, query, approx) {
+  function renderRecipeResult(r, query, approx, inferred) {
     if (!recipeResult) return;
     recipeResult.hidden = false;
     recipeResult.innerHTML = '';
@@ -774,33 +813,42 @@
     head.appendChild(el('span', 'rr-emoji', r.emoji || '🍽️'));
     var ht = el('div', 'rr-headtext');
     ht.appendChild(el('div', 'rr-title', r.name + ' の材料'));
-    if (approx) ht.appendChild(el('div', 'rr-sub', '「' + query + '」に近い献立だよ'));
+    if (inferred) ht.appendChild(el('div', 'rr-sub', '🔎 自動検索した予想の材料です（調整できます）'));
+    else if (approx) ht.appendChild(el('div', 'rr-sub', '「' + query + '」に近い献立だよ'));
     head.appendChild(ht);
     var close = el('button', 'rr-close', '✕'); close.type = 'button';
     close.addEventListener('click', function () { recipeResult.hidden = true; });
     head.appendChild(close);
     recipeResult.appendChild(head);
 
-    // 材料（タップで1つずつ追加）
+    // 材料プレビュー（表示のみ。リスト反映は「これを作る」で）
     var chips = el('div', 'rr-ings');
     r.items.forEach(function (it) {
       var cat = CAT.getCategory(CAT.classify(it.name));
-      var chip = el('button', 'rr-ing'); chip.type = 'button';
+      var chip = el('span', 'rr-ing');
       chip.appendChild(el('span', 'rr-ing-emoji', cat.emoji));
       chip.appendChild(el('span', null, it.name));
-      chip.addEventListener('click', function () {
-        addItem(it.name, it.qty || 1, { unit: it.unit });
-        chip.classList.add('is-added');
-        toast(it.name + ' を追加🛒');
-      });
       chips.appendChild(chip);
     });
     recipeResult.appendChild(chips);
 
+    // 人数（簡易の量づけに使う）
+    var servWrap = el('div', 'rr-serv');
+    servWrap.appendChild(el('span', 'rr-serv-label', '👥 作る人数'));
+    var servInput = el('input', 'rr-serv-input');
+    servInput.type = 'number'; servInput.inputMode = 'numeric';
+    servInput.min = '1'; servInput.max = '20'; servInput.value = '2';
+    servWrap.appendChild(servInput);
+    servWrap.appendChild(el('span', 'rr-serv-unit', '人前'));
+    recipeResult.appendChild(servWrap);
+
     var acts = el('div', 'rr-actions');
-    var addAll = el('button', 'big-btn', '🛒 材料をぜんぶリストに追加'); addAll.type = 'button';
-    addAll.addEventListener('click', function () { addRecipeToList(r); });
-    acts.appendChild(addAll);
+    var makeBtn = el('button', 'big-btn', '🍳 これを作る（リストに材料を入れる）'); makeBtn.type = 'button';
+    makeBtn.addEventListener('click', function () {
+      var s = Math.max(1, Math.min(20, parseInt(servInput.value, 10) || 2));
+      makeThis(r, s);
+    });
+    acts.appendChild(makeBtn);
     var cp = el('a', 'big-btn ghost', '👩‍🍳 作り方を見る（クックパッド ↗）');
     cp.href = cookpadUrl(r.name); cp.target = '_blank'; cp.rel = 'noopener noreferrer';
     acts.appendChild(cp);
@@ -824,7 +872,7 @@
     if (!recipeResult) return;
     recipeResult.hidden = false;
     recipeResult.innerHTML = '';
-    recipeResult.appendChild(el('p', 'rr-none', '「' + query + '」に近い献立が見つかりませんでした。'));
+    recipeResult.appendChild(el('p', 'rr-none', '「' + query + '」の材料が見つかりませんでした。'));
     var cp = el('a', 'big-btn', '🍳 クックパッドで「' + query + '」の材料・作り方を見る ↗');
     cp.href = cookpadUrl(query); cp.target = '_blank'; cp.rel = 'noopener noreferrer';
     recipeResult.appendChild(cp);
@@ -846,7 +894,16 @@
     card.appendChild(el('div', 'recipe-items',
       r.items.map(function (it) { return it.name; }).join('、')));
 
-    if (cnt > 0) card.appendChild(el('div', 'recipe-count', '🍳 作った ' + cnt + '回'));
+    if (cnt > 0) {
+      var countRow = el('div', 'recipe-count');
+      countRow.appendChild(el('span', null, '🍳 作った ' + cnt + '回'));
+      var undo = el('button', 'recipe-count-undo', '↩︎ 戻す');
+      undo.type = 'button';
+      undo.title = 'カウントを1つ戻す';
+      undo.addEventListener('click', function (e) { e.stopPropagation(); decCook(r); });
+      countRow.appendChild(undo);
+      card.appendChild(countRow);
+    }
 
     if (photo) {
       var pimg = el('img', 'recipe-photo');
@@ -857,9 +914,9 @@
     }
 
     var actions = el('div', 'recipe-actions');
-    var addBtn = el('button', 'recipe-add-btn', '＋ 材料を追加');
+    var addBtn = el('button', 'recipe-add-btn', '🍳 これを作る');
     addBtn.type = 'button';
-    addBtn.addEventListener('click', function () { addRecipeToList(r); });
+    addBtn.addEventListener('click', function () { makeThis(r, 2); });
     actions.appendChild(addBtn);
 
     var howBtn = el('button', 'recipe-how-btn', '👩‍🍳 作り方');
@@ -867,14 +924,9 @@
     actions.appendChild(howBtn);
     card.appendChild(actions);
 
-    // 「作った！」「写真」「シェア」
+    // 「写真」「シェア」（作ったカウントは写真をのせると自動で +1）
     var actions2 = el('div', 'recipe-actions2');
-    var madeBtn = el('button', 'recipe-made-btn', cnt > 0 ? '🍳 作った！(' + cnt + ')' : '🍳 作った！');
-    madeBtn.type = 'button';
-    madeBtn.addEventListener('click', function (e) { e.stopPropagation(); markCooked(r); });
-    actions2.appendChild(madeBtn);
-
-    var photoBtn = el('button', 'recipe-photo-btn', photo ? '📷 写真をかえる' : '📷 写真をのせる');
+    var photoBtn = el('button', 'recipe-photo-btn', photo ? '📷 写真をかえる' : '📷 写真をのせる（作った+1）');
     photoBtn.type = 'button';
     photoBtn.addEventListener('click', function (e) { e.stopPropagation(); pickPhoto(r); });
     actions2.appendChild(photoBtn);
@@ -955,14 +1007,165 @@
     }
   }
 
-  function addRecipeToList(r) {
-    var added = 0;
-    r.items.forEach(function (it) {
-      var exists = state.items.some(function (x) { return x.name === it.name && !x.checked; });
-      if (!exists) { addItem(it.name, it.qty || 1, { unit: it.unit }); added++; }
+  /* ---------- ズボラメシ（時短・節約メニュー） ---------- */
+  var zuboraArea = $('#zuboraArea');
+  var zuboraCatsEl = $('#zuboraCats');
+  var zuboraCat = 'all';   // 表示中のカテゴリ
+
+  function renderZubora() {
+    if (!zuboraArea) return;
+    var cats = (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.zuboraCats) || [];
+    var list = zuboraRecipes();
+
+    // カテゴリの絞り込みチップ
+    if (zuboraCatsEl) {
+      zuboraCatsEl.innerHTML = '';
+      var all = el('button', 'chip' + (zuboraCat === 'all' ? ' is-added' : ''), 'ぜんぶ');
+      all.type = 'button';
+      all.addEventListener('click', function () { zuboraCat = 'all'; renderZubora(); });
+      zuboraCatsEl.appendChild(all);
+      cats.forEach(function (c) {
+        var chip = el('button', 'chip' + (zuboraCat === c.key ? ' is-added' : ''));
+        chip.type = 'button';
+        chip.appendChild(el('span', 'chip-cat', c.emoji));
+        chip.appendChild(el('span', null, c.label));
+        chip.addEventListener('click', function () { zuboraCat = c.key; renderZubora(); });
+        zuboraCatsEl.appendChild(chip);
+      });
+    }
+
+    zuboraArea.innerHTML = '';
+    list.filter(function (r) { return zuboraCat === 'all' || r.cat === zuboraCat; })
+        .forEach(function (r) { zuboraArea.appendChild(recipeCard(r)); });
+  }
+
+  /* =====================================================================
+   * 作る献立プラン（リスト上部に献立→下に必要な材料）
+   *  - 「これを作る」で献立をプランに追加し、材料を自動でリストに反映
+   *  - 人数で量を簡易スケール（基準2人前）、被る材料は1つにまとめる
+   * ===================================================================== */
+  function makeThis(r, servings) {
+    addPlan(r, servings || 2);
+    selectTab('list');
+    toast('🍳「' + r.name + '」をリストに追加！材料は上にまとめたよ');
+  }
+
+  function addPlan(r, servings) {
+    servings = Math.max(1, Math.min(20, servings || 2));
+    var items = (r.items || []).map(function (it) {
+      return { name: it.name, qty: it.qty || 1, unit: it.unit || '' };
     });
-    toast(added > 0 ? (r.name + ' の材料を ' + added + '品 追加したよ🛒')
-                    : (r.name + ' の材料はもう全部リストにあるよ😊'));
+    var existing = null;
+    for (var i = 0; i < state.plans.length; i++) {
+      if (state.plans[i].name === r.name) { existing = state.plans[i]; break; }
+    }
+    if (existing) {
+      existing.servings = servings;
+      existing.items = items;
+    } else {
+      state.plans.push({
+        id: 'p' + uid(), name: r.name, emoji: r.emoji || '🍽️',
+        servings: servings, items: items
+      });
+    }
+    recomputePlanItems();
+    render();
+  }
+
+  function removePlan(id) {
+    state.plans = state.plans.filter(function (p) { return p.id !== id; });
+    recomputePlanItems();
+    render();
+  }
+
+  function setPlanServings(id, n) {
+    var p = null;
+    for (var i = 0; i < state.plans.length; i++) if (state.plans[i].id === id) { p = state.plans[i]; break; }
+    if (!p) return;
+    p.servings = Math.max(1, Math.min(20, n || 1));
+    recomputePlanItems();
+    render();
+  }
+
+  // プラン由来の材料を作り直す。手動追加品・チェック状態・単価はできるだけ保つ。
+  function recomputePlanItems() {
+    var prev = {};
+    state.items.forEach(function (it) { if (it.fromPlan) prev[it.name] = it; });
+    // いったんプラン由来を外す
+    state.items = state.items.filter(function (it) { return !it.fromPlan; });
+
+    // 既に手動で入っている（未完了の）品の名前
+    var manual = {};
+    state.items.forEach(function (it) { if (!it.checked) manual[it.name] = true; });
+
+    // 人数でスケールしつつ、同じ材料は数量をまとめる
+    var agg = {};
+    state.plans.forEach(function (p) {
+      var mult = (p.servings || 2) / 2;   // 基準は2人前
+      (p.items || []).forEach(function (ing) {
+        var q = Math.max(1, Math.round((ing.qty || 1) * mult));
+        if (!agg[ing.name]) agg[ing.name] = { name: ing.name, qty: 0, unit: ing.unit || '' };
+        agg[ing.name].qty += q;
+      });
+    });
+
+    Object.keys(agg).forEach(function (name) {
+      if (manual[name]) return;   // 手動でもう入っているものは二重にしない
+      var a = agg[name];
+      var entry = catalogEntry(name);
+      var p = prev[name];
+      state.items.push({
+        id: uid(),
+        name: name,
+        category: (entry && entry.category) || CAT.classify(name),
+        qty: a.qty,
+        unit: a.unit || (entry && entry.defaultUnit) || '',
+        price: p ? p.price : (entry && entry.defaultPrice != null ? entry.defaultPrice : null),
+        prevPrice: (entry && entry.defaultPrice != null) ? entry.defaultPrice : null,
+        checked: p ? !!p.checked : false,
+        checkedAt: p ? p.checkedAt : undefined,
+        fromPlan: true,
+        addedAt: p ? p.addedAt : Date.now()
+      });
+    });
+    persist();
+  }
+
+  /* ---------- 作る献立の表示（リスト上部） ---------- */
+  var planArea = $('#planArea');
+  function renderPlan() {
+    if (!planArea) return;
+    planArea.innerHTML = '';
+    if (!state.plans.length) { planArea.hidden = true; return; }
+    planArea.hidden = false;
+
+    planArea.appendChild(el('div', 'plan-head', '🍳 作る献立'));
+    state.plans.forEach(function (p) {
+      var row = el('div', 'plan-row');
+      row.appendChild(el('span', 'plan-emoji', p.emoji || '🍽️'));
+      row.appendChild(el('span', 'plan-name', p.name));
+
+      var serv = el('div', 'plan-serv');
+      var input = el('input', 'plan-serv-input');
+      input.type = 'number'; input.inputMode = 'numeric'; input.min = '1'; input.max = '20';
+      input.value = p.servings || 2;
+      input.addEventListener('change', function () {
+        setPlanServings(p.id, parseInt(input.value, 10) || 1);
+      });
+      input.addEventListener('click', function (e) { e.stopPropagation(); });
+      serv.appendChild(input);
+      serv.appendChild(el('span', 'plan-serv-unit', '人前'));
+      row.appendChild(serv);
+
+      var del = el('button', 'plan-del', '✕');
+      del.type = 'button';
+      del.setAttribute('aria-label', p.name + 'を献立から外す');
+      del.addEventListener('click', function () { removePlan(p.id); });
+      row.appendChild(del);
+
+      planArea.appendChild(row);
+    });
+    planArea.appendChild(el('p', 'plan-note', '↑ の献立に必要な材料を、下にまとめています（人数で量を調整）'));
   }
 
   function saveCustomRecipe() {
@@ -1015,7 +1218,8 @@
     return Math.min(9, Math.floor(n / 3));   // 9 = TITLES の最終indexと一致
   }
 
-  function markCooked(r) {
+  // 写真をのせたとき自動で +1 する（手動ボタンは廃止）。
+  function incCook(r) {
     var key = recipeKey(r);
     var c = state.cooks[key] || { count: 0, last: 0 };
     c.count += 1;
@@ -1023,9 +1227,20 @@
     state.cooks[key] = c;
     save(KEYS.cooks, state.cooks);
     reward();
-    toast('🍳「' + r.name + '」を作った！（' + c.count + '回目）');
     render();
     maybeCelebrateTitle();
+  }
+
+  // 間違えてカウントしたときに 1つ戻す。
+  function decCook(r) {
+    var key = recipeKey(r);
+    var c = state.cooks[key];
+    if (!c || !c.count) return;
+    c.count -= 1;
+    if (c.count <= 0) delete state.cooks[key];
+    save(KEYS.cooks, state.cooks);
+    render();
+    toast('「' + r.name + '」のカウントを1つ戻したよ');
   }
 
   // 新しい称号に到達していたらお祝い演出。
@@ -1158,8 +1373,9 @@
         var key = recipeKey(r);
         state.photos[key] = dataUrl;
         if (savePhotos()) {
-          renderRecipes();
-          toast('📷「' + r.name + '」の写真をのせたよ！');
+          // 写真をのせたら「作った」を自動で +1（間違えたらカードの「↩︎戻す」で戻せる）
+          incCook(r);
+          toast('📷「' + r.name + '」の写真をのせて、作った +1！');
         } else {
           delete state.photos[key];
           renderRecipes();
@@ -1501,6 +1717,22 @@
   if (recipeSearch) recipeSearch.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); decideRecipe(recipeSearch.value); }
   });
+
+  // 献立／ズボラメシ の切り替え
+  var segRecipes = $('#segRecipes');
+  var segZubora = $('#segZubora');
+  var recipesPane = $('#recipesPane');
+  var zuboraPane = $('#zuboraPane');
+  function showMenuPane(which) {
+    var zub = which === 'zubora';
+    if (recipesPane) recipesPane.hidden = zub;
+    if (zuboraPane) zuboraPane.hidden = !zub;
+    if (segRecipes) segRecipes.classList.toggle('is-active', !zub);
+    if (segZubora) segZubora.classList.toggle('is-active', zub);
+    if (zub) renderZubora();
+  }
+  if (segRecipes) segRecipes.addEventListener('click', function () { showMenuPane('recipes'); });
+  if (segZubora) segZubora.addEventListener('click', function () { showMenuPane('zubora'); });
 
   /* =====================================================================
    * ホーム画面に追加（スマホでアプリ化）

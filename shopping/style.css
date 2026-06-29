@@ -966,10 +966,8 @@ body {
 .rr-ing {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 7px 12px; border-radius: 999px; font-family: var(--font); font-weight: 800; font-size: 0.84rem;
-  background: var(--cream); border: 2px solid var(--pink-soft); color: var(--ink); cursor: pointer;
+  background: var(--cream); border: 2px solid var(--pink-soft); color: var(--ink);
 }
-.rr-ing:active { transform: scale(0.95); }
-.rr-ing.is-added { background: var(--mint); border-color: var(--mint-deep); color: #1f7d63; }
 .rr-ing .rr-ing-emoji { font-size: 0.95rem; }
 .rr-actions { display: flex; flex-direction: column; gap: 8px; }
 .rr-actions .big-btn { text-decoration: none; text-align: center; }
@@ -981,6 +979,64 @@ body {
 }
 .rr-sim:active { transform: scale(0.95); }
 .rr-none { font-weight: 800; font-size: 0.9rem; color: var(--ink); margin: 0 0 12px; text-align: center; }
+
+/* ====== 作る献立（リスト上部のプラン） ====== */
+.plan-area {
+  margin: 6px 0 12px; padding: 12px 14px;
+  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  border: 2px solid var(--pink); border-radius: var(--radius); box-shadow: var(--shadow-soft);
+}
+.plan-area[hidden] { display: none; }
+.plan-head { font-weight: 900; font-size: 0.95rem; color: var(--ink); margin-bottom: 8px; }
+.plan-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--white); border: 2px solid var(--pink-soft); border-radius: var(--radius-sm);
+  padding: 8px 10px; margin-bottom: 7px;
+}
+.plan-emoji { font-size: 1.3rem; line-height: 1; flex: 0 0 auto; }
+.plan-name { font-weight: 900; font-size: 0.92rem; color: var(--ink); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-serv { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
+.plan-serv-input {
+  width: 50px; text-align: center; font-family: var(--font); font-weight: 800; font-size: 16px;
+  border: 1.5px solid var(--line); border-radius: 8px; padding: 5px 4px; background: var(--cream); color: var(--ink);
+}
+.plan-serv-input:focus { outline: none; border-color: var(--pink); background: #fff; }
+.plan-serv-unit { font-size: 0.78rem; font-weight: 800; color: var(--ink-soft); }
+.plan-del {
+  flex: 0 0 auto; width: 30px; height: 30px; border: none; background: transparent;
+  color: var(--ink-soft); font-size: 0.9rem; cursor: pointer; border-radius: 8px;
+}
+.plan-del:active { background: var(--pink-soft); }
+.plan-note { font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; margin: 4px 2px 0; }
+
+/* ====== 献立／ズボラメシ 切り替え ====== */
+.menu-seg { display: flex; gap: 8px; margin: 6px 4px 12px; }
+.seg-btn {
+  flex: 1 1 0; font-family: var(--font); font-weight: 900; font-size: 0.9rem;
+  padding: 10px 8px; border-radius: 999px; cursor: pointer;
+  border: 2px solid var(--pink-soft); background: var(--white); color: var(--ink-soft);
+}
+.seg-btn.is-active { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); color: #fff; border-color: #fff; box-shadow: var(--shadow-soft); }
+.seg-btn:active { transform: scale(0.97); }
+
+/* 作った回数の戻すボタン */
+.recipe-count { display: flex; align-items: center; gap: 8px; }
+.recipe-count-undo {
+  font-family: var(--font); font-weight: 800; font-size: 0.66rem; cursor: pointer;
+  border: 1.5px solid var(--pink-soft); background: var(--white); color: var(--ink-soft);
+  border-radius: 999px; padding: 2px 8px;
+}
+.recipe-count-undo:active { transform: scale(0.94); }
+
+/* 検索結果パネルの人数入力 */
+.rr-serv { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.rr-serv-label { font-weight: 800; font-size: 0.84rem; color: var(--ink); }
+.rr-serv-input {
+  width: 56px; text-align: center; font-family: var(--font); font-weight: 800; font-size: 16px;
+  border: 1.5px solid var(--line); border-radius: 8px; padding: 6px 4px; background: var(--cream); color: var(--ink);
+}
+.rr-serv-input:focus { outline: none; border-color: var(--pink); background: #fff; }
+.rr-serv-unit { font-weight: 800; font-size: 0.84rem; color: var(--ink-soft); }
 
 /* ====== 位置情報の許可ガイド ====== */
 .perm-help {
