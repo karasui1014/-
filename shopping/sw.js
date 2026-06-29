@@ -3,7 +3,7 @@
  * アプリシェルをキャッシュして、機内モード/電波が弱くてもコア機能を動かす。
  * バージョンを上げると古いキャッシュを掃除して更新される。
  * ========================================================================= */
-var CACHE = 'okaimono-v11';
+var CACHE = 'okaimono-v12';
 
 // アプリの土台になる静的ファイル一式（同一ディレクトリ相対）。
 // ※ お店タブの地図(Leaflet/OSMタイル)は外部・オンライン時のみで、ここには含めない。
@@ -27,7 +27,13 @@ var APP_SHELL = [
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE).then(function (cache) {
-      return cache.addAll(APP_SHELL);
+      // HTTPキャッシュを避けて常に最新を取り込む（更新の取りこぼし防止）。
+      // 一部が失敗してもインストールは続行する。
+      return Promise.all(APP_SHELL.map(function (url) {
+        return fetch(new Request(url, { cache: 'reload' }))
+          .then(function (res) { if (res && res.ok) return cache.put(url, res); })
+          .catch(function () { /* ネット不調などは無視 */ });
+      }));
     }).then(function () { return self.skipWaiting(); })
   );
 });

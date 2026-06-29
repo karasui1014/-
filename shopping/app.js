@@ -1863,11 +1863,55 @@
   if (isIOS()) showInstallBanner('ios');
 
   /* =====================================================================
-   * Service Worker 登録（PWA）
+   * Service Worker 登録（PWA）＋ 自動アップデート
+   *  - 新しいバージョンを公開すると、新SWが制御を引き継いだ瞬間に
+   *    自動でページを再読み込みして最新版に切り替える。
+   *  - データは localStorage 保存なので、リロードしても内容はそのまま。
+   *  - 入力中はその場で奪わず、操作が一段落してから更新する。
    * ===================================================================== */
   if ('serviceWorker' in navigator) {
+    var swFirstControl = !navigator.serviceWorker.controller;  // 初回はまだ制御者がいない
+    var swReloading = false;
+
+    function reloadForUpdate() {
+      if (swReloading) return;
+      swReloading = true;
+      var ae = document.activeElement;
+      var typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') &&
+                   ae.value && ae.value.length > 0;
+      if (typing) {
+        toast('✨ 新しいバージョンに更新します（入力おわりに）');
+        var go = function () { location.reload(); };
+        window.addEventListener('blur', go, { once: true });
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'hidden') go();
+        }, { once: true });
+        setTimeout(go, 60000);   // 念のため、しばらく操作が無ければ更新
+        return;
+      }
+      location.reload();
+    }
+
+    // 新SWが制御を取った（＝新バージョンが有効化された）らリロード。
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (swFirstControl) { swFirstControl = false; return; }  // 初回登録の制御取得は除く
+      reloadForUpdate();
+    });
+
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () { /* オフライン無効でも動く */ });
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        if (!reg) return;
+        // 開いている間も新バージョンを拾えるよう、起動時＋定期的に更新チェック。
+        try { reg.update(); } catch (e) {}
+        setInterval(function () { try { reg.update(); } catch (e) {} }, 60 * 60 * 1000);
+      }).catch(function () { /* オフライン無効でも動く */ });
+    });
+    // タブに戻ってきたタイミングでも更新を確認（公開直後をすばやく反映）。
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (reg) { try { reg.update(); } catch (e) {} }
+      }).catch(function () {});
     });
   }
 
