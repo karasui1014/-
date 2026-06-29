@@ -163,10 +163,13 @@
         <h2 class="section-title">🍳 作りたい料理から材料を検索</h2>
         <p class="section-note">料理名を入力して「決定」を押すと、必要な材料を自動で検索。「これを作る」でお買い物リストに入ります（登録にない料理も自動で推定）。</p>
 
-        <div class="recipe-search">
-          <input id="recipeSearch" class="text-input" type="text" inputmode="text"
-                 placeholder="🔍 作りたい料理を入力（例：カレー）" maxlength="24" />
-          <button id="recipeDecideBtn" class="pill-btn" type="button">決定</button>
+        <div class="recipe-search-wrap">
+          <div class="recipe-search">
+            <input id="recipeSearch" class="text-input" type="text" inputmode="text" autocomplete="off"
+                   placeholder="🔍 作りたい料理を入力（例：カレー）" maxlength="24" />
+            <button id="recipeDecideBtn" class="pill-btn" type="button">決定</button>
+          </div>
+          <div id="recipeSuggest" class="recipe-suggest" hidden></div>
         </div>
 
         <div id="recipeResult" class="recipe-result" hidden></div>
@@ -281,7 +284,7 @@
         データはこの端末の中だけに保存されます（ログイン不要・無料・オフラインOK）。<br />
         ブラウザのデータを消すと、リストも消えるのでご注意ください。
       </p>
-      <p class="settings-ver">おかいものメモ Phase 3 · v1.7.2</p>
+      <p class="settings-ver">おかいものメモ Phase 3 · v1.8</p>
     </section>
   </main>
 

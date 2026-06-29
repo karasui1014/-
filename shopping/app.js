@@ -696,7 +696,8 @@
   // カタカナ→ひらがな・小文字化・空白除去でゆるく正規化する。
   function normJ(s) {
     return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, '')
-      .replace(/[ァ-ヶ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+      .replace(/[ァ-ヶ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); })
+      .replace(/鶏/g, '鳥');   // 「鶏」と「鳥」を同一視（とり料理の表記ゆれ対策）
   }
   function levenshtein(a, b) {
     var m = a.length, n = b.length;
@@ -1622,6 +1623,11 @@
     });
     // 追加バーはリストタブのみ表示
     $('#addBar').style.display = (target === 'list') ? '' : 'none';
+    // タブを切り替えたら先頭まで戻す（リストなら「作る献立」が一番上に見える）。
+    if (window.scrollTo) {
+      try { window.scrollTo({ top: 0, behavior: 'auto' }); }
+      catch (e) { window.scrollTo(0, 0); }
+    }
   }
 
   tabBtns.forEach(function (btn) {
@@ -1704,18 +1710,86 @@
   var recipeItems = $('#recipeItems');
   $('#saveRecipeBtn').addEventListener('click', saveCustomRecipe);
 
+  /* ---------- 料理名のサジェスト（文脈から予測して候補表示） ---------- */
+  var recipeSuggest = $('#recipeSuggest');
+  var rsActive = -1;
+
+  function predictDishList(q) {
+    return (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.predict)
+      ? window.OKAIMONO_RECIPES.predict(q, 8) : [];
+  }
+  function dishEmojiOf(name) {
+    return (window.OKAIMONO_RECIPES && window.OKAIMONO_RECIPES.dishEmoji)
+      ? window.OKAIMONO_RECIPES.dishEmoji(name) : '🍽️';
+  }
+  function showRecipeSuggest() {
+    if (!recipeSuggest || !recipeSearch) return;
+    var q = recipeSearch.value;
+    var names = q.trim() ? predictDishList(q) : [];
+    recipeSuggest.innerHTML = '';
+    rsActive = -1;
+    if (!names.length) { recipeSuggest.hidden = true; return; }
+
+    recipeSuggest.appendChild(el('div', 'rs-hint', '🔎 もしかして…（タップで材料を検索）'));
+    names.forEach(function (name) {
+      var row = el('div', 'rs-item');
+      row.appendChild(el('span', 'rs-emoji', dishEmojiOf(name)));
+      row.appendChild(el('span', 'rs-name', name));
+      var known = !!bestRecipe(name);   // 登録ありか自動推定かをひとことで
+      row.appendChild(el('span', 'rs-tag', known ? '材料あり' : '自動検索'));
+      row.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        recipeSuggest.hidden = true;
+        decideRecipe(name);
+      });
+      recipeSuggest.appendChild(row);
+    });
+    recipeSuggest.hidden = false;
+  }
+  function highlightRecipeSuggest(rows) {
+    rows.forEach(function (r, i) { r.classList.toggle('is-active', i === rsActive); });
+    if (rows[rsActive] && rows[rsActive].scrollIntoView) {
+      rows[rsActive].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
   var recipeSearch = $('#recipeSearch');
   if (recipeSearch) recipeSearch.addEventListener('input', function () {
     recipeQuery = recipeSearch.value;
     renderRecipes();
+    showRecipeSuggest();
+  });
+  if (recipeSearch) recipeSearch.addEventListener('focus', showRecipeSuggest);
+  if (recipeSearch) recipeSearch.addEventListener('blur', function () {
+    setTimeout(function () { if (recipeSuggest) recipeSuggest.hidden = true; }, 140);
   });
   // 「決定」ボタン／Enterで、入力した料理名の材料を検索して表示。
   var recipeDecideBtn = $('#recipeDecideBtn');
   if (recipeDecideBtn) recipeDecideBtn.addEventListener('click', function () {
+    if (recipeSuggest) recipeSuggest.hidden = true;
     decideRecipe(recipeSearch ? recipeSearch.value : '');
   });
   if (recipeSearch) recipeSearch.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); decideRecipe(recipeSearch.value); }
+    var rows = recipeSuggest ? recipeSuggest.querySelectorAll('.rs-item') : [];
+    if (e.key === 'ArrowDown' && rows.length) {
+      e.preventDefault();
+      rsActive = Math.min(rows.length - 1, rsActive + 1);
+      highlightRecipeSuggest(rows);
+    } else if (e.key === 'ArrowUp' && rows.length) {
+      e.preventDefault();
+      rsActive = Math.max(0, rsActive - 1);
+      highlightRecipeSuggest(rows);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (rsActive >= 0 && rows[rsActive]) {
+        rows[rsActive].dispatchEvent(new MouseEvent('mousedown'));
+      } else {
+        if (recipeSuggest) recipeSuggest.hidden = true;
+        decideRecipe(recipeSearch.value);
+      }
+    } else if (e.key === 'Escape') {
+      if (recipeSuggest) recipeSuggest.hidden = true;
+    }
   });
 
   // 献立／ズボラメシ の切り替え
