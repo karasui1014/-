@@ -684,6 +684,7 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { t.classList.remove('is-show'); }, 1900);
   }
+  window.okaimonoToast = toast;   // stores.js（お店タブ）からも使う
 
   /* =====================================================================
    * ご褒美演出

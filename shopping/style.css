@@ -413,6 +413,102 @@ body {
 }
 .inv-empty { color: var(--ink-soft); font-size: 0.82rem; font-weight: 700; padding: 6px 2px; }
 
+/* ====== お店（Phase 3） ====== */
+.store-actions { margin: 8px 4px; }
+.big-btn {
+  width: 100%;
+  font-family: var(--font);
+  font-weight: 900;
+  font-size: 1rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pink-deep), var(--pink));
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+.big-btn:active { transform: scale(0.98); }
+.big-btn.ghost {
+  background: var(--white);
+  color: var(--pink-deep);
+  border: 2px solid var(--pink-soft);
+}
+.store-status {
+  margin: 6px 4px;
+  padding: 10px 14px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+.store-status[hidden] { display: none; }
+.store-status.is-ok { color: var(--mint-deep); }
+.store-status.is-warn { color: var(--pink-deep); }
+
+.map-wrap { margin: 10px 4px; border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-soft); }
+.map-wrap[hidden] { display: none; }
+#map { width: 100%; height: 240px; background: #e8eef0; }
+.leaflet-container { font-family: var(--font); }
+
+.store-results { margin: 4px 0; }
+.store-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 11px 12px;
+  margin: 8px 4px;
+  box-shadow: var(--shadow-soft);
+}
+.store-body { flex: 1 1 auto; min-width: 0; }
+.store-name { font-weight: 800; font-size: 0.96rem; word-break: break-word; }
+.store-meta { font-size: 0.74rem; color: var(--ink-soft); font-weight: 700; margin-top: 1px; }
+.store-mini {
+  flex: 0 0 auto; width: 36px; height: 36px;
+  border: none; background: var(--pink-soft); border-radius: 10px;
+  font-size: 1rem; cursor: pointer;
+}
+.store-mini:active { transform: scale(0.92); }
+.store-save {
+  flex: 0 0 auto;
+  font-family: var(--font); font-weight: 800; font-size: 0.82rem;
+  color: var(--pink-deep); background: var(--white);
+  border: 2px solid var(--pink-soft); border-radius: 999px;
+  padding: 7px 12px; cursor: pointer; white-space: nowrap;
+}
+.store-save.is-saved { background: var(--mint); border-color: var(--mint-deep); color: var(--ink); }
+.store-save:active { transform: scale(0.96); }
+.store-check { width: 22px; height: 22px; flex: 0 0 auto; accent-color: var(--mint-deep); }
+
+.route-area {
+  margin: 10px 4px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, #fff, #eafaf3);
+  border: 2px solid #c8efde;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+.route-head { font-weight: 900; font-size: 0.92rem; margin-bottom: 8px; }
+.route-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+.route-row:last-of-type { border-bottom: none; }
+.route-num {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--mint-deep); color: #fff; font-weight: 900; font-size: 0.82rem;
+  display: grid; place-items: center;
+}
+.route-namewrap { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.route-name { font-weight: 800; font-size: 0.92rem; }
+.route-leg { font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; }
+.route-total { margin-top: 8px; font-weight: 900; font-size: 0.86rem; color: var(--mint-deep); text-align: right; }
+
+/* 5タブでも収まるよう少しコンパクトに */
+.tab-btn .tab-lbl { font-size: 0.64rem; }
+.tab-btn .tab-ico { font-size: 1.2rem; }
+
 /* ====== 設定 ====== */
 .field { display: block; margin: 4px 4px 16px; }
 .field-label { font-weight: 900; font-size: 0.95rem; }

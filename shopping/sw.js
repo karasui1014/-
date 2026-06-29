@@ -3,9 +3,10 @@
  * アプリシェルをキャッシュして、機内モード/電波が弱くてもコア機能を動かす。
  * バージョンを上げると古いキャッシュを掃除して更新される。
  * ========================================================================= */
-var CACHE = 'okaimono-v2';
+var CACHE = 'okaimono-v3';
 
 // アプリの土台になる静的ファイル一式（同一ディレクトリ相対）。
+// ※ お店タブの地図(Leaflet/OSMタイル)は外部・オンライン時のみで、ここには含めない。
 var APP_SHELL = [
   './',
   './index.html',
@@ -13,7 +14,11 @@ var APP_SHELL = [
   './categories.js',
   './recipes.js',
   './app.js',
+  './stores.js',
   './manifest.json',
+  './favicon.svg',
+  './favicon-16.png',
+  './favicon-32.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
