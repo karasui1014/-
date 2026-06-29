@@ -7,6 +7,20 @@
  *  - ご褒美演出
  * 依存：categories.js（window.OKAIMONO_CATEGORIES）
  * ========================================================================= */
+/* クリックジャッキング対策（保険）。
+ * GitHub Pages ではHTTPヘッダ(X-Frame-Options/CSP frame-ancestors)を付けられないため、
+ * 別オリジンのiframeに埋め込まれていたらトップに復帰、無理なら表示を止める。 */
+(function () {
+  'use strict';
+  try {
+    if (window.top && window.self !== window.top) {
+      window.top.location.replace(window.self.location.href);
+    }
+  } catch (e) {
+    try { document.documentElement.style.display = 'none'; } catch (e2) {}
+  }
+})();
+
 (function () {
   'use strict';
 

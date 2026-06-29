@@ -11,8 +11,12 @@
 
   var KEY = 'okaimono.stores';
   var OVERPASS = 'https://overpass-api.de/api/interpreter';
+  // CDN(unpkg)から読み込む Leaflet を SRI（Subresource Integrity）で検証する。
+  // 改ざん・差し替えがあれば読み込みを拒否（地図は一覧のみにフォールバック）。
   var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  var LEAFLET_CSS_SRI = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
   var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  var LEAFLET_JS_SRI = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
   var RADIUS = 1500; // m
 
   /* ---------- 保存（自前の最小localStorage） ---------- */
@@ -84,10 +88,12 @@
       if (!document.querySelector('link[data-leaflet]')) {
         var link = document.createElement('link');
         link.rel = 'stylesheet'; link.href = LEAFLET_CSS; link.setAttribute('data-leaflet', '1');
+        link.integrity = LEAFLET_CSS_SRI; link.crossOrigin = 'anonymous';
         document.head.appendChild(link);
       }
       var s = document.createElement('script');
       s.src = LEAFLET_JS; s.async = true;
+      s.integrity = LEAFLET_JS_SRI; s.crossOrigin = 'anonymous';
       var to = setTimeout(function () { reject(new Error('leaflet-timeout')); }, 8000);
       s.onload = function () { clearTimeout(to); resolve(window.L); };
       s.onerror = function () { clearTimeout(to); reject(new Error('leaflet-error')); };
