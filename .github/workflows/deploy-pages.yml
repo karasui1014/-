@@ -1,0 +1,61 @@
+# おかいものメモ / 既存サイトを GitHub Pages へ自動デプロイ
+# 使い方（最初の1回だけ）:
+#   リポジトリの Settings → Pages → "Build and deployment" の Source を
+#   「GitHub Actions」に設定してください。あとは push で自動公開されます。
+# 公開URL（例）:
+#   トップ      … https://karasui1014.github.io/-/
+#   おかいもの  … https://karasui1014.github.io/-/shopping/
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/shopping-list-app-plan-5m97bw
+  workflow_dispatch:
+
+# Pages デプロイに必要な権限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行は1つに（古いデプロイは待つ）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble site
+        run: |
+          set -eu
+          mkdir -p _site
+          # おかいものメモ（本体）
+          cp -r shopping _site/shopping
+          # 既存の公開物も残す（あるものだけコピー）
+          [ -f index.html ] && cp index.html _site/index.html || true
+          [ -f glasses_prescription_calculator.html ] && cp glasses_prescription_calculator.html _site/ || true
+          # GitHub Pages は Jekyll 処理を挟むため、それを無効化（ファイルをそのまま配信）
+          touch _site/.nojekyll
+          ls -R _site
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
