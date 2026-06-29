@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#ffb6c8" />
+  <meta name="description" content="主婦のための、かわいいお買い物リスト。よく買うものはワンタップ、売り場順で店内をスイスイ。" />
+  <title>おかいものメモ 🐱🧺</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- 丸ゴシック（リポジトリで使用中の Zen Maru Gothic） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ====== ヘッダー ====== -->
+  <header class="app-header">
+    <div class="mascot" aria-hidden="true">
+      <!-- 買い物かごの子ねこマスコット -->
+      <svg viewBox="0 0 64 64" width="56" height="56" role="img">
+        <ellipse cx="32" cy="55" rx="20" ry="4" fill="#000" opacity="0.06"/>
+        <!-- かご -->
+        <path d="M14 34 h36 l-3 18 a4 4 0 0 1 -4 3 H21 a4 4 0 0 1 -4 -3 Z" fill="#ffd9a0" stroke="#e9a86a" stroke-width="2"/>
+        <path d="M14 34 h36" stroke="#e9a86a" stroke-width="3" stroke-linecap="round"/>
+        <path d="M22 34 v22 M32 34 v22 M42 34 v22" stroke="#e9a86a" stroke-width="1.5" opacity="0.6"/>
+        <!-- ねこ -->
+        <g>
+          <path d="M20 26 l-3 -8 l8 4 Z" fill="#fff1d6" stroke="#e9a86a" stroke-width="1.5"/>
+          <path d="M44 26 l3 -8 l-8 4 Z" fill="#fff1d6" stroke="#e9a86a" stroke-width="1.5"/>
+          <circle cx="32" cy="26" r="13" fill="#fff7e9" stroke="#e9a86a" stroke-width="1.5"/>
+          <circle cx="27" cy="25" r="1.8" fill="#5b4636"/>
+          <circle cx="37" cy="25" r="1.8" fill="#5b4636"/>
+          <path d="M30 29 q2 2 4 0" fill="none" stroke="#5b4636" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="24" cy="28" r="2.2" fill="#ffc2cf" opacity="0.8"/>
+          <circle cx="40" cy="28" r="2.2" fill="#ffc2cf" opacity="0.8"/>
+        </g>
+      </svg>
+    </div>
+    <div class="app-title">
+      <h1>おかいものメモ</h1>
+      <p class="tagline">きょうも いってらっしゃい♪</p>
+    </div>
+  </header>
+
+  <!-- ====== 予算サマリー ====== -->
+  <section id="budgetBar" class="budget-bar" aria-live="polite">
+    <div class="budget-line">
+      <span class="budget-total">合計 <strong id="totalText">¥0</strong></span>
+      <span class="budget-of" id="budgetOfText"></span>
+    </div>
+    <div class="budget-meter" role="progressbar" aria-label="予算の使用率">
+      <div class="budget-meter-fill" id="budgetFill"></div>
+    </div>
+    <p class="budget-warn" id="budgetWarn" hidden>🐱 予算をちょっとオーバーしてるよ〜</p>
+  </section>
+
+  <!-- ====== メイン（タブ切替） ====== -->
+  <main class="app-main">
+    <!-- リストタブ -->
+    <section id="tab-list" class="tab-panel is-active" data-tab="list">
+      <div id="listArea"></div>
+      <div id="emptyState" class="empty-state" hidden>
+        <div class="empty-emoji">🧺</div>
+        <p class="empty-title">リストはまだ空っぽ</p>
+        <p class="empty-sub">下の「＋」から、買うものを追加してね</p>
+      </div>
+    </section>
+
+    <!-- よく買うものタブ -->
+    <section id="tab-staples" class="tab-panel" data-tab="staples" hidden>
+      <h2 class="section-title">⭐ いつもの・よく買うもの</h2>
+      <p class="section-note">タップでリストに追加できます。長く使うほど、よく買うものが上に出てきます。</p>
+      <div id="staplesArea" class="chip-wrap"></div>
+      <div class="add-staple">
+        <input id="newStapleInput" class="text-input" type="text" inputmode="text"
+               placeholder="「いつもの」に登録（例：牛乳）" maxlength="30" />
+        <button id="addStapleBtn" class="pill-btn" type="button">登録</button>
+      </div>
+    </section>
+
+    <!-- 設定タブ -->
+    <section id="tab-settings" class="tab-panel" data-tab="settings" hidden>
+      <h2 class="section-title">⚙️ 設定</h2>
+
+      <label class="field">
+        <span class="field-label">今回の予算</span>
+        <span class="field-input-yen">
+          <span>¥</span>
+          <input id="budgetInput" class="text-input" type="number" inputmode="numeric"
+                 min="0" step="100" placeholder="例：5000" />
+        </span>
+      </label>
+
+      <label class="toggle-field">
+        <span>
+          <span class="field-label">売り場順にならべる</span>
+          <span class="field-sub">野菜→お肉→…の順でカード表示</span>
+        </span>
+        <input id="sortToggle" type="checkbox" class="switch" checked />
+      </label>
+
+      <label class="toggle-field">
+        <span>
+          <span class="field-label">合計金額を表示</span>
+          <span class="field-sub">単価から自動でカゴ合計を計算</span>
+        </span>
+        <input id="budgetToggle" type="checkbox" class="switch" checked />
+      </label>
+
+      <div class="settings-actions">
+        <button id="clearCheckedBtn" class="ghost-btn" type="button">✅ 完了したものを消す</button>
+        <button id="clearAllBtn" class="ghost-btn danger" type="button">🗑 リストを全部消す</button>
+      </div>
+
+      <p class="settings-note">
+        データはこの端末の中だけに保存されます（ログイン不要・無料・オフラインOK）。<br />
+        ブラウザのデータを消すと、リストも消えるのでご注意ください。
+      </p>
+      <p class="settings-ver">おかいものメモ Phase 1 · v1.0</p>
+    </section>
+  </main>
+
+  <!-- ====== 下部：追加バー ====== -->
+  <div id="addBar" class="add-bar">
+    <div id="suggestBox" class="suggest-box" hidden></div>
+    <form id="addForm" class="add-form" autocomplete="off">
+      <input id="nameInput" class="add-name" type="text" inputmode="text"
+             placeholder="買うものを入力…" maxlength="40" aria-label="買うものの名前" />
+      <input id="qtyInput" class="add-qty" type="number" inputmode="numeric"
+             min="1" step="1" value="1" aria-label="数量" />
+      <button id="addBtn" class="add-submit" type="submit" aria-label="リストに追加">＋</button>
+    </form>
+  </div>
+
+  <!-- ====== タブバー ====== -->
+  <nav class="tab-bar" role="tablist">
+    <button class="tab-btn is-active" data-target="list" role="tab" aria-selected="true">
+      <span class="tab-ico">🧺</span><span class="tab-lbl">リスト</span>
+    </button>
+    <button class="tab-btn" data-target="staples" role="tab" aria-selected="false">
+      <span class="tab-ico">⭐</span><span class="tab-lbl">よく買う</span>
+    </button>
+    <button class="tab-btn" data-target="settings" role="tab" aria-selected="false">
+      <span class="tab-ico">⚙️</span><span class="tab-lbl">設定</span>
+    </button>
+  </nav>
+
+  <!-- ご褒美演出のレイヤー -->
+  <div id="rewardLayer" class="reward-layer" aria-hidden="true"></div>
+
+  <script src="categories.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

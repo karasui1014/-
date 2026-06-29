@@ -1,0 +1,28 @@
+{
+  "name": "おかいものメモ",
+  "short_name": "おかいもの",
+  "description": "主婦のための、かわいいお買い物リスト。よく買うものはワンタップ、売り場順で店内をスイスイ。端末内保存・ログイン不要・オフラインOK。",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff9f3",
+  "theme_color": "#ffb6c8",
+  "categories": ["lifestyle", "shopping", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
