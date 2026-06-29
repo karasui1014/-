@@ -163,6 +163,8 @@
       unit: opts.unit || (entry && entry.defaultUnit) || '',
       price: (opts.price != null ? opts.price
              : (entry && entry.defaultPrice != null ? entry.defaultPrice : null)),
+      // 前回この場所で買ったときの値段（catalogの値が変わっても比較用にこのまま残す）
+      prevPrice: (entry && entry.defaultPrice != null) ? entry.defaultPrice : null,
       checked: false,
       addedAt: Date.now()
     };
@@ -186,10 +188,15 @@
     if (it.checked) {
       it.checkedAt = Date.now();
       recordPurchase(it.name);   // 在庫・購入周期を学習
-      reward();
+      if (!isAllComplete()) reward();   // 全部完了する瞬間はコンプリート演出にまとめる
     }
     persist();
     render();
+  }
+
+  // リストの全品が完了済みか（1品以上あって、全部チェック済み）。
+  function isAllComplete() {
+    return state.items.length > 0 && state.items.every(function (i) { return i.checked; });
   }
 
   function changeQty(id, delta) {
@@ -206,7 +213,7 @@
     it.price = (price === '' || price == null) ? null : Number(price);
     rememberPrice(it.name, it.price);
     persist();
-    updateBudget();
+    render();
   }
 
   function removeItem(id) {
@@ -232,6 +239,9 @@
    * ===================================================================== */
   var listArea = $('#listArea');
   var emptyState = $('#emptyState');
+  var completeBanner = $('#completeBanner');
+  var nextTripBtn = $('#nextTripBtn');
+  var wasComplete = isAllComplete();   // 起動時にすでに完了済みなら演出はスキップ
 
   function render() {
     renderList();
@@ -243,6 +253,13 @@
   }
 
   function renderList() {
+    var complete = isAllComplete();
+    if (completeBanner) {
+      completeBanner.hidden = !complete;
+      if (complete && !wasComplete) celebrateComplete();
+    }
+    wasComplete = complete;
+
     listArea.innerHTML = '';
     if (state.items.length === 0) {
       emptyState.hidden = false;
@@ -327,6 +344,17 @@
     var cat = CAT.getCategory(it.category);
     meta.appendChild(el('span', null, cat.emoji + ' ' + cat.label));
     if (state.settings.showBudget) {
+      if (it.prevPrice != null) {
+        var prevNum = Number(it.prevPrice);
+        var curNum = it.price != null ? Number(it.price) : null;
+        var prevLabel = '前回¥' + prevNum.toLocaleString('ja-JP');
+        var prevCls = 'item-prev-price';
+        if (curNum != null && curNum !== prevNum) {
+          prevCls += curNum > prevNum ? ' is-up' : ' is-down';
+          prevLabel += curNum > prevNum ? ' ↑' : ' ↓';
+        }
+        meta.appendChild(el('span', prevCls, prevLabel));
+      }
       var priceInput = el('input', 'item-price-input');
       priceInput.type = 'number';
       priceInput.inputMode = 'numeric';
@@ -777,6 +805,23 @@
     setTimeout(function () { rewardLayer.innerHTML = ''; }, 1300);
   }
 
+  // 全品コンプリート時の演出（個別のreward()より大きく・長く表示）。
+  function celebrateComplete() {
+    if (!rewardLayer) return;
+    var bubble = el('div', 'reward-bubble reward-complete', '🎉 コンプリート！🎉');
+    rewardLayer.appendChild(bubble);
+    for (var i = 0; i < 26; i++) {
+      var c = el('div', 'confetti');
+      c.style.left = (8 + Math.random() * 84) + '%';
+      c.style.top = '22%';
+      c.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+      c.style.animationDelay = (Math.random() * 0.3) + 's';
+      c.style.transform = 'translateX(' + ((Math.random() - 0.5) * 220) + 'px)';
+      rewardLayer.appendChild(c);
+    }
+    setTimeout(function () { rewardLayer.innerHTML = ''; }, 1700);
+  }
+
   /* =====================================================================
    * 追加バー ＆ サジェスト
    * ===================================================================== */
@@ -941,6 +986,11 @@
   if (dueClose) dueClose.addEventListener('click', function () {
     dueHidden = true;
     dueArea.hidden = true;
+  });
+
+  if (nextTripBtn) nextTripBtn.addEventListener('click', function () {
+    clearChecked();   // 完了した品をリストから片付けて、次のお買い物へ
+    toast('🛍️ 次のお買い物、いってらっしゃい♪');
   });
 
   var recipeName = $('#recipeName');

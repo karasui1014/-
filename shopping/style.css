@@ -260,6 +260,9 @@ body {
   background: var(--cream);
 }
 .item-price-input:focus { outline: none; border-color: var(--pink); background: #fff; }
+.item-prev-price { color: var(--ink-soft); font-weight: 700; }
+.item-prev-price.is-up { color: var(--warn); }
+.item-prev-price.is-down { color: var(--mint-deep); }
 
 .qty-group { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
 .qty-btn {
@@ -346,6 +349,25 @@ body {
 .due-close:active { background: rgba(0,0,0,0.05); }
 .due-area .chip { border-color: #ffe6ad; }
 .due-area .chip .chip-sub { font-size: 0.7rem; color: var(--ink-soft); margin-left: 2px; }
+
+/* ====== コンプリート演出 ====== */
+.complete-banner {
+  margin: 12px 0 16px;
+  padding: 22px 18px;
+  text-align: center;
+  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  border: 2px solid var(--pink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.complete-banner[hidden] { display: none; }
+.complete-emoji { font-size: 2.6rem; animation: bob 1.6s ease-in-out infinite; }
+.complete-title {
+  font-size: 1.3rem; font-weight: 900; color: var(--pink-deep);
+  margin: 6px 0 2px; letter-spacing: 0.02em;
+}
+.complete-sub { font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 14px; font-weight: 700; }
+.complete-banner .big-btn { width: auto; padding: 13px 26px; }
 
 /* ====== 献立（レシピ） ====== */
 .recipe-grid {
@@ -754,6 +776,8 @@ body {
 .reward-layer { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
 .reward-bubble {
   position: absolute;
+  width: max-content;
+  white-space: nowrap;
   left: 50%;
   top: 38%;
   transform: translate(-50%, -50%) scale(0.6);
@@ -772,6 +796,13 @@ body {
   25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
   70%  { opacity: 1; transform: translate(-50%, -60%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -80%) scale(0.95); }
+}
+.reward-bubble.reward-complete {
+  font-size: 1.7rem;
+  padding: 18px 30px;
+  background: linear-gradient(135deg, var(--pink-deep), var(--pink));
+  color: #fff;
+  animation: reward 1.5s ease forwards;
 }
 .confetti {
   position: absolute;
