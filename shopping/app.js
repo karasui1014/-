@@ -20,8 +20,13 @@
     budget:    'okaimono.budget',
     settings:  'okaimono.settings',
     inventory: 'okaimono.inventory',
-    recipes:   'okaimono.recipes'
+    recipes:   'okaimono.recipes',
+    cooks:     'okaimono.cooks',     // 献立ごとの「作った回数」
+    photos:    'okaimono.photos'     // 献立ごとの料理写真（dataURL）
   };
+
+  // このアプリのURL（SNSシェアのフォールバック用）
+  var APP_URL = location.href.split('#')[0].split('?')[0];
 
   /* ---------- 状態 ---------- */
   var state = {
@@ -31,10 +36,16 @@
     budget:    load(KEYS.budget, { amount: 0 }),
     settings:  load(KEYS.settings, { sortByAisle: true, showBudget: true }),
     inventory: load(KEYS.inventory, []),   // [{name,lastBought,intervalDays,history,manual}]
-    recipes:   load(KEYS.recipes, [])      // ユーザー自作の献立
+    recipes:   load(KEYS.recipes, []),     // ユーザー自作の献立
+    cooks:     load(KEYS.cooks, {}),       // { recipeId: {count,last} }
+    photos:    load(KEYS.photos, {})       // { recipeId: dataURL }
   };
   // 後から増えた設定のデフォルト
   if (state.settings.showReminder === undefined) state.settings.showReminder = true;
+  // 称号の「演出済みレベル」。初回は今のレベルにそろえて、過去分の連続演出を防ぐ。
+  if (state.settings.titleSeen === undefined) {
+    state.settings.titleSeen = currentTitleIndex(distinctCookedCount());
+  }
 
   // 初回起動なら「いつもの」のおすすめを少しだけ用意（消してもOK）。
   if (state.staples.length === 0 && state.items.length === 0 && state.catalog.length === 0) {
@@ -62,6 +73,17 @@
     save(KEYS.settings, state.settings);
     save(KEYS.inventory, state.inventory);
     save(KEYS.recipes, state.recipes);
+    save(KEYS.cooks, state.cooks);
+  }
+  // 写真は容量が大きいので persist() とは分けて保存する。
+  function savePhotos() {
+    try {
+      localStorage.setItem(KEYS.photos, JSON.stringify(state.photos));
+      return true;
+    } catch (e) {
+      toast('写真の保存容量がいっぱいです🙏');
+      return false;
+    }
   }
 
   /* ---------- DOM ヘルパ ---------- */
@@ -250,6 +272,8 @@
     renderDue();
     renderInventory();
     renderRecipes();
+    renderTitleBadge();
+    renderCookProgress();
   }
 
   function renderList() {
@@ -654,11 +678,25 @@
   }
 
   function recipeCard(r) {
+    var key = recipeKey(r);
+    var cnt = cookCount(r);
+    var photo = state.photos[key];
+
     var card = el('div', 'recipe-card' + (r.custom ? ' is-custom' : ''));
     card.appendChild(el('div', 'recipe-emoji', r.emoji || '🍽️'));
     card.appendChild(el('div', 'recipe-name', r.name));
     card.appendChild(el('div', 'recipe-items',
       r.items.map(function (it) { return it.name; }).join('、')));
+
+    if (cnt > 0) card.appendChild(el('div', 'recipe-count', '🍳 作った ' + cnt + '回'));
+
+    if (photo) {
+      var pimg = el('img', 'recipe-photo');
+      pimg.src = photo;
+      pimg.alt = r.name + 'の写真';
+      pimg.addEventListener('click', function (e) { e.stopPropagation(); shareDish(r); });
+      card.appendChild(pimg);
+    }
 
     var actions = el('div', 'recipe-actions');
     var addBtn = el('button', 'recipe-add-btn', '＋ 材料を追加');
@@ -670,6 +708,26 @@
     howBtn.type = 'button';
     actions.appendChild(howBtn);
     card.appendChild(actions);
+
+    // 「作った！」「写真」「シェア」
+    var actions2 = el('div', 'recipe-actions2');
+    var madeBtn = el('button', 'recipe-made-btn', cnt > 0 ? '🍳 作った！(' + cnt + ')' : '🍳 作った！');
+    madeBtn.type = 'button';
+    madeBtn.addEventListener('click', function (e) { e.stopPropagation(); markCooked(r); });
+    actions2.appendChild(madeBtn);
+
+    var photoBtn = el('button', 'recipe-photo-btn', photo ? '📷 写真をかえる' : '📷 写真をのせる');
+    photoBtn.type = 'button';
+    photoBtn.addEventListener('click', function (e) { e.stopPropagation(); pickPhoto(r); });
+    actions2.appendChild(photoBtn);
+
+    if (photo) {
+      var shareBtn = el('button', 'recipe-share-btn', '📤 シェア');
+      shareBtn.type = 'button';
+      shareBtn.addEventListener('click', function (e) { e.stopPropagation(); shareDish(r); });
+      actions2.appendChild(shareBtn);
+    }
+    card.appendChild(actions2);
 
     // 作り方（手順＋クックパッド）— トグルで開閉
     var how = el('div', 'recipe-how');
@@ -764,6 +822,277 @@
     recipeName.value = ''; recipeItems.value = '';
     renderRecipes();
     toast('「' + name + '」を保存したよ✨');
+  }
+
+  /* =====================================================================
+   * 称号・スタンプ（作った献立の種類でランクアップ）
+   * 3種類ごとにスタンプ→称号。10段階で「料理の創造神」へ。
+   * ===================================================================== */
+  var TITLES = [
+    { name: '料理初心者',     icon: '🍳' },
+    { name: 'キッチン見習い', icon: '🧑‍🍳' },
+    { name: '献立ハンター',   icon: '🎯' },
+    { name: '食材テイマー',   icon: '🥕' },
+    { name: '味の錬金術師',   icon: '⚗️' },
+    { name: '食卓の守護者',   icon: '🛡️' },
+    { name: '美食の探求者',   icon: '🔭' },
+    { name: 'レジェンドシェフ', icon: '🏆' },
+    { name: '献立大賢者',     icon: '🔮' },
+    { name: '料理の創造神',   icon: '👑' }
+  ];
+
+  function recipeKey(r) { return r.id || ('n:' + r.name); }
+  function cookCount(r) {
+    var c = state.cooks[recipeKey(r)];
+    return (c && c.count) || 0;
+  }
+  // 「作った（1回以上）」献立の種類数。
+  function distinctCookedCount() {
+    var n = 0;
+    for (var k in state.cooks) {
+      if (state.cooks.hasOwnProperty(k) && state.cooks[k] && state.cooks[k].count > 0) n++;
+    }
+    return n;
+  }
+  function currentTitleIndex(n) {
+    return Math.min(9, Math.floor(n / 3));   // 9 = TITLES の最終indexと一致
+  }
+
+  function markCooked(r) {
+    var key = recipeKey(r);
+    var c = state.cooks[key] || { count: 0, last: 0 };
+    c.count += 1;
+    c.last = Date.now();
+    state.cooks[key] = c;
+    save(KEYS.cooks, state.cooks);
+    reward();
+    toast('🍳「' + r.name + '」を作った！（' + c.count + '回目）');
+    render();
+    maybeCelebrateTitle();
+  }
+
+  // 新しい称号に到達していたらお祝い演出。
+  function maybeCelebrateTitle() {
+    var idx = currentTitleIndex(distinctCookedCount());
+    var seen = state.settings.titleSeen || 0;
+    if (idx > seen) {
+      state.settings.titleSeen = idx;
+      save(KEYS.settings, state.settings);
+      celebrateTitle(idx);
+    }
+  }
+
+  function celebrateTitle(idx) {
+    var t = TITLES[idx];
+    if (rewardLayer) {
+      var bubble = el('div', 'reward-bubble reward-title', t.icon + ' 称号「' + t.name + '」獲得！');
+      rewardLayer.appendChild(bubble);
+      for (var i = 0; i < 30; i++) {
+        var c = el('div', 'confetti');
+        c.style.left = (6 + Math.random() * 88) + '%';
+        c.style.top = '24%';
+        c.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+        c.style.animationDelay = (Math.random() * 0.35) + 's';
+        c.style.transform = 'translateX(' + ((Math.random() - 0.5) * 240) + 'px)';
+        rewardLayer.appendChild(c);
+      }
+      setTimeout(function () { rewardLayer.innerHTML = ''; }, 2000);
+    }
+    toast(t.icon + ' 新しい称号「' + t.name + '」を手に入れた！');
+  }
+
+  /* ---------- 称号バッジ（ヘッダー上部） ---------- */
+  var titleBadge = $('#titleBadge');
+  var tbIcon = $('#tbIcon');
+  var tbName = $('#tbName');
+
+  function renderTitleBadge() {
+    if (!titleBadge) return;
+    var idx = currentTitleIndex(distinctCookedCount());
+    var t = TITLES[idx];
+    tbIcon.textContent = t.icon;
+    tbName.textContent = t.name;
+    titleBadge.hidden = false;
+    titleBadge.className = 'title-badge tl-' + idx +
+      (idx >= 5 ? ' glam' : '') + (idx >= 8 ? ' glam-max' : '');
+  }
+
+  /* ---------- 称号・スタンプの進捗（献立タブ） ---------- */
+  var cpIcon = $('#cpIcon');
+  var cpName = $('#cpName');
+  var cpCount = $('#cpCount');
+  var cpBarFill = $('#cpBarFill');
+  var cpNext = $('#cpNext');
+  var stampCard = $('#stampCard');
+
+  function renderCookProgress() {
+    if (!stampCard) return;
+    var n = distinctCookedCount();
+    var idx = currentTitleIndex(n);
+    if (cpIcon) cpIcon.textContent = TITLES[idx].icon;
+    if (cpName) cpName.textContent = TITLES[idx].name;
+    if (cpCount) cpCount.textContent = '作った献立 ' + n + '種類';
+
+    var maxed = idx >= TITLES.length - 1;
+    if (cpBarFill) cpBarFill.style.width = maxed ? '100%' :
+      Math.min(100, ((n - idx * 3) / 3) * 100) + '%';
+    if (cpNext) cpNext.textContent = maxed
+      ? '最高位の称号を達成！もう料理の神さまです✨'
+      : 'あと ' + ((idx + 1) * 3 - n) + ' 種類で「' + TITLES[idx + 1].name + '」🌟';
+
+    stampCard.innerHTML = '';
+    // 今のサイクル（3つ）のスタンプ
+    var within = maxed ? 3 : (n - idx * 3);
+    var row = el('div', 'stamp-row');
+    for (var s = 0; s < 3; s++) {
+      var st = el('div', 'stamp' + (s < within ? ' is-filled' : ''), s < within ? '⭐' : '○');
+      row.appendChild(st);
+    }
+    stampCard.appendChild(row);
+
+    // 称号コレクション（獲得済み＝カラー、未獲得＝グレー）
+    var chips = el('div', 'title-chips');
+    TITLES.forEach(function (t, i) {
+      var unlocked = i <= idx;
+      var chip = el('div', 'title-chip' + (i === idx ? ' is-current' : (unlocked ? '' : ' is-locked')));
+      chip.appendChild(el('span', 'tc-ico', unlocked ? t.icon : '🔒'));
+      chip.appendChild(el('span', null, t.name));
+      chips.appendChild(chip);
+    });
+    stampCard.appendChild(chips);
+  }
+
+  /* =====================================================================
+   * 料理写真のアップロード ＆ SNSシェア（X / インスタ / Facebook）
+   *  - スマホは Web Share API（navigator.share）で各アプリへ直接投稿
+   *  - PCはダウンロード＋X/Facebookのフォールバック
+   * ===================================================================== */
+  // 写真は端末内に保存するため、長辺1080px・JPEGに圧縮して容量を抑える。
+  function compressImage(file, maxDim, quality) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        try { resolve(canvas.toDataURL('image/jpeg', quality)); }
+        catch (e) { reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('load error')); };
+      img.src = url;
+    });
+  }
+
+  function pickPhoto(r) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      compressImage(f, 1080, 0.82).then(function (dataUrl) {
+        var key = recipeKey(r);
+        state.photos[key] = dataUrl;
+        if (savePhotos()) {
+          renderRecipes();
+          toast('📷「' + r.name + '」の写真をのせたよ！');
+        } else {
+          delete state.photos[key];
+          renderRecipes();
+        }
+      }).catch(function () { toast('写真を読み込めませんでした😢'); });
+    });
+    input.click();
+  }
+
+  function dataURLtoFile(dataUrl, name) {
+    var arr = dataUrl.split(',');
+    var mime = (arr[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    var bstr = atob(arr[1]);
+    var n = bstr.length;
+    var u8 = new Uint8Array(n);
+    while (n--) u8[n] = bstr.charCodeAt(n);
+    return new File([u8], name, { type: mime });
+  }
+
+  function shareDish(r) {
+    var dataUrl = state.photos[recipeKey(r)];
+    var text = '🍳今日のごはんは「' + r.name + '」♪ #おかいものメモ #おうちごはん';
+    // スマホ：画像つきでネイティブ共有（X・インスタ・Facebook等を選べる）
+    if (dataUrl && navigator.share && navigator.canShare) {
+      try {
+        var file = dataURLtoFile(dataUrl, 'dish.jpg');
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], text: text }).catch(function () {});
+          return;
+        }
+      } catch (e) { /* フォールバックへ */ }
+    }
+    openShareFallback(r, dataUrl, text);
+  }
+
+  function openShareFallback(r, dataUrl, text) {
+    var backdrop = el('div', 'share-sheet-backdrop');
+    var sheet = el('div', 'share-sheet');
+    sheet.appendChild(el('h3', null, '📤「' + r.name + '」をシェア'));
+    sheet.appendChild(el('p', 'ss-note', dataUrl
+      ? 'スマホなら「写真でシェア」から、X・インスタ・Facebookに直接投稿できます。'
+      : '先に「📷 写真をのせる」で写真を登録すると、SNSにシェアできます。'));
+
+    function close() { if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop); }
+
+    if (dataUrl && navigator.share && navigator.canShare) {
+      var nativeBtn = el('button', 'ss-btn', '📱 写真でシェア（X・インスタ・Facebook）');
+      nativeBtn.type = 'button';
+      nativeBtn.addEventListener('click', function () {
+        close();
+        try {
+          var file = dataURLtoFile(dataUrl, 'dish.jpg');
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], text: text }).catch(function () {});
+            return;
+          }
+        } catch (e) {}
+        navigator.share({ text: text }).catch(function () {});
+      });
+      sheet.appendChild(nativeBtn);
+    }
+
+    if (dataUrl) {
+      var saveLink = el('a', 'ss-btn', '📥 画像を保存（インスタ投稿用）');
+      saveLink.href = dataUrl;
+      saveLink.download = (r.name || 'dish') + '.jpg';
+      sheet.appendChild(saveLink);
+    }
+
+    var x = el('a', 'ss-btn', '🐦 Xに投稿');
+    x.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+    x.target = '_blank'; x.rel = 'noopener noreferrer';
+    sheet.appendChild(x);
+
+    var fb = el('a', 'ss-btn', '📘 Facebookでシェア');
+    fb.href = 'https://www.facebook.com/sharer/sharer.php?u=' +
+      encodeURIComponent(APP_URL) + '&quote=' + encodeURIComponent(text);
+    fb.target = '_blank'; fb.rel = 'noopener noreferrer';
+    sheet.appendChild(fb);
+
+    var insta = el('div', 'ss-btn ss-static', '📷 Instagramは画像を保存→アプリから投稿してね');
+    sheet.appendChild(insta);
+
+    var closeBtn = el('button', 'ss-close', '閉じる');
+    closeBtn.type = 'button';
+    closeBtn.addEventListener('click', close);
+    sheet.appendChild(closeBtn);
+
+    backdrop.appendChild(sheet);
+    backdrop.addEventListener('click', function (e) { if (e.target === backdrop) close(); });
+    document.body.appendChild(backdrop);
   }
 
   /* ---------- 小さなトースト ---------- */
@@ -905,23 +1234,27 @@
    * ===================================================================== */
   var tabBtns = document.querySelectorAll('.tab-btn');
   var panels = document.querySelectorAll('.tab-panel');
-  tabBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var target = btn.dataset.target;
-      tabBtns.forEach(function (b) {
-        var on = b === btn;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      panels.forEach(function (p) {
-        var on = p.dataset.tab === target;
-        p.hidden = !on;
-        p.classList.toggle('is-active', on);
-      });
-      // 追加バーはリストタブのみ表示
-      $('#addBar').style.display = (target === 'list') ? '' : 'none';
+
+  function selectTab(target) {
+    tabBtns.forEach(function (b) {
+      var on = b.dataset.target === target;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    panels.forEach(function (p) {
+      var on = p.dataset.tab === target;
+      p.hidden = !on;
+      p.classList.toggle('is-active', on);
+    });
+    // 追加バーはリストタブのみ表示
+    $('#addBar').style.display = (target === 'list') ? '' : 'none';
+  }
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () { selectTab(btn.dataset.target); });
   });
+  // 起動時のホームは「献立」タブ
+  selectTab('menu');
 
   /* =====================================================================
    * 設定 UI

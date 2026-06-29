@@ -838,6 +838,115 @@ body {
 }
 .app-toast.is-show { opacity: 0.95; transform: translateX(-50%) translateY(0); }
 
+/* ====== 称号バッジ（ヘッダー上部・作るほど豪華に） ====== */
+.title-badge {
+  display: flex; align-items: center; gap: 10px;
+  margin: 10px 14px 2px; padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--white);
+  border: 2px solid var(--pink-soft);
+  box-shadow: var(--shadow-soft);
+  position: relative; overflow: hidden;
+}
+.title-badge[hidden] { display: none; }
+.title-badge .tb-icon { font-size: 1.5rem; line-height: 1; flex: 0 0 auto; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12)); }
+.title-badge .tb-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.title-badge .tb-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; opacity: 0.7; }
+.title-badge .tb-name { font-size: 1rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title-badge .tb-spark { margin-left: auto; font-size: 1.05rem; flex: 0 0 auto; animation: tb-twinkle 1.8s ease-in-out infinite; }
+@keyframes tb-twinkle { 0%,100% { opacity: 0.4; transform: scale(0.9) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(12deg); } }
+
+.title-badge.tl-0 { background: #fff; border-color: var(--pink-soft); color: var(--ink); }
+.title-badge.tl-1 { background: linear-gradient(135deg, #fff, #eafaf3); border-color: var(--mint); color: var(--ink); }
+.title-badge.tl-2 { background: linear-gradient(135deg, #fff, #e9f3ff); border-color: var(--sky); color: var(--ink); }
+.title-badge.tl-3 { background: linear-gradient(135deg, #fff, #f1eafc); border-color: var(--lav); color: var(--ink); }
+.title-badge.tl-4 { background: linear-gradient(135deg, #fff7ea, #ffe6c2); border-color: var(--peach); color: #8a5a1e; }
+.title-badge.tl-5 { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: #fff; color: #fff; }
+.title-badge.tl-6 { background: linear-gradient(135deg, #7fd7c4, #4fb6e8); border-color: #fff; color: #fff; }
+.title-badge.tl-7 { background: linear-gradient(135deg, #b69cf0, #8f7be8); border-color: #fff; color: #fff; }
+.title-badge.tl-8 { background: linear-gradient(135deg, #ff9ec4, #b07bf0); border-color: #fff; color: #fff; }
+.title-badge.tl-9 { background: linear-gradient(125deg, #ffd86b, #ff9ec4 40%, #9b8cff 75%, #6fd3e8); border-color: #fff; color: #fff; }
+.title-badge.tl-5 .tb-label, .title-badge.tl-6 .tb-label, .title-badge.tl-7 .tb-label,
+.title-badge.tl-8 .tb-label, .title-badge.tl-9 .tb-label { opacity: 0.9; }
+.title-badge.glam { box-shadow: 0 4px 16px rgba(255,140,180,0.40); }
+.title-badge.glam-max { box-shadow: 0 6px 22px rgba(255,170,90,0.50); }
+/* 高位はキラッと光が流れる */
+.title-badge.glam::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
+  transform: translateX(-120%); animation: tb-shimmer 3.4s ease-in-out infinite;
+}
+@keyframes tb-shimmer { 0% { transform: translateX(-120%); } 60%,100% { transform: translateX(120%); } }
+
+/* ====== 称号・スタンプの進捗（献立タブ） ====== */
+.cook-progress {
+  margin: 4px 4px 16px; padding: 14px;
+  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  border: 2px solid var(--pink-soft); border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+.cp-top { display: flex; align-items: center; gap: 10px; }
+.cp-title-icon { font-size: 1.8rem; line-height: 1; flex: 0 0 auto; }
+.cp-title-wrap { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.cp-title-label { font-size: 0.66rem; font-weight: 800; color: var(--ink-soft); }
+.cp-title-name { font-size: 1.05rem; font-weight: 900; color: var(--pink-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-count { margin-left: auto; font-size: 0.78rem; font-weight: 800; color: var(--ink-soft); text-align: right; flex: 0 0 auto; }
+.cp-bar { height: 10px; border-radius: 999px; background: var(--white); border: 1.5px solid var(--pink-soft); overflow: hidden; margin: 12px 0 6px; }
+.cp-bar-fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--pink), var(--pink-deep)); transition: width 0.4s ease; }
+.cp-next { font-size: 0.82rem; font-weight: 800; color: var(--ink); margin: 0 0 10px; }
+.stamp-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.stamp {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.05rem; border: 2px dashed var(--pink-soft); background: var(--white); color: var(--ink-soft);
+}
+.stamp.is-filled { border-style: solid; border-color: var(--pink-deep); background: var(--pink-soft); color: var(--pink-deep); animation: stamp-pop 0.4s ease; }
+@keyframes stamp-pop { 0% { transform: scale(0.4); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.title-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.title-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 800;
+  background: var(--white); border: 2px solid var(--pink-soft); color: var(--ink);
+}
+.title-chip .tc-ico { font-size: 0.95rem; }
+.title-chip.is-locked { opacity: 0.45; filter: grayscale(0.6); }
+.title-chip.is-current { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); color: #fff; border-color: #fff; box-shadow: var(--shadow-soft); }
+
+/* ====== 献立カード：作った回数・写真・シェア ====== */
+.recipe-count { font-size: 0.72rem; font-weight: 800; color: var(--pink-deep); margin: 5px 0 2px; }
+.recipe-photo { width: 100%; height: 92px; object-fit: cover; border-radius: 10px; margin: 6px 0 2px; border: 2px solid var(--pink-soft); cursor: pointer; display: block; }
+.recipe-actions2 { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.recipe-made-btn, .recipe-photo-btn, .recipe-share-btn {
+  font-family: var(--font); font-weight: 800; font-size: 0.74rem; cursor: pointer;
+  border-radius: 10px; padding: 7px 9px; border: 2px solid var(--pink-soft); background: var(--white); color: var(--ink);
+}
+.recipe-made-btn { background: var(--pink-soft); color: var(--pink-deep); border-color: var(--pink); }
+.recipe-share-btn { background: var(--mint); color: #1f7d63; border-color: var(--mint-deep); }
+.recipe-made-btn:active, .recipe-photo-btn:active, .recipe-share-btn:active { transform: scale(0.95); }
+
+/* ====== シェアシート（PCフォールバック） ====== */
+.share-sheet-backdrop { position: fixed; inset: 0; background: rgba(80,60,55,0.4); z-index: 70; display: flex; align-items: flex-end; justify-content: center; }
+.share-sheet {
+  width: 100%; max-width: 480px; background: var(--white);
+  border-radius: 20px 20px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+  box-shadow: 0 -6px 24px rgba(0,0,0,0.15); animation: sheet-up 0.25s ease;
+}
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+.share-sheet h3 { margin: 0 0 4px; font-size: 1rem; font-weight: 900; color: var(--ink); }
+.share-sheet .ss-note { margin: 0 0 12px; font-size: 0.78rem; color: var(--ink-soft); font-weight: 700; line-height: 1.5; }
+.share-sheet .ss-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 13px 14px; margin-bottom: 8px; border-radius: 12px;
+  border: 2px solid var(--pink-soft); background: var(--cream);
+  font-family: var(--font); font-weight: 800; font-size: 0.9rem; color: var(--ink); cursor: pointer; text-decoration: none; text-align: left;
+}
+.share-sheet .ss-btn:active { transform: scale(0.98); }
+.share-sheet .ss-static { background: var(--white); cursor: default; color: var(--ink-soft); font-size: 0.82rem; }
+.share-sheet .ss-close { margin-top: 4px; background: transparent; border: none; color: var(--ink-soft); font-weight: 800; width: 100%; padding: 10px; cursor: pointer; font-family: var(--font); }
+
+/* コンプリート/称号の大きめバブル */
+.reward-bubble.reward-title { font-size: 1.2rem; padding: 16px 26px; background: linear-gradient(135deg, #ffd86b, #ff9ec4 60%, #9b8cff); color: #fff; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.05ms !important; }
 }

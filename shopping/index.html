@@ -63,6 +63,16 @@
     </div>
   </header>
 
+  <!-- ====== 称号バッジ（料理を作るほど豪華に） ====== -->
+  <div id="titleBadge" class="title-badge" hidden>
+    <span class="tb-icon" id="tbIcon" aria-hidden="true">🍳</span>
+    <span class="tb-text">
+      <span class="tb-label">あなたの称号</span>
+      <span class="tb-name" id="tbName">料理初心者</span>
+    </span>
+    <span class="tb-spark" aria-hidden="true">✨</span>
+  </div>
+
   <!-- ====== ホーム画面に追加バナー（スマホ用） ====== -->
   <div id="installBanner" class="install-banner" hidden>
     <span class="ib-emoji" aria-hidden="true">📲</span>
@@ -86,7 +96,7 @@
   <!-- ====== メイン（タブ切替） ====== -->
   <main class="app-main">
     <!-- リストタブ -->
-    <section id="tab-list" class="tab-panel is-active" data-tab="list">
+    <section id="tab-list" class="tab-panel" data-tab="list" hidden>
       <!-- 買い忘れ提案（購入周期から「そろそろ？」） -->
       <div id="dueArea" class="due-area" hidden>
         <div class="due-head">
@@ -121,10 +131,25 @@
       </div>
     </section>
 
-    <!-- 献立タブ -->
-    <section id="tab-menu" class="tab-panel" data-tab="menu" hidden>
-      <h2 class="section-title">🍳 献立から材料をまとめて追加</h2>
-      <p class="section-note">作りたい料理を入力 or タップで、材料がリストに入ります。「作り方」からクックパッドも見られます。</p>
+    <!-- 献立タブ（ホーム） -->
+    <section id="tab-menu" class="tab-panel is-active" data-tab="menu">
+      <!-- 称号・スタンプの進捗 -->
+      <div id="cookProgress" class="cook-progress">
+        <div class="cp-top">
+          <span class="cp-title-icon" id="cpIcon" aria-hidden="true">🍳</span>
+          <span class="cp-title-wrap">
+            <span class="cp-title-label">いまの称号</span>
+            <span class="cp-title-name" id="cpName">料理初心者</span>
+          </span>
+          <span class="cp-count" id="cpCount">作った献立 0種類</span>
+        </div>
+        <div class="cp-bar"><div class="cp-bar-fill" id="cpBarFill"></div></div>
+        <p class="cp-next" id="cpNext"></p>
+        <div id="stampCard" class="stamp-card"></div>
+      </div>
+
+      <h2 class="section-title">🍳 作りたい料理から材料を検索</h2>
+      <p class="section-note">料理の名前を入力 or タップすると、材料がリストに入ります。「作った！」で称号がたまり、写真ものせられます。</p>
 
       <div class="recipe-search">
         <input id="recipeSearch" class="text-input" type="text" inputmode="text"
@@ -231,12 +256,12 @@
         データはこの端末の中だけに保存されます（ログイン不要・無料・オフラインOK）。<br />
         ブラウザのデータを消すと、リストも消えるのでご注意ください。
       </p>
-      <p class="settings-ver">おかいものメモ Phase 3 · v1.4</p>
+      <p class="settings-ver">おかいものメモ Phase 3 · v1.5</p>
     </section>
   </main>
 
-  <!-- ====== 下部：追加バー ====== -->
-  <div id="addBar" class="add-bar">
+  <!-- ====== 下部：追加バー（リストタブのみ表示） ====== -->
+  <div id="addBar" class="add-bar" style="display:none;">
     <div id="suggestBox" class="suggest-box" hidden></div>
     <form id="addForm" class="add-form" autocomplete="off">
       <input id="nameInput" class="add-name" type="text" inputmode="text"
@@ -249,10 +274,10 @@
 
   <!-- ====== タブバー ====== -->
   <nav class="tab-bar" role="tablist">
-    <button class="tab-btn is-active" data-target="list" role="tab" aria-selected="true">
+    <button class="tab-btn" data-target="list" role="tab" aria-selected="false">
       <span class="tab-ico">🧺</span><span class="tab-lbl">リスト</span>
     </button>
-    <button class="tab-btn" data-target="menu" role="tab" aria-selected="false">
+    <button class="tab-btn is-active" data-target="menu" role="tab" aria-selected="true">
       <span class="tab-ico">🍳</span><span class="tab-lbl">献立</span>
     </button>
     <button class="tab-btn" data-target="stores" role="tab" aria-selected="false">
