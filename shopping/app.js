@@ -635,6 +635,60 @@
   });
 
   /* =====================================================================
+   * ホーム画面に追加（スマホでアプリ化）
+   *  - Android/Chrome: beforeinstallprompt を捕まえてワンタップ追加
+   *  - iOS/Safari: 自動プロンプトが無いので、共有メニューの手順を案内
+   * ===================================================================== */
+  var installBanner = $('#installBanner');
+  var installText = $('#installText');
+  var installBtn = $('#installBtn');
+  var installClose = $('#installClose');
+  var deferredPrompt = null;
+
+  function isStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+           window.navigator.standalone === true;
+  }
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+  function dismissInstall() {
+    installBanner.hidden = true;
+    state.settings.installDismissed = true;
+    save(KEYS.settings, state.settings);
+  }
+  function showInstallBanner(kind) {
+    if (isStandalone() || state.settings.installDismissed) return;
+    if (kind === 'ios') {
+      installText.textContent = '共有ボタン → 「ホーム画面に追加」で、アプリのように使えます';
+      installBtn.hidden = true;
+    } else {
+      installText.textContent = 'ホーム画面に追加して、アプリみたいに使えます♪';
+      installBtn.hidden = false;
+    }
+    installBanner.hidden = false;
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstallBanner('android');
+  });
+  window.addEventListener('appinstalled', function () { dismissInstall(); });
+
+  installBtn.addEventListener('click', function () {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function () {
+      deferredPrompt = null;
+      installBanner.hidden = true;
+    });
+  });
+  installClose.addEventListener('click', dismissInstall);
+
+  if (isIOS()) showInstallBanner('ios');
+
+  /* =====================================================================
    * Service Worker 登録（PWA）
    * ===================================================================== */
   if ('serviceWorker' in navigator) {

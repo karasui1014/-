@@ -2,13 +2,23 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <!-- viewport-fit=cover で iPhone のノッチ/ホームバーまで対応。
+       拡大はアクセシビリティのため敢えて禁止しない（入力欄は16pxで自動拡大を防止）。 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#ffb6c8" />
   <meta name="description" content="主婦のための、かわいいお買い物リスト。よく買うものはワンタップ、売り場順で店内をスイスイ。" />
   <title>おかいものメモ 🐱🧺</title>
 
+  <!-- スマホでホーム画面に追加すると、アプリのように全画面で起動する -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="おかいもの" />
+  <meta name="format-detection" content="telephone=no" />
+
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
 
   <!-- 丸ゴシック（リポジトリで使用中の Zen Maru Gothic） -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,6 +56,14 @@
       <p class="tagline">きょうも いってらっしゃい♪</p>
     </div>
   </header>
+
+  <!-- ====== ホーム画面に追加バナー（スマホ用） ====== -->
+  <div id="installBanner" class="install-banner" hidden>
+    <span class="ib-emoji" aria-hidden="true">📲</span>
+    <span id="installText" class="ib-text"></span>
+    <button id="installBtn" class="ib-btn" type="button" hidden>追加</button>
+    <button id="installClose" class="ib-close" type="button" aria-label="閉じる">✕</button>
+  </div>
 
   <!-- ====== 予算サマリー ====== -->
   <section id="budgetBar" class="budget-bar" aria-live="polite">
