@@ -1090,3 +1090,89 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.05ms !important; }
 }
+
+/* =========================================================================
+ * ローディング画面（モフモフ子ねこ）
+ *  - 起動時にかわいい子ねこが、もふっと弾み・まばたき・耳ぴく・おてて・しっぽを動かす
+ *  - 最低表示のあと app.js がフェードで隠す（JSが動かなくても保険で自動的に消える）
+ * ========================================================================= */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  background:
+    radial-gradient(900px 360px at 50% -120px, var(--pink-soft), transparent),
+    linear-gradient(180deg, var(--cream), #fff4ee 60%, #fdeee7);
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+  animation: lsSafety 0.6s ease 6.5s forwards;   /* JSが動かない時の保険 */
+}
+.loading-screen.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+@keyframes lsSafety { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+.mofu-svg {
+  width: min(60vw, 240px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 8px 10px rgba(150,120,110,0.12));
+}
+.loading-text {
+  margin: 6px 0 0;
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--pink-deep);
+  letter-spacing: 0.05em;
+}
+.loading-dots span { animation: lsDot 1.2s infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes lsDot { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+.loading-sub { margin: 2px 0 0; font-weight: 700; font-size: 0.82rem; color: var(--ink-soft); }
+
+/* SVGの各パーツの回転/拡縮の原点を viewBox 座標で指定する */
+.mofu, .mofu-eyes, .mofu-ear-l, .mofu-ear-r, .mofu-paw-l, .mofu-paw-r,
+.mofu-tail, .mofu-shadow { transform-box: view-box; }
+.mofu-spark { transform-box: fill-box; transform-origin: center; }
+
+.mofu { transform-origin: 100px 160px; animation: mofuBob 2.4s ease-in-out infinite; }
+@keyframes mofuBob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-11px) rotate(0deg); }
+  25%      { transform: translateY(-6px) rotate(-2.5deg); }
+  75%      { transform: translateY(-6px) rotate(2.5deg); }
+}
+.mofu-shadow { transform-origin: 100px 198px; animation: mofuShadow 2.4s ease-in-out infinite; }
+@keyframes mofuShadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.09; }
+  50%      { transform: scaleX(0.8); opacity: 0.05; }
+}
+.mofu-eyes { transform-origin: 100px 97px; animation: mofuBlink 3.6s infinite; }
+@keyframes mofuBlink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.08); } }
+
+.mofu-ear-l { transform-origin: 75px 62px; animation: mofuEarL 2.4s ease-in-out infinite; }
+.mofu-ear-r { transform-origin: 125px 62px; animation: mofuEarR 2.4s ease-in-out infinite; }
+@keyframes mofuEarL { 0%,100%{transform:rotate(0)} 30%{transform:rotate(-8deg)} 60%{transform:rotate(3deg)} }
+@keyframes mofuEarR { 0%,100%{transform:rotate(0)} 30%{transform:rotate(8deg)} 60%{transform:rotate(-3deg)} }
+
+.mofu-paw-r { transform-origin: 122px 141px; animation: mofuWave 1.1s ease-in-out infinite; }
+@keyframes mofuWave { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-24deg)} }
+.mofu-paw-l { transform-box: view-box; transform-origin: 78px 141px; animation: mofuPawL 2.4s ease-in-out infinite; }
+@keyframes mofuPawL { 0%,100%{transform:rotate(0)} 50%{transform:rotate(7deg)} }
+
+.mofu-tail { transform-origin: 150px 132px; animation: mofuTail 2s ease-in-out infinite; }
+@keyframes mofuTail { 0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(11deg)} }
+
+.mofu-spark { animation: mofuTwinkle 1.8s ease-in-out infinite; }
+.mofu-spark.sp2 { animation-delay: 0.3s; }
+.mofu-spark.sp3 { animation-delay: 0.7s; }
+.mofu-spark.sp4 { animation-delay: 1.0s; }
+.mofu-spark.sp5 { animation-delay: 1.4s; }
+@keyframes mofuTwinkle {
+  0%, 100% { transform: scale(0.5); opacity: 0.2; }
+  50%      { transform: scale(1.1); opacity: 1; }
+}

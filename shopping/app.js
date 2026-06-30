@@ -24,6 +24,7 @@
 (function () {
   'use strict';
 
+  var APP_START = Date.now();   // ローディング画面の最低表示時間の計測に使う
   var CAT = window.OKAIMONO_CATEGORIES;
 
   /* ---------- localStorage キー ---------- */
@@ -1931,4 +1932,17 @@
 
   /* ---------- 初期描画 ---------- */
   render();
+
+  /* ---------- ローディング画面（モフモフ子ねこ）を隠す ---------- */
+  // 最低表示時間を確保してから、ふわっとフェードアウトして取り除く。
+  (function () {
+    var ls = document.getElementById('loadingScreen');
+    if (!ls) return;
+    var MIN_MS = 1300;
+    function hide() {
+      ls.classList.add('is-hidden');
+      setTimeout(function () { if (ls.parentNode) ls.parentNode.removeChild(ls); }, 550);
+    }
+    setTimeout(hide, Math.max(0, MIN_MS - (Date.now() - APP_START)));
+  })();
 })();
