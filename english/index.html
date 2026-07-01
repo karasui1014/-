@@ -410,6 +410,12 @@ const CATEGORIES = {
   business: { label:"仕事・ビジネス", icon:"💼", desc:"依頼・会議・メール的なやりとり" },
   phone:    { label:"電話・オンライン", icon:"📞", desc:"電話やビデオ通話でのやりとり" },
   help:     { label:"困ったとき・聞き返し", icon:"🆘", desc:"聞き返す・お願いする・助けを求める" },
+  family:   { label:"家族・日常生活", icon:"🏠", desc:"家族との会話・毎日のちょっとしたやりとり" },
+  school:   { label:"学校生活", icon:"🎒", desc:"宿題・部活・友達とのやりとり" },
+  health:   { label:"体調・病院", icon:"🏥", desc:"体調を聞く/伝える・病院・薬局でのやりとり" },
+  season:   { label:"天気・季節・行事", icon:"🌦️", desc:"天気の世間話・新年や誕生日のあいさつ" },
+  hobby:    { label:"趣味・雑談のきっかけ", icon:"🎨", desc:"趣味・映画・スポーツ・旅行の話題" },
+  kindness: { label:"ほめる・お祝い・気遣い", icon:"💐", desc:"褒め言葉・お祝い・お悔やみ・謝罪" },
 };
 
 const PHRASES = [
@@ -874,6 +880,396 @@ const PHRASES = [
     school:{ en:"I lost my way.", ja:"道に迷いました。" },
     natural:{ en:"Excuse me, I think I'm lost. Could you help me?", ja:"すみません、道に迷ったみたいで。助けてもらえますか？" },
     point:"<b>I'm lost</b> が自然な言い方。<b>I think</b> を付けると柔らかく、<b>Could you help me?</b> で助けを求められます。"
+  },
+
+  /* ---------- 家族・日常生活 ---------- */
+  {
+    id:"fam_howwasschool", category:"family",
+    prompt:{ en:"How was school today?", ja:"今日、学校どうだった？" },
+    situation:"親が子どもに一日の様子を聞く、何気ない声かけ。",
+    keywords:["how was school","学校どうだった","今日どうだった","school today"],
+    school:{ en:"It was fine, thank you.", ja:"楽しかったです、ありがとう。" },
+    natural:{ en:"Pretty good! We had a fun art class.", ja:"まあまあ良かったよ！図工が楽しかった。" },
+    point:"家族との会話で丁寧なフルセンテンスは不要。<b>Pretty good!</b> のように短く、具体的な出来事をひとつ添えると自然です。"
+  },
+  {
+    id:"fam_dinner", category:"family",
+    prompt:{ en:"What do you want for dinner?", ja:"夕飯何がいい？" },
+    situation:"家族に晩ご飯の希望を聞かれたとき。",
+    keywords:["dinner","夕飯","晩ご飯","what do you want","何がいい"],
+    school:{ en:"I want to eat curry.", ja:"カレーが食べたいです。" },
+    natural:{ en:"Anything's fine, but maybe curry?", ja:"何でもいいけど、カレーとかどう？" },
+    point:"<b>I want to eat X</b>は子どもっぽい直球な言い方。大人の会話では<b>Anything's fine, but maybe X?</b>と柔らかく提案するのが自然です。"
+  },
+  {
+    id:"fam_hurry", category:"family",
+    prompt:{ en:"Hurry up, we're going to be late!", ja:"急いで、遅れちゃうよ！" },
+    situation:"家族に急かされたときのとっさの返事。",
+    keywords:["hurry up","急いで","遅れる","late"],
+    school:{ en:"I understand. I will hurry.", ja:"わかりました。急ぎます。" },
+    natural:{ en:"Okay, coming!", ja:"うん、今行く！" },
+    point:"とっさの場面で<b>I understand, I will hurry</b>は説明的すぎ。<b>Coming!</b>だけで十分伝わります。"
+  },
+  {
+    id:"fam_pets", category:"family",
+    prompt:{ en:"Do you have any pets?", ja:"ペット飼ってるの？" },
+    situation:"雑談でペットについて聞かれたとき。",
+    keywords:["pets","ペット","飼って","animal"],
+    school:{ en:"Yes, I have a dog.", ja:"はい、犬を飼っています。" },
+    natural:{ en:"Yeah, a dog named Max. He's adorable.", ja:"うん、マックスっていう犬がいるの。すごく可愛いんだ。" },
+    point:"名前やひと言の感想を添えると、相手も質問しやすくなり会話が弾みます。"
+  },
+  {
+    id:"fam_grandkids", category:"family",
+    prompt:{ en:"How old are your grandchildren now?", ja:"お孫さんは今おいくつ？" },
+    situation:"高齢の方同士の世間話でよく出る質問。",
+    keywords:["grandchildren","孫","おいくつ","grandkids"],
+    school:{ en:"My grandchildren are ten years old.", ja:"孫は10歳です。" },
+    natural:{ en:"My oldest is ten, and the little one just turned five.", ja:"上の子が10歳で、下の子は5歳になったばかりよ。" },
+    point:"家族の話題は年齢だけでなく、続柄や近況をひとこと添えると温かい会話になります。"
+  },
+  {
+    id:"fam_takecare", category:"family",
+    prompt:{ en:"Please take care of yourself.", ja:"お体を大事にしてくださいね。" },
+    situation:"体調を気遣う言葉をかけられたとき。",
+    keywords:["take care","お大事に","気をつけて","体に気をつけて"],
+    school:{ en:"Thank you, I will take care.", ja:"ありがとう、気をつけます。" },
+    natural:{ en:"Thank you, I will. You too!", ja:"ありがとう、そうするね。あなたもね！" },
+    point:"相手にも<b>You too!</b>と気遣いを返すと、より温かいやりとりになります。"
+  },
+  {
+    id:"fam_visitagain", category:"family",
+    prompt:{ en:"Come visit again soon.", ja:"また遊びに来てね。" },
+    situation:"家族や親戚の家を訪ねた帰り際。",
+    keywords:["come visit","また来て","遊びに来て","visit again"],
+    school:{ en:"Yes, I will come again.", ja:"はい、また来ます。" },
+    natural:{ en:"I will! Thanks for having me.", ja:"また来るね！招いてくれてありがとう。" },
+    point:"<b>Thanks for having me</b>（お邪魔しました）は訪問の帰り際に使う決まり文句です。"
+  },
+
+  /* ---------- 学校生活 ---------- */
+  {
+    id:"sch_homework", category:"school",
+    prompt:{ en:"Did you finish your homework?", ja:"宿題終わった？" },
+    situation:"親や先生に宿題の進み具合を聞かれたとき。",
+    keywords:["homework","宿題","finish","終わった"],
+    school:{ en:"Yes, I finished my homework.", ja:"はい、宿題を終えました。" },
+    natural:{ en:"Yep, all done!", ja:"うん、終わったよ！" },
+    point:"日常会話では<b>Yep, all done!</b>のような短い相槌のほうが自然です。"
+  },
+  {
+    id:"sch_subject", category:"school",
+    prompt:{ en:"What's your favorite subject?", ja:"好きな教科は何？" },
+    situation:"学校生活について聞かれる定番の質問。",
+    keywords:["favorite subject","好きな教科","科目","subject"],
+    school:{ en:"My favorite subject is math.", ja:"好きな教科は数学です。" },
+    natural:{ en:"I really like math. Numbers just make sense to me.", ja:"数学が好きなんだ。数字ってしっくりくるんだよね。" },
+    point:"好きな理由をひと言添えると、会話が広がりやすくなります。"
+  },
+  {
+    id:"sch_club", category:"school",
+    prompt:{ en:"What club are you in?", ja:"何部に入ってるの？" },
+    situation:"部活について聞かれたとき。",
+    keywords:["club","部活","what club","入ってる"],
+    school:{ en:"I am in the tennis club.", ja:"テニス部に入っています。" },
+    natural:{ en:"I'm on the tennis team. We practice every day.", ja:"テニス部だよ。毎日練習してるんだ。" },
+    point:"活動の頻度など具体的な情報を添えると、自然な会話の広がりになります。"
+  },
+  {
+    id:"sch_exam", category:"school",
+    prompt:{ en:"How did your exam go?", ja:"テストどうだった？" },
+    situation:"試験の出来を聞かれたとき。",
+    keywords:["exam","テスト","how did","試験"],
+    school:{ en:"I think I did well.", ja:"うまくいったと思います。" },
+    natural:{ en:"Not bad, I think! I'm just glad it's over.", ja:"悪くなかったと思う！終わってほっとしたよ。" },
+    point:"「終わってほっとした」のような素直な感情を添えると、より人間味のある返答になります。"
+  },
+  {
+    id:"sch_absent", category:"school",
+    prompt:{ en:"Why were you absent yesterday?", ja:"昨日どうして休んだの？" },
+    situation:"欠席の理由を聞かれたとき。",
+    keywords:["absent","休んだ","yesterday","欠席"],
+    school:{ en:"I was absent because I was sick.", ja:"具合が悪かったので休みました。" },
+    natural:{ en:"I wasn't feeling well, so I stayed home.", ja:"体調が良くなくて、家にいたんだ。" },
+    point:"<b>I was absent because</b>は硬い言い回し。自然には<b>I wasn't feeling well, so...</b>の形がよく使われます。"
+  },
+  {
+    id:"sch_praise", category:"school",
+    prompt:{ en:"Great job on your presentation!", ja:"発表よかったよ！" },
+    situation:"先生やクラスメートに褒められたとき。",
+    keywords:["great job","よかったよ","presentation","発表","褒められ"],
+    school:{ en:"Thank you very much.", ja:"どうもありがとうございます。" },
+    natural:{ en:"Thanks! I was pretty nervous, honestly.", ja:"ありがとう！正直けっこう緊張してたんだ。" },
+    point:"緊張してた等の素直な気持ちを添えると、人間味のある会話になります。"
+  },
+  {
+    id:"sch_lunch", category:"school",
+    prompt:{ en:"Want to eat lunch together?", ja:"一緒にお昼食べない？" },
+    situation:"クラスメートからの誘い。",
+    keywords:["lunch together","お昼","一緒に","eat lunch"],
+    school:{ en:"Yes, let's eat lunch together.", ja:"はい、一緒に食べましょう。" },
+    natural:{ en:"Sure, sounds good!", ja:"いいね、そうしよう！" },
+    point:"カジュアルな誘いには<b>Sure, sounds good!</b>のような軽い相槌で十分です。"
+  },
+
+  /* ---------- 体調・病院 ---------- */
+  {
+    id:"hea_feeling", category:"health",
+    prompt:{ en:"How are you feeling today?", ja:"今日の体調はどうですか？" },
+    situation:"体調を気遣われたとき（家族・病院など）。",
+    keywords:["how are you feeling","体調","feeling today","調子"],
+    school:{ en:"I am feeling fine.", ja:"元気です。" },
+    natural:{ en:"A bit better than yesterday, thanks.", ja:"昨日よりは少し良いです、ありがとう。" },
+    point:"昨日との比較など変化を伝えると、相手も状況を把握しやすくなります。"
+  },
+  {
+    id:"hea_whatswrong", category:"health",
+    prompt:{ en:"What's wrong?", ja:"どうしたの？（具合悪そうなとき）" },
+    situation:"具合が悪そうな様子を心配されたとき。",
+    keywords:["what's wrong","どうしたの","大丈夫","具合","頭痛","headache","痛い"],
+    school:{ en:"I have a headache.", ja:"頭痛があります。" },
+    natural:{ en:"I've got a bit of a headache, that's all.", ja:"ちょっと頭痛がするだけ、大したことないよ。" },
+    point:"<b>that's all</b>（それだけ、大したことない）を添えると相手を安心させられます。"
+  },
+  {
+    id:"hea_symptoms", category:"health",
+    prompt:{ en:"What symptoms do you have?", ja:"どんな症状がありますか？" },
+    situation:"薬局や病院で症状を聞かれたとき。",
+    keywords:["symptoms","症状","pharmacy","薬局"],
+    school:{ en:"I have a cold.", ja:"風邪をひいています。" },
+    natural:{ en:"I've had a sore throat and a runny nose since yesterday.", ja:"昨日から喉の痛みと鼻水があるんです。" },
+    point:"症状の種類と続いている期間を具体的に伝えると、より的確な対応をしてもらえます。"
+  },
+  {
+    id:"hea_getwell", category:"health",
+    prompt:{ en:"Get well soon!", ja:"早く良くなってね！" },
+    situation:"体調を気遣う言葉をかけられたとき。",
+    keywords:["get well soon","早く良くなって","お大事に"],
+    school:{ en:"Thank you.", ja:"ありがとう。" },
+    natural:{ en:"Thanks, I appreciate it.", ja:"ありがとう、うれしいよ。" },
+    point:"<b>I appreciate it</b>を添えると、感謝の気持ちがより丁寧に伝わります。"
+  },
+  {
+    id:"hea_appointment", category:"health",
+    prompt:{ en:"Do you have an appointment?", ja:"ご予約はございますか？" },
+    situation:"病院の受付で聞かれたとき。",
+    keywords:["appointment","予約","clinic","受付"],
+    school:{ en:"No, I do not have an appointment.", ja:"いいえ、予約はしていません。" },
+    natural:{ en:"No, I don't. Is it possible to see a doctor today?", ja:"いいえ、していません。今日診てもらうことはできますか？" },
+    point:"予約なしでも診てもらえるか続けて聞くと、スムーズに話が進みます。"
+  },
+  {
+    id:"hea_allergy", category:"health",
+    prompt:{ en:"Do you have any allergies?", ja:"アレルギーはありますか？" },
+    situation:"病院や飲食店でアレルギーを確認されたとき。",
+    keywords:["allergies","アレルギー","allergy"],
+    school:{ en:"I do not have any allergies.", ja:"アレルギーはありません。" },
+    natural:{ en:"No, none that I know of.", ja:"いえ、私の知る限りはないです。" },
+    point:"<b>that I know of</b>（自分の知る限り）という言い回しで、断定を避けつつ自然に答えられます。"
+  },
+  {
+    id:"hea_tiredlately", category:"health",
+    prompt:{ en:"You look tired lately.", ja:"最近疲れてるみたいだね。" },
+    situation:"心配して声をかけられたとき。",
+    keywords:["look tired","疲れてる","tired lately","顔色"],
+    school:{ en:"Yes, I am tired.", ja:"はい、疲れています。" },
+    natural:{ en:"Yeah, I haven't been sleeping well lately.", ja:"うん、最近あまり眠れてなくて。" },
+    point:"理由をひとこと添えると、ただの相槌以上の会話に発展します。"
+  },
+
+  /* ---------- 天気・季節・行事 ---------- */
+  {
+    id:"sea_hotday", category:"season",
+    prompt:{ en:"It's so hot today, isn't it?", ja:"今日は暑いですね。" },
+    situation:"天気の世間話（定番の切り出し方）。",
+    keywords:["hot today","暑いですね","weather","isn't it"],
+    school:{ en:"Yes, it is hot today.", ja:"はい、今日は暑いです。" },
+    natural:{ en:"Yeah, it's brutal out there!", ja:"ほんと、外めちゃくちゃ暑いよ！" },
+    point:"天気の相槌は誰にでも使える定番の世間話。<b>brutal</b>のような少しくだけた表現を使うとより自然です。"
+  },
+  {
+    id:"sea_rain", category:"season",
+    prompt:{ en:"Looks like it might rain.", ja:"雨が降りそうですね。" },
+    situation:"天気の話題（傘の心配など）。",
+    keywords:["might rain","雨が降りそう","rain","umbrella"],
+    school:{ en:"Yes, it might rain.", ja:"はい、降るかもしれません。" },
+    natural:{ en:"Yeah, I should've brought an umbrella.", ja:"だね、傘持ってくればよかった。" },
+    point:"自分の状況（傘を忘れた等）を絡めて話すと、より自然な会話になります。"
+  },
+  {
+    id:"sea_newyear", category:"season",
+    prompt:{ en:"Happy New Year!", ja:"あけましておめでとうございます！" },
+    situation:"新年のあいさつ。",
+    keywords:["happy new year","あけましておめでとう","new year"],
+    school:{ en:"Happy New Year to you too.", ja:"あなたもよいお年を。" },
+    natural:{ en:"Happy New Year! Hope this year is a great one for you.", ja:"あけましておめでとう！今年もいい一年になりますように。" },
+    point:"気持ちをひと言添えると、より温かみのある新年の挨拶になります。"
+  },
+  {
+    id:"sea_birthday", category:"season",
+    prompt:{ en:"Happy birthday!", ja:"誕生日おめでとう！" },
+    situation:"誕生日を祝われたとき。",
+    keywords:["happy birthday","誕生日おめでとう","birthday"],
+    school:{ en:"Thank you very much.", ja:"どうもありがとうございます。" },
+    natural:{ en:"Thank you so much! That means a lot.", ja:"ありがとう！それを聞けてうれしいよ。" },
+    point:"<b>That means a lot</b>（うれしいよ）で気持ちを込めた返しになります。"
+  },
+  {
+    id:"sea_holidayplans", category:"season",
+    prompt:{ en:"Any plans for the holidays?", ja:"休みの予定はある？" },
+    situation:"長期休暇の前後によくある世間話。",
+    keywords:["holidays","休みの予定","plans","vacation"],
+    school:{ en:"I do not have any plans.", ja:"予定はありません。" },
+    natural:{ en:"Not really, just relaxing at home. How about you?", ja:"特には、家でのんびりするだけかな。そっちは？" },
+    point:"聞き返すことで、会話のキャッチボールが自然に生まれます。"
+  },
+  {
+    id:"sea_sakura", category:"season",
+    prompt:{ en:"The cherry blossoms are beautiful this year.", ja:"今年の桜はきれいだね。" },
+    situation:"季節の話題（花見など）。",
+    keywords:["cherry blossoms","桜","beautiful","sakura"],
+    school:{ en:"Yes, they are beautiful.", ja:"はい、きれいですね。" },
+    natural:{ en:"They really are! Perfect weather for it too.", ja:"ほんときれい！お天気もぴったりだね。" },
+    point:"天気など関連する話題を足すと、会話が自然に広がります。"
+  },
+  {
+    id:"sea_staywarm", category:"season",
+    prompt:{ en:"Stay warm out there!", ja:"寒いから気をつけてね！" },
+    situation:"寒い時期に気遣われたとき。",
+    keywords:["stay warm","気をつけて","寒いから","cold"],
+    school:{ en:"Thank you, I will stay warm.", ja:"ありがとう、暖かくします。" },
+    natural:{ en:"Thanks, you too! Bundle up.", ja:"ありがとう、あなたもね！しっかり着込んで。" },
+    point:"<b>Bundle up</b>（厚着してね）のように相手にも返すと、親しみやすいやりとりになります。"
+  },
+
+  /* ---------- 趣味・雑談のきっかけ ---------- */
+  {
+    id:"hob_freetime", category:"hobby",
+    prompt:{ en:"What do you do in your free time?", ja:"休みの日は何してるの？" },
+    situation:"趣味について聞かれる定番の質問。",
+    keywords:["free time","休みの日","what do you do","趣味"],
+    school:{ en:"I read books in my free time.", ja:"休みの日は本を読みます。" },
+    natural:{ en:"I mostly just read or watch movies, nothing too exciting.", ja:"だいたい本読んだり映画観たりかな、特別なことはしてないよ。" },
+    point:"少し謙遜しつつ具体的に答えると、話しやすい雰囲気になります。"
+  },
+  {
+    id:"hob_movie", category:"hobby",
+    prompt:{ en:"Have you seen any good movies lately?", ja:"最近何か良い映画観た？" },
+    situation:"映画の話題を振られたとき。",
+    keywords:["good movies","映画","seen any","lately"],
+    school:{ en:"Yes, I saw a good movie.", ja:"はい、良い映画を観ました。" },
+    natural:{ en:"Actually yeah, I watched a really good one last weekend.", ja:"それがね、先週末にすごく良いの観たんだ。" },
+    point:"いつ観たかなど具体性を足すと、会話が続きやすくなります。"
+  },
+  {
+    id:"hob_sports", category:"hobby",
+    prompt:{ en:"Do you follow any sports?", ja:"何かスポーツ見たりする？" },
+    situation:"スポーツ好きかどうか聞かれたとき。",
+    keywords:["follow sports","スポーツ","sports fan"],
+    school:{ en:"Yes, I follow baseball.", ja:"はい、野球を見ます。" },
+    natural:{ en:"Yeah, I'm a huge baseball fan actually.", ja:"うん、実は野球の大ファンなんだ。" },
+    point:"<b>huge fan</b>（大ファン）のように感情を込めた表現で、熱意が伝わります。"
+  },
+  {
+    id:"hob_music", category:"hobby",
+    prompt:{ en:"What kind of music do you listen to?", ja:"どんな音楽聴くの？" },
+    situation:"音楽の好みについて聞かれたとき。",
+    keywords:["what kind of music","音楽","listen to"],
+    school:{ en:"I listen to pop music.", ja:"ポップスを聴きます。" },
+    natural:{ en:"Mostly pop, but I'm open to just about anything.", ja:"だいたいポップスかな、でも大体何でも聴くよ。" },
+    point:"<b>open to anything</b>（何でも聴く）のような柔軟さを示す表現も自然です。"
+  },
+  {
+    id:"hob_travel", category:"hobby",
+    prompt:{ en:"Have you traveled anywhere recently?", ja:"最近どこか旅行した？" },
+    situation:"旅行の話題を振られたとき。",
+    keywords:["traveled","旅行した","recently","trip"],
+    school:{ en:"Yes, I traveled to Osaka.", ja:"はい、大阪へ旅行しました。" },
+    natural:{ en:"Yeah, I went to Osaka last month. It was amazing.", ja:"うん、先月大阪に行ったよ。すごく良かった。" },
+    point:"感想（amazingなど）を添えると、相手も質問しやすくなります。"
+  },
+  {
+    id:"hob_newhobby", category:"hobby",
+    prompt:{ en:"I just started a new hobby.", ja:"新しい趣味を始めたんだ。" },
+    situation:"相手が新しい趣味の話をしてきたとき。",
+    keywords:["new hobby","新しい趣味","started"],
+    school:{ en:"That is good.", ja:"それは良いですね。" },
+    natural:{ en:"Oh nice, what is it?", ja:"へえいいね、それ何？" },
+    point:"<b>That is good</b>だけでは会話が止まってしまいます。質問で返すと自然に続きます。"
+  },
+  {
+    id:"hob_game", category:"hobby",
+    prompt:{ en:"Do you want to play a game?", ja:"ゲームしない？" },
+    situation:"友人・家族からの誘い。",
+    keywords:["play a game","ゲームしない","game"],
+    school:{ en:"Yes, I want to play a game.", ja:"はい、ゲームがしたいです。" },
+    natural:{ en:"Sure, I'm in!", ja:"いいね、乗った！" },
+    point:"<b>I'm in!</b>（乗った！）は、カジュアルな誘いへの定番の返し方です。"
+  },
+
+  /* ---------- ほめる・お祝い・気遣い ---------- */
+  {
+    id:"kin_outfit", category:"kindness",
+    prompt:{ en:"I love your outfit today!", ja:"今日の服素敵だね！" },
+    situation:"服装を褒められたとき。",
+    keywords:["love your outfit","服素敵","compliment","outfit"],
+    school:{ en:"Thank you.", ja:"ありがとう。" },
+    natural:{ en:"Thank you! That's so sweet of you to say.", ja:"ありがとう！そう言ってもらえてうれしい。" },
+    point:"ひと言添えると、ただの相槌以上の温かい返しになります。"
+  },
+  {
+    id:"kin_congrats", category:"kindness",
+    prompt:{ en:"Congratulations on your new job!", ja:"新しい仕事おめでとう！" },
+    situation:"昇進や転職を祝われたとき。",
+    keywords:["congratulations","おめでとう","new job"],
+    school:{ en:"Thank you very much.", ja:"どうもありがとうございます。" },
+    natural:{ en:"Thank you so much! I'm really excited about it.", ja:"本当にありがとう！すごく楽しみなんだ。" },
+    point:"気持ち（excitedなど）を添えると、喜びがより伝わります。"
+  },
+  {
+    id:"kin_sympathy", category:"kindness",
+    prompt:{ en:"I'm so sorry for your loss.", ja:"この度はご愁傷様です。" },
+    situation:"お悔やみの言葉をかけられたとき。",
+    keywords:["sorry for your loss","ご愁傷様","condolences"],
+    school:{ en:"Thank you.", ja:"ありがとうございます。" },
+    natural:{ en:"Thank you, I really appreciate you saying that.", ja:"ありがとうございます、そう言っていただけて感謝します。" },
+    point:"フォーマルな場面でも、気持ちのこもったひと言を添えると良いでしょう。"
+  },
+  {
+    id:"kin_apology", category:"kindness",
+    prompt:{ en:"I'm really sorry I'm late.", ja:"遅れて本当にごめんね。" },
+    situation:"相手から謝罪されたとき。",
+    keywords:["sorry i'm late","遅れてごめん","apology","late"],
+    school:{ en:"It is okay.", ja:"大丈夫です。" },
+    natural:{ en:"No worries at all, don't stress about it.", ja:"全然気にしないで、大丈夫だから。" },
+    point:"<b>It is okay</b>よりくだけた<b>No worries</b>のほうが親しみやすく、相手の気を楽にします。"
+  },
+  {
+    id:"kin_gift", category:"kindness",
+    prompt:{ en:"This is for you.", ja:"これ、どうぞ。（プレゼントを渡されたとき）" },
+    situation:"プレゼントをもらったとき。",
+    keywords:["this is for you","プレゼント","gift","どうぞ"],
+    school:{ en:"Thank you, I like it.", ja:"ありがとう、気に入りました。" },
+    natural:{ en:"Oh wow, thank you so much! You didn't have to.", ja:"わあ、本当にありがとう！そんな気を使わなくてよかったのに。" },
+    point:"<b>You didn't have to</b>（そんな気を使わなくてよかったのに）は、贈り物への定番の謙遜フレーズです。"
+  },
+  {
+    id:"kin_comfort", category:"kindness",
+    prompt:{ en:"I failed my test.", ja:"テストに落ちちゃった。" },
+    situation:"落ち込んでいる相手を励ますとき。",
+    keywords:["failed","落ち込ん","comfort","test"],
+    school:{ en:"That is unfortunate.", ja:"それは残念ですね。" },
+    natural:{ en:"Oh no, I'm sorry to hear that. You'll do better next time.", ja:"えー、それは残念だったね。次はきっとうまくいくよ。" },
+    point:"共感＋励ましのひと言をセットで伝えると、温かい会話になります。"
+  },
+  {
+    id:"kin_niceweekend", category:"kindness",
+    prompt:{ en:"Have a nice weekend!", ja:"良い週末を！" },
+    situation:"別れ際のあいさつ。",
+    keywords:["have a nice weekend","良い週末","weekend"],
+    school:{ en:"You too.", ja:"あなたもね。" },
+    natural:{ en:"Thanks, you too! Any plans?", ja:"ありがとう、あなたもね！何か予定あるの？" },
+    point:"質問を添えると、立ち話がもう少し続く自然なきっかけになります。"
   },
 ];
 
