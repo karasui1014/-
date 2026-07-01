@@ -29,7 +29,7 @@
 
 - **完全無料 / ログイン不要 / 端末内保存**（データは `localStorage` に保存されます）
 - **自動アップデート**: 例文追加などの改善版を公開すると、開きっぱなしのタブでも自動で最新版に切り替わります（入力中は奪わず、操作の切れ目で更新）
-- **オフライン動作**（外部CDN・サーバー不要の単一HTML）
+- **単一HTML**（フォント表示用に Google Fonts の CDN を利用。読み込めない場合はシステムフォントに自動フォールバックするため、オフラインでも機能自体は問題なく動作します）
 
 ---
 
@@ -85,4 +85,5 @@ GitHub Pages で公開しています（リポジトリ設定で Pages の Sourc
 - 音声出力: Web Speech API（`SpeechSynthesis`）
 - 録音: `MediaRecorder` API
 - 保存: `localStorage`
-- 依存ライブラリ・外部通信なし
+- フォント: Google Fonts（Zen Kaku Gothic New / Poppins）をCDN経由で読み込み
+- 依存ライブラリなし（外部通信はフォント読み込みのみ）
