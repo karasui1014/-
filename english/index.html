@@ -133,11 +133,14 @@
     padding:10px 12px; font-size:.83rem; color:#1e3a8a; margin-top:6px;
   }
   .point b{color:#1d4ed8;}
-  .card .card-foot{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .card .card-foot{display:flex; justify-content:flex-end; align-items:center; margin-top:10px;}
   .fav-btn{
-    border:none; background:transparent; cursor:pointer; font-size:1.25rem; color:#cbd5e1; padding:4px;
+    border:1px solid var(--line); background:#fff; cursor:pointer; font-size:.8rem; font-weight:700;
+    color:#94a3b8; padding:6px 14px; border-radius:999px; display:inline-flex; align-items:center; gap:6px;
   }
-  .fav-btn.on{color:#f59e0b;}
+  .fav-btn .st{font-size:1.05rem; line-height:1;}
+  .fav-btn:active{transform:scale(.96);}
+  .fav-btn.on{color:#b45309; border-color:#fde68a; background:#fffbeb;}
 
   .related{margin-top:4px;}
   .related .related-lbl{font-size:.78rem; color:var(--sub); margin-bottom:6px; font-weight:600;}
@@ -236,7 +239,7 @@
   <!-- ===== 会話（自由入力）===== -->
   <section id="panel-talk" class="panel active">
     <div class="searchbox">
-      <textarea id="queryInput" rows="2" placeholder="日本語でも英語でもOK。例：ペンを持っていますか / お疲れ様です / How are you?"></textarea>
+      <textarea id="queryInput" rows="2" placeholder="日本語でも英語でもOK（例：ペンを持っていますか）"></textarea>
       <div class="controls">
         <div class="seg" id="langSeg" title="音声入力の言語">
           <button data-lang="ja-JP" class="on">🎙 日本語</button>
@@ -310,9 +313,12 @@
    ========================================================================= */
 const CATEGORIES = {
   greeting: { label:"あいさつ・雑談", icon:"👋", desc:"あいさつ・自己紹介・体調・天気など" },
+  reaction: { label:"あいづち・リアクション", icon:"😊", desc:"会話を続ける相づち・共感・驚きの返し" },
   shopping: { label:"買い物・飲食店", icon:"🛍️", desc:"お店・注文・会計・値段の聞き方" },
-  travel:   { label:"旅行・移動・道案内", icon:"✈️", desc:"道を尋ねる/教える・交通・ホテル" },
+  travel:   { label:"旅行・移動・道案内", icon:"✈️", desc:"道を尋ねる/教える・交通・ホテル・入国" },
   business: { label:"仕事・ビジネス", icon:"💼", desc:"依頼・会議・メール的なやりとり" },
+  phone:    { label:"電話・オンライン", icon:"📞", desc:"電話やビデオ通話でのやりとり" },
+  help:     { label:"困ったとき・聞き返し", icon:"🆘", desc:"聞き返す・お願いする・助けを求める" },
 };
 
 const PHRASES = [
@@ -512,6 +518,272 @@ const PHRASES = [
     natural:{ en:"Let me check and get back to you.", ja:"確認して、あらためてご連絡します。" },
     point:"<b>Let me check</b> で『ちょっと確認しますね』、<b>get back to you</b> で『後で連絡します』。セットで使うとスマートです。"
   },
+
+  /* ---------- あいさつ・雑談（追加） ---------- */
+  {
+    id:"g_longtime", category:"greeting",
+    prompt:{ en:"Long time no see!", ja:"久しぶり！" },
+    situation:"久しぶりに会ったときのあいさつ。",
+    keywords:["long time","久しぶり","ひさしぶり","no see","再会"],
+    school:{ en:"It has been a long time.", ja:"長い間会っていませんでしたね。" },
+    natural:{ en:"Yeah, it's been a while! How have you been?", ja:"ほんと久しぶり！元気にしてた？" },
+    point:"久しぶりの再会では <b>How have you been?</b>（元気にしてた？）と近況を聞き返すと会話が続きます。"
+  },
+  {
+    id:"g_youtoo", category:"greeting",
+    prompt:{ en:"Enjoy your meal!", ja:"ごゆっくりどうぞ！（料理を出すときの声かけ）" },
+    situation:"店員が料理を出すときの決まり文句。相手（店員）は食べません。",
+    keywords:["enjoy your meal","meal","食事","召し上が","いただきます"],
+    school:{ en:"Thank you.", ja:"ありがとう。" },
+    natural:{ en:"Thanks! / Thank you.", ja:"ありがとう！" },
+    point:"つい <b>You too!</b> と返しがちですが、店員は食べないので不自然。ここは <b>Thanks!</b> だけで十分です。"
+  },
+  {
+    id:"g_haveagoodone", category:"greeting",
+    prompt:{ en:"Have a good one!", ja:"よい一日を！（店員などの別れ際）" },
+    situation:"お店を出るときなどに言われる、軽い別れのあいさつ。",
+    keywords:["have a good one","good day","よい一日","別れ","またね"],
+    school:{ en:"You have a good day too.", ja:"あなたもよい一日を。" },
+    natural:{ en:"Thanks, you too!", ja:"ありがとう、あなたも！" },
+    point:"ここは相手も一日を過ごすので <b>You too!</b> が自然。短く <b>Thanks, you too!</b> でOKです。"
+  },
+
+  /* ---------- あいづち・リアクション ---------- */
+  {
+    id:"r_isee", category:"reaction",
+    prompt:{ en:"...(相手が説明してくれた)", ja:"相手が説明してくれた" },
+    situation:"相手の話に相づちを打つとき。",
+    keywords:["相づち","あいづち","なるほど","i see","わかった","got it"],
+    school:{ en:"I understand.", ja:"理解しました。" },
+    natural:{ en:"Oh, I see! / Got it.", ja:"なるほど！／わかった。" },
+    point:"会話中の相づちに <b>I understand</b> は少し硬い印象。<b>I see / Got it</b> がテンポよく自然です。"
+  },
+  {
+    id:"r_really", category:"reaction",
+    prompt:{ en:"I just got a new job!", ja:"新しい仕事が決まったんだ！" },
+    situation:"相手のうれしい・驚きの報告への反応。",
+    keywords:["really","驚き","マジ","すごい","no way","ほんと"],
+    school:{ en:"Is that true?", ja:"それは本当ですか？" },
+    natural:{ en:"Really?! That's awesome! / No way!", ja:"ほんと！？すごいね！／うそでしょ！" },
+    point:"驚きは <b>Really?! / No way!</b> で。<b>Is that true?</b> は相手を疑っているように聞こえることがあります。"
+  },
+  {
+    id:"r_toobad", category:"reaction",
+    prompt:{ en:"I'm not feeling well today.", ja:"今日は体調が悪くて。" },
+    situation:"相手の残念な知らせ・悪い話への反応。",
+    keywords:["残念","気の毒","too bad","sorry to hear","体調","大変"],
+    school:{ en:"Oh, that is bad.", ja:"ああ、それは悪いですね。" },
+    natural:{ en:"Oh no, that's too bad. I'm sorry to hear that.", ja:"えー、それは大変。お大事にね。" },
+    point:"悪い知らせには <b>That's too bad / I'm sorry to hear that</b>。同情を示す定番の返しです。"
+  },
+  {
+    id:"r_samehere", category:"reaction",
+    prompt:{ en:"I love spicy food.", ja:"辛い食べ物が大好きなんだ。" },
+    situation:"相手の発言に『私も』と同意するとき。",
+    keywords:["私も","同意","me too","same here","わたしも","だよね"],
+    school:{ en:"I love spicy food too.", ja:"私も辛い食べ物が大好きです。" },
+    natural:{ en:"Me too! / Same here!", ja:"私も！／だよね！" },
+    point:"肯定文への『私も』は <b>Me too / Same here</b>。否定文（I don't〜）への『私も』は <b>Me neither</b> になります。"
+  },
+  {
+    id:"r_makessense", category:"reaction",
+    prompt:{ en:"That's why the store was closed.", ja:"だからお店が閉まってたんだ。" },
+    situation:"相手の説明に納得したとき。",
+    keywords:["納得","なるほど","makes sense","筋が通","理解","そういうこと"],
+    school:{ en:"I understood the reason.", ja:"理由を理解しました。" },
+    natural:{ en:"Ah, that makes sense!", ja:"あー、なるほどね！（納得）" },
+    point:"納得したときは <b>That makes sense</b>（筋が通っている＝なるほど）がとても自然です。"
+  },
+  {
+    id:"r_goodforyou", category:"reaction",
+    prompt:{ en:"I passed the exam!", ja:"試験に合格したよ！" },
+    situation:"相手のうれしい報告を一緒に喜ぶとき。",
+    keywords:["good for you","おめでとう","よかったね","祝","合格","すごい"],
+    school:{ en:"That is good.", ja:"それは良いことです。" },
+    natural:{ en:"Good for you! / That's great!", ja:"よかったね！／すごいじゃん！" },
+    point:"相手の良い知らせには <b>Good for you! / That's great!</b> と一緒に喜ぶのが自然です。"
+  },
+
+  /* ---------- 買い物・飲食店（追加） ---------- */
+  {
+    id:"s_stillworking", category:"shopping",
+    prompt:{ en:"Are you still working on that?", ja:"そちら、まだお召し上がり中ですか？" },
+    situation:"レストランで店員がお皿を下げてよいか確認する言い方。",
+    keywords:["still working","お皿","下げ","食べ終","working on","召し上が"],
+    school:{ en:"Yes, I am still eating.", ja:"はい、まだ食べています。" },
+    natural:{ en:"Yes, I'm still working on it. / No, I'm done, thanks.", ja:"はい、まだ食べています。／いえ、もう大丈夫です。" },
+    point:"<b>working on it</b> は『まだ食べている』の意味。食べ終わったら <b>I'm done, thanks</b> でお皿を下げてもらえます。"
+  },
+  {
+    id:"s_howiseverything", category:"shopping",
+    prompt:{ en:"How is everything?", ja:"お料理はいかがですか？" },
+    situation:"食事中に店員が様子を尋ねる決まり文句。",
+    keywords:["how is everything","料理","味","いかが","おいしい"],
+    school:{ en:"Everything is delicious.", ja:"すべて美味しいです。" },
+    natural:{ en:"It's great, thank you!", ja:"とても美味しいです、ありがとう！" },
+    point:"全部を説明しなくてOK。<b>It's great, thanks!</b> と笑顔で返すだけで十分伝わります。"
+  },
+  {
+    id:"s_drink", category:"shopping",
+    prompt:{ en:"Can I start you off with something to drink?", ja:"まずお飲み物はいかがですか？" },
+    situation:"着席後、店員がまず飲み物を尋ねる言い方。",
+    keywords:["something to drink","飲み物","ドリンク","start you off","注文"],
+    school:{ en:"I want water.", ja:"水が欲しいです。" },
+    natural:{ en:"Just water for now, thanks. / Can I have a minute?", ja:"とりあえずお水を、ありがとう。／少し待ってもらえますか？" },
+    point:"まだ決まっていなければ <b>Can I have a minute?</b>（少し待って）が便利。<b>I want〜</b> より <b>Can I have〜 / I'll have〜</b> が丁寧です。"
+  },
+
+  /* ---------- 旅行・移動・道案内（追加） ---------- */
+  {
+    id:"t_bizpleasure", category:"travel",
+    prompt:{ en:"Business or pleasure?", ja:"お仕事ですか、観光ですか？" },
+    situation:"入国審査などで訪問の目的を聞かれる言い方。",
+    keywords:["business or pleasure","観光","目的","入国","pleasure","審査"],
+    school:{ en:"I came for sightseeing.", ja:"観光で来ました。" },
+    natural:{ en:"Pleasure. / Just sightseeing.", ja:"観光です。／観光だけです。" },
+    point:"<b>pleasure</b> は『観光・私用』の意味。短く <b>Pleasure</b> か <b>Sightseeing</b> と答えればOKです。"
+  },
+  {
+    id:"t_needahand", category:"travel",
+    prompt:{ en:"Do you need a hand?", ja:"手伝いましょうか？" },
+    situation:"荷物などで困っていそうなときの申し出。",
+    keywords:["need a hand","手伝","手を貸","help","荷物"],
+    school:{ en:"No, I am okay.", ja:"いいえ、大丈夫です。" },
+    natural:{ en:"Oh, thank you! / I'm okay, thanks.", ja:"あ、ありがとう！／大丈夫です、ありがとう。" },
+    point:"<b>need a hand</b> は『手伝おうか？』。断るときも <b>thanks</b> を添えると感じよく伝わります。"
+  },
+  {
+    id:"t_enjoystay", category:"travel",
+    prompt:{ en:"Enjoy your stay!", ja:"ごゆっくりどうぞ！（滞在を楽しんで）" },
+    situation:"ホテルのチェックインなどで言われるあいさつ。",
+    keywords:["enjoy your stay","滞在","ホテル","stay","チェックイン"],
+    school:{ en:"Yes, I will.", ja:"はい、そうします。" },
+    natural:{ en:"Thank you! / Thanks, we will!", ja:"ありがとう！／ありがとう、楽しみます！" },
+    point:"かしこまらず <b>Thank you!</b> で十分。ひと言 <b>we will</b> を足すとより自然です。"
+  },
+
+  /* ---------- 仕事・ビジネス（追加） ---------- */
+  {
+    id:"b_touchbase", category:"business",
+    prompt:{ en:"Let's touch base next week.", ja:"来週、状況を確認し合いましょう。" },
+    situation:"『また連絡を取り合おう』というビジネス表現。",
+    keywords:["touch base","連絡","確認","next week","取り合","打ち合わせ"],
+    school:{ en:"Yes, let us meet next week.", ja:"はい、来週会いましょう。" },
+    natural:{ en:"Sounds good. I'll follow up next week.", ja:"いいですね。来週こちらから連絡します。" },
+    point:"<b>touch base</b> は『状況を確認し合う』。<b>Sounds good</b> と受けて <b>follow up</b>（追って連絡）が自然です。"
+  },
+  {
+    id:"b_keepposted", category:"business",
+    prompt:{ en:"Keep me posted.", ja:"進捗があったら知らせてね。" },
+    situation:"『随時アップデートして』という依頼。",
+    keywords:["keep me posted","知らせ","進捗","報告","posted","共有"],
+    school:{ en:"Yes, I will tell you later.", ja:"はい、後で伝えます。" },
+    natural:{ en:"Sure, I'll keep you posted.", ja:"了解です、随時ご連絡します。" },
+    point:"<b>keep you posted</b> は『随時知らせる』。同じ表現をそのまま返すとこなれて聞こえます。"
+  },
+
+  /* ---------- 電話・オンライン ---------- */
+  {
+    id:"p_thisis", category:"phone",
+    prompt:{ en:"May I ask who's calling?", ja:"どちら様ですか？（お電話）" },
+    situation:"電話で名乗るとき。",
+    keywords:["who's calling","電話","名乗","this is","誰","どちら様"],
+    school:{ en:"I am Tanaka.", ja:"私は田中です。" },
+    natural:{ en:"This is Tanaka.", ja:"田中と申します。" },
+    point:"電話で名乗るときは <b>I am〜</b> ではなく <b>This is〜</b> が決まり文句。相手を確認するときは <b>Is this〜?</b> を使います。"
+  },
+  {
+    id:"p_hearme", category:"phone",
+    prompt:{ en:"Can you hear me?", ja:"聞こえますか？（通話）" },
+    situation:"ビデオ通話などで音声を確認するとき。",
+    keywords:["can you hear me","聞こえ","通話","音声","hear","オンライン"],
+    school:{ en:"Yes, I can hear you.", ja:"はい、聞こえます。" },
+    natural:{ en:"Yeah, I can hear you. / You're a bit quiet.", ja:"うん、聞こえるよ。／ちょっと小さいかも。" },
+    point:"聞こえにくいときは <b>You're a bit quiet</b>（少し小さい）や <b>You're breaking up</b>（途切れてる）が便利です。"
+  },
+  {
+    id:"p_breakingup", category:"phone",
+    prompt:{ en:"Sorry, you're breaking up.", ja:"ごめん、音声が途切れてる。" },
+    situation:"通話が乱れて相手の声が途切れるとき。",
+    keywords:["breaking up","途切れ","電波","通話","乱れ","切れる"],
+    school:{ en:"I cannot hear you well.", ja:"よく聞こえません。" },
+    natural:{ en:"You're breaking up—can you say that again?", ja:"途切れてるよ、もう一回言ってくれる？" },
+    point:"<b>breaking up</b> は『（通話が）途切れる』。聞き直すときは <b>Can you say that again?</b> をセットで。"
+  },
+  {
+    id:"p_holdon", category:"phone",
+    prompt:{ en:"Could you hold on a second?", ja:"少々お待ちいただけますか？（電話）" },
+    situation:"電話で相手を少し待たせるとき。",
+    keywords:["hold on","お待ち","保留","少々","second","待って"],
+    school:{ en:"Yes, I will wait.", ja:"はい、待ちます。" },
+    natural:{ en:"Sure, no problem.", ja:"はい、大丈夫です。" },
+    point:"待つのを了承するときは <b>Sure, no problem</b>。自分が待ってほしいときは <b>Hold on a second</b> と言えます。"
+  },
+  {
+    id:"p_callback", category:"phone",
+    prompt:{ en:"(かけ直します)", ja:"あとでかけ直します" },
+    situation:"こちらから改めて電話すると伝えるとき。",
+    keywords:["call back","かけ直","電話","あとで","callback","折り返"],
+    school:{ en:"I will call again later.", ja:"後でまた電話します。" },
+    natural:{ en:"Can I call you back? / I'll call you back later.", ja:"かけ直してもいい？／あとでかけ直すね。" },
+    point:"<b>call you back</b> が『かけ直す』の定番。相手にかけ直したいか尋ねるなら <b>Can I call you back?</b>。"
+  },
+
+  /* ---------- 困ったとき・聞き返し ---------- */
+  {
+    id:"h_sayagain", category:"help",
+    prompt:{ en:"(もう一度言ってほしい)", ja:"もう一度言ってもらえますか？" },
+    situation:"相手の言葉が聞き取れなかったとき。",
+    keywords:["say again","もう一度","聞き返","もう一回","pardon","聞こえなかった"],
+    school:{ en:"Please say it again.", ja:"もう一度言ってください。" },
+    natural:{ en:"Sorry, could you say that again?", ja:"すみません、もう一度言ってもらえますか？" },
+    point:"<b>Please say again</b> はやや命令的。<b>Sorry, could you say that again?</b> と前置きすると丁寧。単語なら <b>Sorry?</b> だけでも通じます。"
+  },
+  {
+    id:"h_slowly", category:"help",
+    prompt:{ en:"(ゆっくり話してほしい)", ja:"もう少しゆっくり話してもらえますか？" },
+    situation:"相手が早口で聞き取りづらいとき。",
+    keywords:["slowly","ゆっくり","早口","speak slow","もう少し","スピード"],
+    school:{ en:"Please speak slowly.", ja:"ゆっくり話してください。" },
+    natural:{ en:"Could you speak a little more slowly, please?", ja:"もう少しゆっくり話していただけますか？" },
+    point:"<b>a little more slowly</b>（もう少しゆっくり）とやわらげ、<b>please</b> を添えると角が立ちません。"
+  },
+  {
+    id:"h_notfollowing", category:"help",
+    prompt:{ en:"Does that make sense?", ja:"（説明のあと）ここまで大丈夫ですか？" },
+    situation:"相手の説明が理解できなかったと伝えるとき。",
+    keywords:["don't understand","わからない","理解できない","not following","ついていけ","難しい"],
+    school:{ en:"I don't understand.", ja:"理解できません。" },
+    natural:{ en:"Sorry, I'm not following. Could you explain that again?", ja:"すみません、ちょっとついていけてなくて。もう一度説明してもらえますか？" },
+    point:"<b>I don't understand</b> は少しきつい響き。<b>I'm not following</b>（ついていけていない）だと柔らかく失礼になりません。"
+  },
+  {
+    id:"h_whatmean", category:"help",
+    prompt:{ en:"It's a piece of cake.", ja:"（慣用句）朝飯前だよ。" },
+    situation:"知らない表現の意味を尋ねるとき。",
+    keywords:["what do you mean","意味","どういう意味","what does","mean","わからない言葉"],
+    school:{ en:"I don't know that word.", ja:"その単語を知りません。" },
+    natural:{ en:"What do you mean by that? / What does that mean?", ja:"それってどういう意味？／それどういう意味？" },
+    point:"意味を聞くときは <b>What do you mean by 〜?</b> や <b>What does 〜 mean?</b>。相手も言い換えて説明してくれます。"
+  },
+  {
+    id:"h_restroom", category:"help",
+    prompt:{ en:"(トイレはどこ？)", ja:"トイレはどこですか？" },
+    situation:"お店や施設でトイレの場所を尋ねるとき。",
+    keywords:["restroom","トイレ","お手洗い","bathroom","toilet","化粧室"],
+    school:{ en:"Where is the toilet?", ja:"トイレはどこですか？" },
+    natural:{ en:"Excuse me, where's the restroom?", ja:"すみません、お手洗いはどこですか？" },
+    point:"英語圏では <b>toilet</b>（便器そのもの）より <b>restroom / bathroom</b> が上品。<b>Excuse me</b> を付けて尋ねましょう。"
+  },
+  {
+    id:"h_lost", category:"help",
+    prompt:{ en:"(道に迷った)", ja:"道に迷ってしまいました" },
+    situation:"外出先で道がわからず助けを求めるとき。",
+    keywords:["lost","迷","道","助け","help me","迷子"],
+    school:{ en:"I lost my way.", ja:"道に迷いました。" },
+    natural:{ en:"Excuse me, I think I'm lost. Could you help me?", ja:"すみません、道に迷ったみたいで。助けてもらえますか？" },
+    point:"<b>I'm lost</b> が自然な言い方。<b>I think</b> を付けると柔らかく、<b>Could you help me?</b> で助けを求められます。"
+  },
 ];
 
 /* ===== 状態・保存 ===== */
@@ -637,11 +909,11 @@ function renderCard(e, opts={}){
   card.appendChild(answerBlock("natural","実際に伝わる返し方（おすすめ）", e.natural, e.id));
   card.appendChild(el("div","point", `📝 <b>ここがポイント</b>：${e.point}`));
   const foot = el("div","card-foot");
-  const fav = el("button","fav-btn"+(isFav?" on":""), isFav?"⭐":"☆");
-  fav.title="お気に入り";
-  fav.onclick = ()=>{ toggleFav(e.id); fav.classList.toggle("on"); fav.textContent = favorites.includes(e.id)?"⭐":"☆"; refreshBadges(); };
+  const fav = el("button","fav-btn"+(isFav?" on":""));
+  const paintFav = ()=>{ const on=favorites.includes(e.id); fav.classList.toggle("on",on); fav.innerHTML=`<span class="st">${on?"⭐":"☆"}</span>${on?"お気に入り済み":"お気に入り"}`; };
+  paintFav();
+  fav.onclick = ()=>{ toggleFav(e.id); paintFav(); refreshBadges(); };
   foot.appendChild(fav);
-  foot.appendChild(el("span","",""));
   card.appendChild(foot);
   return card;
 }
