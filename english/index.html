@@ -854,9 +854,10 @@ function scoreEntry(query, e){
   return score;
 }
 function search(query){
+  // どんな入力でも「一番近い例文」を必ず返す（0点でも空にはしない）。
+  // ぴったりかどうかは呼び出し側が MATCH_STRONG で判定して表示を変える。
   const ranked = PHRASES
     .map(e=>({ e, s:scoreEntry(query,e) }))
-    .filter(x=>x.s>0)
     .sort((a,b)=>b.s-a.s);
   return ranked;
 }
@@ -1190,9 +1191,54 @@ function init(){
   document.querySelectorAll("nav.tabbar button").forEach(b=> b.onclick=()=>switchTab(b.dataset.tab));
   // 音声リストの遅延ロード対策
   if("speechSynthesis" in window){ window.speechSynthesis.onvoiceschanged = ()=>{}; window.speechSynthesis.getVoices(); }
+  initAutoUpdate();
 }
 window.startQuiz = startQuiz; // インラインonclick用
 init();
+
+/* =========================================================================
+   自動アップデート（改善版を公開したら、開きっぱなしのタブにも自動反映）
+   - 単一HTMLでバージョン番号の手動管理をしないよう、取得したHTML本文の
+     ハッシュ値を比較して「変わったかどうか」だけを見る。
+   - 入力中は奪わず、操作の切れ目（blur / タブ非表示 / 最大1分）で更新。
+   ========================================================================= */
+let pageHash = null;
+let updating = false;
+function hashText(s){
+  let h = 0;
+  for (let i=0; i<s.length; i++){ h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0; }
+  return h;
+}
+function reloadForUpdate(){
+  if (updating) return;
+  updating = true;
+  const ae = document.activeElement;
+  const typing = ae && (ae.tagName === "TEXTAREA" || ae.tagName === "INPUT") && ae.value && ae.value.length > 0;
+  if (typing){
+    toast("✨ 新しいバージョンに更新します（入力おわりに）");
+    const go = ()=> location.reload();
+    window.addEventListener("blur", go, { once:true });
+    document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") go(); }, { once:true });
+    setTimeout(go, 60000);
+    return;
+  }
+  location.reload();
+}
+async function checkForUpdate(){
+  try{
+    const res = await fetch(location.pathname + "?_=" + Date.now(), { cache:"no-store" });
+    if(!res.ok) return;
+    const text = await res.text();
+    const h = hashText(text);
+    if(pageHash === null){ pageHash = h; return; }
+    if(h !== pageHash){ reloadForUpdate(); }
+  }catch(e){ /* オフライン等は無視 */ }
+}
+function initAutoUpdate(){
+  checkForUpdate(); // 初回は基準ハッシュを保存するだけ
+  setInterval(checkForUpdate, 30*60*1000); // 30分ごと
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") checkForUpdate(); });
+}
 </script>
 </body>
 </html>
