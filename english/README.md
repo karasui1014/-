@@ -88,4 +88,4 @@ GitHub Pages で公開しています（リポジトリ設定で Pages の Sourc
 - 保存: `localStorage`
 - フォント: Google Fonts（Zen Kaku Gothic New / Poppins）をCDN経由で読み込み
 - 依存ライブラリなし（外部通信はフォント読み込みのみ）
-- アイコン: `favicon.svg`（吹き出しに"Aa"のロゴマーク）＋各サイズPNG（`favicon-16/32/48.png`, `icons/apple-touch-icon.png`, `icons/icon-192/512.png`）。`manifest.json` でホーム画面追加時のアイコン・アプリ名を指定
+- アイコン: `favicon.svg`（開いた本 + "English"の吹き出し + 会話中を示す黄色いドット吹き出しのロゴマーク）＋各サイズPNG（`favicon-16/32/48.png`, `icons/apple-touch-icon.png`, `icons/icon-192/512.png`）。`manifest.json` でホーム画面追加時のアイコン・アプリ名を指定
