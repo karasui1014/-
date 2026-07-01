@@ -381,6 +381,19 @@
     border-radius:var(--radius); box-shadow:var(--shadow-sm); font-weight:600;
   }
   .chat-end-emoji{font-size:2.2rem; margin-bottom:8px;}
+
+  /* ==== 語句ごとの英語 ==== */
+  .word-break{margin-top:18px;}
+  .word-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:9px; margin-top:8px;}
+  .word-item{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:11px 13px; position:relative; box-shadow:var(--shadow-sm);
+  }
+  .word-item .w-ja{font-size:.76rem; color:var(--sub); margin-bottom:3px;}
+  .word-item .w-en{font-family:var(--font-en); font-weight:700; font-size:.96rem; color:var(--ink); padding-right:26px; line-height:1.35;}
+  .word-item .w-nat{font-size:.8rem; color:var(--natural); font-weight:600; margin-top:3px;}
+  .word-item .w-note{font-size:.71rem; color:var(--sub2); margin-top:4px; line-height:1.45;}
+  .word-item .w-speak{position:absolute; top:9px; right:9px; padding:3px 6px; font-size:.72rem;}
 </style>
 </head>
 <body>
@@ -404,7 +417,7 @@
         <button class="btn btn-primary" id="searchBtn">調べる</button>
       </div>
       <div class="chips" id="exampleChips"></div>
-      <div class="hint">💡 相手のひと言（例: Do you have a pen?）や、言いたい日本語（例: これいくらですか）を入れてみてください。</div>
+      <div class="hint">💡 相手のひと言や、言いたい日本語を入れてみてください。ぴったりの例文が無くても、含まれる<b>語句ごとに「学校式／日常会話式」</b>の英語を表示します。</div>
     </div>
     <div id="talkResult"></div>
   </section>
@@ -1522,6 +1535,223 @@ const CONVERSATIONS = {
   }],
 };
 
+/* =========================================================================
+   語句辞書（単語・短い表現）— 文が例文集になくても「語句ごと」に英語を返すための辞書。
+   ja: 見出し / en: 学校で習う（標準的な）英語 / natural: 日常会話でよく使う言い方（任意）
+   note: ひとことメモ（任意） / alt: 別表記など検索用の別キー（任意）
+   ========================================================================= */
+const WORDS = [
+  /* あいさつ・返事 */
+  { ja:"はい", en:"Yes", natural:"Yeah / Yep / Sure", note:"カジュアルには Yeah や Yep" },
+  { ja:"いいえ", en:"No", natural:"Nope / Nah", note:"軽い否定は Nope / Nah", alt:["いえ"] },
+  { ja:"ありがとう", en:"Thank you", natural:"Thanks!", note:"日常では Thanks が定番", alt:["ありがとうございます","感謝"] },
+  { ja:"ごめんなさい", en:"I am sorry", natural:"Sorry!", note:"軽い謝罪は Sorry だけでOK", alt:["ごめん","すいません"] },
+  { ja:"すみません", en:"Excuse me", natural:"Sorry / Excuse me", note:"呼びかけは Excuse me、謝罪は Sorry" },
+  { ja:"おはよう", en:"Good morning", natural:"Morning!", alt:["おはようございます"] },
+  { ja:"こんにちは", en:"Hello", natural:"Hi! / Hey!", alt:["こんにちわ"] },
+  { ja:"こんばんは", en:"Good evening", natural:"Evening!" },
+  { ja:"おやすみ", en:"Good night", natural:"Night!", alt:["おやすみなさい"] },
+  { ja:"さようなら", en:"Goodbye", natural:"Bye! / See you!", alt:["さよなら","バイバイ"] },
+  { ja:"またね", en:"See you later", natural:"See ya!", alt:["また今度"] },
+  { ja:"どういたしまして", en:"You are welcome", natural:"No problem! / Anytime" },
+  { ja:"もちろん", en:"Of course", natural:"Sure! / Absolutely" },
+  { ja:"たぶん", en:"Maybe / Probably", alt:["おそらく"] },
+  { ja:"わかった", en:"I understand", natural:"Got it! / Okay", note:"相づちは Got it が自然", alt:["わかりました","了解"] },
+  { ja:"わからない", en:"I do not understand", natural:"I'm not sure / I don't get it", alt:["わかりません"] },
+  { ja:"大丈夫", en:"I am okay", natural:"I'm fine / No worries", alt:["だいじょうぶ"] },
+  { ja:"いいですね", en:"That is good", natural:"Sounds good! / Nice!", alt:["いいね"] },
+  { ja:"お願いします", en:"Please", natural:"Please / Thanks", alt:["おねがいします"] },
+
+  /* 代名詞・指示 */
+  { ja:"私", en:"I / me", alt:["わたし","僕","俺","ぼく","おれ"] },
+  { ja:"あなた", en:"you", alt:["きみ","君"] },
+  { ja:"彼", en:"he / him", alt:["かれ"] },
+  { ja:"彼女", en:"she / her", alt:["かのじょ"] },
+  { ja:"私たち", en:"we / us", alt:["わたしたち","僕たち"] },
+  { ja:"これ", en:"this" },
+  { ja:"それ", en:"that / it" },
+  { ja:"あれ", en:"that (over there)" },
+  { ja:"ここ", en:"here" },
+  { ja:"そこ", en:"there" },
+
+  /* 疑問詞 */
+  { ja:"何", en:"what", alt:["なに","なん"] },
+  { ja:"誰", en:"who", alt:["だれ"] },
+  { ja:"いつ", en:"when" },
+  { ja:"どこ", en:"where" },
+  { ja:"なぜ", en:"why", natural:"Why? / How come?", alt:["どうして"] },
+  { ja:"どうやって", en:"how" },
+  { ja:"どれ", en:"which" },
+  { ja:"いくら", en:"how much", note:"値段をたずねるとき" },
+  { ja:"いくつ", en:"how many / how old" },
+
+  /* 動詞（基本） */
+  { ja:"食べる", en:"to eat", alt:["食べたい","たべる"] },
+  { ja:"飲む", en:"to drink", alt:["飲みたい","のむ"] },
+  { ja:"行く", en:"to go", alt:["いく","行きたい"] },
+  { ja:"来る", en:"to come", alt:["くる"] },
+  { ja:"見る", en:"to see / to watch / to look", alt:["みる","見たい"] },
+  { ja:"聞く", en:"to listen / to ask", alt:["きく"] },
+  { ja:"話す", en:"to speak / to talk", alt:["はなす","しゃべる"] },
+  { ja:"読む", en:"to read", alt:["よむ"] },
+  { ja:"書く", en:"to write", alt:["かく"] },
+  { ja:"買う", en:"to buy", natural:"to buy / to get", alt:["かう","買いたい"] },
+  { ja:"使う", en:"to use", alt:["つかう","使いたい"] },
+  { ja:"待つ", en:"to wait", alt:["まつ","待って"] },
+  { ja:"会う", en:"to meet", alt:["あう","会いたい"] },
+  { ja:"帰る", en:"to go home / to return", alt:["かえる","帰りたい"] },
+  { ja:"寝る", en:"to sleep / to go to bed", alt:["ねる"] },
+  { ja:"起きる", en:"to get up / to wake up", alt:["おきる"] },
+  { ja:"働く", en:"to work", alt:["はたらく"] },
+  { ja:"休む", en:"to rest / to take a day off", alt:["やすむ"] },
+  { ja:"遊ぶ", en:"to play / to hang out", natural:"to hang out", alt:["あそぶ"] },
+  { ja:"手伝う", en:"to help", alt:["てつだう","手伝って"] },
+  { ja:"借りる", en:"to borrow", alt:["かりる","借りたい"] },
+  { ja:"貸す", en:"to lend", alt:["かす","貸して"] },
+  { ja:"欲しい", en:"I want", natural:"I'd like / Can I get", note:"店では I'd like が丁寧", alt:["ほしい"] },
+  { ja:"好き", en:"I like", natural:"I love (強調)", alt:["すき","大好き"] },
+  { ja:"嫌い", en:"I do not like", natural:"I'm not a fan of", alt:["きらい"] },
+  { ja:"知る", en:"to know", alt:["知っている","しる"] },
+  { ja:"思う", en:"to think", alt:["おもう"] },
+  { ja:"できる", en:"can / to be able to", alt:["出来る"] },
+
+  /* 形容詞・状態 */
+  { ja:"大きい", en:"big / large", alt:["おおきい"] },
+  { ja:"小さい", en:"small / little", alt:["ちいさい"] },
+  { ja:"高い", en:"expensive / tall / high", alt:["たかい"] },
+  { ja:"安い", en:"cheap / inexpensive", alt:["やすい"] },
+  { ja:"新しい", en:"new", alt:["あたらしい"] },
+  { ja:"古い", en:"old", alt:["ふるい"] },
+  { ja:"良い", en:"good", natural:"good / nice / great", alt:["いい","よい"] },
+  { ja:"悪い", en:"bad", alt:["わるい"] },
+  { ja:"暑い", en:"hot", alt:["あつい"] },
+  { ja:"寒い", en:"cold", alt:["さむい"] },
+  { ja:"暖かい", en:"warm", alt:["あたたかい","温かい"] },
+  { ja:"涼しい", en:"cool", alt:["すずしい"] },
+  { ja:"楽しい", en:"fun / enjoyable", alt:["たのしい"] },
+  { ja:"面白い", en:"interesting / funny", natural:"fun / funny", note:"笑える=funny、興味深い=interesting", alt:["おもしろい"] },
+  { ja:"難しい", en:"difficult / hard", alt:["むずかしい"] },
+  { ja:"簡単", en:"easy / simple", alt:["かんたん"] },
+  { ja:"忙しい", en:"busy", alt:["いそがしい"] },
+  { ja:"疲れた", en:"I am tired", natural:"I'm beat / worn out", alt:["つかれた"] },
+  { ja:"眠い", en:"sleepy", alt:["ねむい"] },
+  { ja:"お腹すいた", en:"I am hungry", natural:"I'm starving", alt:["おなかすいた","腹減った"] },
+  { ja:"のどが渇いた", en:"I am thirsty", alt:["喉が渇いた","のどかわいた"] },
+  { ja:"嬉しい", en:"happy / glad", alt:["うれしい"] },
+  { ja:"悲しい", en:"sad", alt:["かなしい"] },
+  { ja:"すごい", en:"amazing / great", natural:"awesome / cool", note:"日常では awesome / cool が定番", alt:["凄い"] },
+  { ja:"かわいい", en:"cute", natural:"adorable", alt:["可愛い"] },
+  { ja:"きれい", en:"beautiful / clean", alt:["綺麗","きれいな"] },
+  { ja:"美味しい", en:"delicious", natural:"really good / tasty", note:"日常では really good もよく使う", alt:["おいしい"] },
+
+  /* 時間 */
+  { ja:"今", en:"now", alt:["いま"] },
+  { ja:"今日", en:"today", alt:["きょう"] },
+  { ja:"明日", en:"tomorrow", alt:["あした","あす"] },
+  { ja:"昨日", en:"yesterday", alt:["きのう"] },
+  { ja:"朝", en:"morning", alt:["あさ"] },
+  { ja:"昼", en:"noon / daytime", alt:["ひる"] },
+  { ja:"夜", en:"night / evening", alt:["よる"] },
+  { ja:"今週", en:"this week", alt:["こんしゅう"] },
+  { ja:"来週", en:"next week", alt:["らいしゅう"] },
+  { ja:"先週", en:"last week", alt:["せんしゅう"] },
+  { ja:"毎日", en:"every day", alt:["まいにち"] },
+  { ja:"週末", en:"weekend", alt:["しゅうまつ"] },
+  { ja:"時間", en:"time / hour", alt:["じかん"] },
+
+  /* 場所 */
+  { ja:"家", en:"house / home", alt:["いえ","うち"] },
+  { ja:"学校", en:"school", alt:["がっこう"] },
+  { ja:"会社", en:"company / office", alt:["かいしゃ"] },
+  { ja:"駅", en:"station", alt:["えき"] },
+  { ja:"店", en:"shop / store", alt:["みせ","お店"] },
+  { ja:"病院", en:"hospital", alt:["びょういん"] },
+  { ja:"銀行", en:"bank", alt:["ぎんこう"] },
+  { ja:"トイレ", en:"toilet", natural:"restroom / bathroom", note:"英語では restroom / bathroom が上品", alt:["お手洗い","化粧室"] },
+  { ja:"レストラン", en:"restaurant", alt:["飲食店"] },
+  { ja:"空港", en:"airport", alt:["くうこう"] },
+  { ja:"ホテル", en:"hotel" },
+  { ja:"公園", en:"park", alt:["こうえん"] },
+  { ja:"スーパー", en:"supermarket / grocery store", alt:["スーパーマーケット"] },
+  { ja:"コンビニ", en:"convenience store" },
+
+  /* 食べ物・飲み物 */
+  { ja:"水", en:"water", alt:["みず"] },
+  { ja:"お茶", en:"tea", alt:["おちゃ"] },
+  { ja:"コーヒー", en:"coffee" },
+  { ja:"ご飯", en:"rice / meal", alt:["ごはん"] },
+  { ja:"朝ごはん", en:"breakfast", alt:["朝食"] },
+  { ja:"昼ごはん", en:"lunch", alt:["昼食","ランチ"] },
+  { ja:"晩ごはん", en:"dinner", alt:["夕飯","夕食","晩御飯"] },
+  { ja:"肉", en:"meat", alt:["にく"] },
+  { ja:"魚", en:"fish", alt:["さかな"] },
+  { ja:"野菜", en:"vegetables", alt:["やさい"] },
+  { ja:"果物", en:"fruit", alt:["くだもの","フルーツ"] },
+  { ja:"パン", en:"bread" },
+  { ja:"卵", en:"egg", alt:["たまご"] },
+
+  /* 人・家族 */
+  { ja:"家族", en:"family", alt:["かぞく"] },
+  { ja:"父", en:"father / dad", alt:["お父さん","ちち"] },
+  { ja:"母", en:"mother / mom", alt:["お母さん","はは"] },
+  { ja:"子供", en:"child / kid", alt:["こども"] },
+  { ja:"友達", en:"friend", alt:["ともだち","友人"] },
+  { ja:"先生", en:"teacher", alt:["せんせい"] },
+  { ja:"赤ちゃん", en:"baby", alt:["あかちゃん"] },
+
+  /* その他よく使う語 */
+  { ja:"少し", en:"a little / a bit", alt:["ちょっと","すこし"] },
+  { ja:"たくさん", en:"a lot / many", alt:["いっぱい"] },
+  { ja:"とても", en:"very", natural:"really / so", note:"会話では really / so が自然", alt:["すごく","めっちゃ"] },
+  { ja:"本当に", en:"really", alt:["ほんとうに","ほんとに"] },
+  { ja:"もっと", en:"more" },
+  { ja:"一緒に", en:"together", alt:["いっしょに"] },
+  { ja:"お金", en:"money", alt:["おかね"] },
+  { ja:"仕事", en:"work / job", alt:["しごと"] },
+  { ja:"名前", en:"name", alt:["なまえ"] },
+  { ja:"電話", en:"phone / call", alt:["でんわ"] },
+  { ja:"天気", en:"weather", alt:["てんき"] },
+  { ja:"雨", en:"rain", alt:["あめ"] },
+  { ja:"雪", en:"snow", alt:["ゆき"] },
+];
+
+/* 検索用インデックス（長い語から優先してマッチ） */
+const WORD_INDEX = (function(){
+  const idx = [];
+  WORDS.forEach(w=>{
+    const keys = [w.ja].concat(w.alt || []);
+    keys.forEach(k=>{ if(k) idx.push({ key:k, word:w }); });
+  });
+  return idx.sort((a,b)=> b.key.length - a.key.length);
+})();
+
+/* 入力文を、辞書にある語句に分解する（長い語優先・重複なし・出現順） */
+function breakIntoWords(query){
+  const raw = String(query||"");
+  if(!raw) return [];
+  const mask = new Array(raw.length).fill(false);
+  const found = [];
+  for(const { key, word } of WORD_INDEX){
+    if(!key) continue;
+    let start = 0;
+    while(start <= raw.length - key.length){
+      const pos = raw.indexOf(key, start);
+      if(pos < 0) break;
+      let overlap = false;
+      for(let i=pos; i<pos+key.length; i++){ if(mask[i]){ overlap=true; break; } }
+      if(!overlap){
+        for(let i=pos; i<pos+key.length; i++) mask[i]=true;
+        found.push({ word, pos });
+      }
+      start = pos + key.length;
+    }
+  }
+  found.sort((a,b)=> a.pos - b.pos);
+  const seen = new Set(); const out = [];
+  for(const f of found){ if(!seen.has(f.word.ja)){ seen.add(f.word.ja); out.push(f.word); } }
+  return out;
+}
+
 /* ===== 状態・保存 ===== */
 const LS = {
   fav:"tsutawaru.fav.v1",
@@ -1713,34 +1943,65 @@ function renderExampleChips(){
     host.appendChild(c);
   });
 }
+/* 入力に含まれる語句ごとの英語（学校式／日常会話式）を表示 */
+function renderWordBreakdown(query){
+  const words = breakIntoWords(query).slice(0,16);
+  if(!words.length) return null;
+  const box = el("div","word-break");
+  box.appendChild(el("div","related-lbl","🔤 入力に含まれる語句の英語（学校式／💬日常会話式）"));
+  const list = el("div","word-list");
+  words.forEach(w=>{
+    const item = el("div","word-item");
+    let html = `<div class="w-ja">${esc(w.ja)}</div><div class="w-en">${esc(w.en)}</div>`;
+    if(w.natural){ html += `<div class="w-nat">💬 ${esc(w.natural)}</div>`; }
+    if(w.note){ html += `<div class="w-note">${esc(w.note)}</div>`; }
+    item.innerHTML = html;
+    const spk = el("button","mini w-speak","🔊");
+    const sayText = (w.natural || w.en).split("/")[0].replace(/\(.*?\)/g,"").trim();
+    spk.onclick = ()=> speak(sayText, 1);
+    item.appendChild(spk);
+    list.appendChild(item);
+  });
+  box.appendChild(list);
+  return box;
+}
+
 function doSearch(){
   const q = $("#queryInput").value.trim();
   const host = $("#talkResult"); host.innerHTML="";
   if(!q){ toast("調べたい言葉を入れてください"); return; }
   const ranked = search(q);
-  if(ranked.length===0){
-    host.appendChild(el("div","empty",
-      `<span class="big">🔍</span>ぴったりの例文がまだありません。<br>下の例をタップするか、言い方を変えて試してみてください。`));
-    renderExampleChips();
-    return;
-  }
   const best = ranked[0];
-  if(best.s < MATCH_STRONG){
-    host.appendChild(el("div","notice","🔎 ぴったりの例文が見つからなかったので、<b>近い場面</b>を表示しています。"));
-  }
-  host.appendChild(renderCard(best.e));
-  addHistory(q, best.e.id);
+  const strong = best && best.s >= MATCH_STRONG;
 
-  const related = ranked.slice(1,4);
-  if(related.length){
-    const rel = el("div","related");
-    rel.appendChild(el("div","related-lbl","こんな場面も見てみる？"));
-    related.forEach(r=>{
-      const c = el("button","chip", esc(r.e.prompt.ja || r.e.prompt.en));
-      c.onclick = ()=>{ host.querySelectorAll('.related').forEach(n=>n.remove()); host.insertBefore(renderCard(r.e), rel); window.scrollTo({top:0,behavior:"smooth"}); };
-      rel.appendChild(c);
-    });
-    host.appendChild(rel);
+  if(best){
+    if(!strong){
+      host.appendChild(el("div","notice","🔎 ぴったりの例文が見つからなかったので、<b>近い場面</b>と<b>語句ごとの英語</b>を表示しています。"));
+    }
+    host.appendChild(renderCard(best.e));
+    addHistory(q, best.e.id);
+
+    const related = ranked.slice(1,4).filter(r=>r.s>0);
+    if(related.length){
+      const rel = el("div","related");
+      rel.appendChild(el("div","related-lbl","こんな場面も見てみる？"));
+      related.forEach(r=>{
+        const c = el("button","chip", esc(r.e.prompt.ja || r.e.prompt.en));
+        c.onclick = ()=>{ host.querySelectorAll('.related').forEach(n=>n.remove()); host.insertBefore(renderCard(r.e), rel); window.scrollTo({top:0,behavior:"smooth"}); };
+        rel.appendChild(c);
+      });
+      host.appendChild(rel);
+    }
+  }
+
+  // 例文にぴったりが無くても、含まれる語句ごとに英語を返す
+  const wb = renderWordBreakdown(q);
+  if(wb) host.appendChild(wb);
+
+  if(!best && !wb){
+    host.appendChild(el("div","empty",
+      `<span class="big">🔍</span>この言葉はまだ収録されていません。<br>下の例をタップするか、言い方を変えて試してみてください。`));
+    renderExampleChips();
   }
 }
 
