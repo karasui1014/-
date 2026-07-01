@@ -317,6 +317,70 @@
   .rec-box .rec-status{font-size:.76rem; color:var(--sub); margin-top:7px;}
 
   footer.app{text-align:center; color:var(--sub2); font-size:.72rem; padding:20px 12px 6px;}
+
+  /* ==== キャラと話す ==== */
+  .char-card{
+    background:var(--card); border-radius:18px; box-shadow:var(--shadow-sm);
+    padding:16px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; gap:14px;
+    border:1px solid rgba(15,23,42,.04); border-left:4px solid var(--char-accent,var(--brand));
+    transition:transform .12s, box-shadow .2s;
+  }
+  .char-card:active{transform:scale(.985); box-shadow:var(--shadow);}
+  .char-avatar{
+    font-size:1.8rem; width:56px; height:56px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--brand-soft),var(--brand-soft2));
+  }
+  .char-avatar.sm{width:34px; height:34px; font-size:1.2rem;}
+  .char-txt{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .char-txt b{font-size:1.02rem; font-weight:800;}
+  .char-role{font-size:.76rem; color:var(--char-accent,var(--brand)); font-weight:700;}
+  .char-desc{font-size:.78rem; color:var(--sub); line-height:1.5;}
+  .char-arrow{margin-left:auto; color:var(--sub2); font-size:1.2rem; flex-shrink:0;}
+
+  .chat-topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--card); border-radius:var(--radius-sm); box-shadow:var(--shadow-sm);
+    padding:10px 14px; margin-bottom:14px; border-left:4px solid var(--char-accent,var(--brand));
+    flex-wrap:wrap;
+  }
+  .chat-who{display:flex; align-items:center; gap:8px; font-size:.9rem;}
+  .chat-who .char-role{font-size:.72rem;}
+
+  .chat-log{display:flex; flex-direction:column; gap:10px;}
+  .chat-bubble{
+    max-width:84%; padding:11px 14px; border-radius:16px; box-shadow:var(--shadow-sm);
+    display:flex; align-items:flex-start; gap:8px;
+  }
+  .chat-bubble.npc{ align-self:flex-start; background:#fff; border-bottom-left-radius:4px;}
+  .chat-bubble.you{ align-self:flex-end; background:linear-gradient(135deg,var(--brand-soft),var(--brand-soft2)); border-bottom-right-radius:4px;}
+  .chat-bubble .bubble-body{min-width:0;}
+  .chat-bubble .bubble-en{font-family:var(--font-en); font-weight:600; font-size:.98rem; color:var(--ink);}
+  .chat-bubble .bubble-ja{font-size:.78rem; color:var(--sub); margin-top:3px;}
+  .chat-bubble .bubble-speak{
+    flex-shrink:0; padding:4px 7px; font-size:.8rem; margin-top:1px;
+  }
+  .chat-point.point{align-self:flex-end; max-width:84%; margin-top:-2px;}
+
+  .chat-choices{display:flex; flex-direction:column; gap:8px; margin-top:2px;}
+  .chat-choice{
+    border-radius:var(--radius-sm); padding:11px 14px; cursor:pointer;
+    border:1.5px solid var(--line); background:#fff; transition:transform .12s, box-shadow .2s;
+  }
+  .chat-choice:active{transform:scale(.98);}
+  .chat-choice .lbl{font-size:.68rem; font-weight:800; letter-spacing:.03em; margin-bottom:4px; text-transform:uppercase;}
+  .chat-choice .en{font-family:var(--font-en); font-weight:600; font-size:.95rem; color:var(--ink);}
+  .chat-choice .ja{font-size:.78rem; color:var(--sub); margin-top:2px;}
+  .chat-choice.school{border-color:var(--school-line); background:linear-gradient(135deg,var(--school-soft),#fff);}
+  .chat-choice.school .lbl{color:var(--school);}
+  .chat-choice.natural{border-color:var(--natural-line); background:linear-gradient(135deg,var(--natural-soft),#fff);}
+  .chat-choice.natural .lbl{color:var(--natural);}
+
+  .chat-end{
+    text-align:center; padding:30px 16px; color:var(--sub); background:var(--card);
+    border-radius:var(--radius); box-shadow:var(--shadow-sm); font-weight:600;
+  }
+  .chat-end-emoji{font-size:2.2rem; margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -343,6 +407,11 @@
       <div class="hint">💡 相手のひと言（例: Do you have a pen?）や、言いたい日本語（例: これいくらですか）を入れてみてください。</div>
     </div>
     <div id="talkResult"></div>
+  </section>
+
+  <!-- ===== キャラと話す（台本式の会話）===== -->
+  <section id="panel-chat" class="panel">
+    <div id="chatArea"></div>
   </section>
 
   <!-- ===== 場面別 ===== -->
@@ -380,6 +449,7 @@
 
 <nav class="tabbar">
   <button data-tab="talk" class="on"><span class="i-wrap"><span class="i">💬</span></span><span class="lbl">会話</span></button>
+  <button data-tab="chat"><span class="i-wrap"><span class="i">🎭</span></span><span class="lbl">トーク</span></button>
   <button data-tab="scenes"><span class="i-wrap"><span class="i">📚</span></span><span class="lbl">場面別</span></button>
   <button data-tab="quiz"><span class="i-wrap"><span class="i">🎯</span></span><span class="lbl">クイズ</span></button>
   <button data-tab="fav"><span class="i-wrap"><span class="i">⭐</span></span><span class="lbl">お気に入り</span></button>
@@ -1271,7 +1341,186 @@ const PHRASES = [
     natural:{ en:"Thanks, you too! Any plans?", ja:"ありがとう、あなたもね！何か予定あるの？" },
     point:"質問を添えると、立ち話がもう少し続く自然なきっかけになります。"
   },
+
+  /* ---------- 基本のあいさつ ---------- */
+  {
+    id:"g_hello", category:"greeting",
+    prompt:{ en:"Hello! / Hi there!", ja:"こんにちは！" },
+    situation:"日常でいちばん基本のあいさつ。",
+    keywords:["こんにちは","hello","hi","やあ","こんちは"],
+    school:{ en:"Hello.", ja:"こんにちは。" },
+    natural:{ en:"Hi! / Hey!", ja:"やあ！" },
+    point:"<b>Hello</b>は間違いではありませんが、日常会話では<b>Hi</b>や<b>Hey</b>のほうがずっとカジュアルでよく使われます。"
+  },
+  {
+    id:"g_goodmorning", category:"greeting",
+    prompt:{ en:"Good morning!", ja:"おはようございます！" },
+    situation:"朝のあいさつ。",
+    keywords:["おはよう","おはようございます","good morning","morning"],
+    school:{ en:"Good morning.", ja:"おはようございます。" },
+    natural:{ en:"Morning!", ja:"おはよう！" },
+    point:"親しい間柄では<b>Good morning</b>を短く<b>Morning!</b>とだけ言うことがとても多いです。"
+  },
+  {
+    id:"g_goodevening", category:"greeting",
+    prompt:{ en:"Good evening!", ja:"こんばんは！" },
+    situation:"夜のあいさつ。",
+    keywords:["こんばんは","good evening","evening"],
+    school:{ en:"Good evening.", ja:"こんばんは。" },
+    natural:{ en:"Evening!", ja:"こんばんは！" },
+    point:"朝と同じく、カジュアルな場面では<b>Evening!</b>と短縮して言うのが自然です。"
+  },
+  {
+    id:"g_nicetomeetyou", category:"greeting",
+    prompt:{ en:"Nice to meet you!", ja:"はじめまして！" },
+    situation:"初対面のあいさつ。",
+    keywords:["はじめまして","nice to meet you","初めまして","初対面"],
+    school:{ en:"Nice to meet you too.", ja:"こちらこそ、はじめまして。" },
+    natural:{ en:"Nice to meet you too! / Great to meet you!", ja:"こちらこそ！お会いできてうれしいです！" },
+    point:"<b>too</b>を忘れずに付けると「こちらこそ」のニュアンスが伝わります。<b>Great to meet you</b>もよく使われます。"
+  },
 ];
+
+/* =========================================================================
+   キャラと話す — 台本式の会話フロー（AI不使用・完全無料・オフライン）
+   1キャラ = 1つ以上の会話シナリオ。1シナリオ = ターンの配列。
+   各ターンは npc（相手のセリフ）と choices（学校式/伝わる式の返答2択）。
+   どちらを選んでも次のnpcセリフに進み、最後まで話し切れる構成。
+   ========================================================================= */
+const CHARACTERS = [
+  { id:"emily", name:"エミリー", role:"気さくな友達", avatar:"🙋‍♀️", accent:"#ec4899",
+    desc:"学校や近所でよく会う、明るく気さくな友達。あいさつや雑談が得意。" },
+  { id:"tom", name:"トム", role:"カフェの店員", avatar:"☕", accent:"#f59e0b",
+    desc:"人気カフェで働く、笑顔が素敵な店員。注文のやりとりを練習できる。" },
+  { id:"grace", name:"グレースさん", role:"近所のおばあちゃん", avatar:"👵", accent:"#8b5cf6",
+    desc:"優しくて話し好きな、近所に住むおばあちゃん。体調や家族の話が中心。" },
+];
+
+const CONVERSATIONS = {
+  emily: [{
+    id:"emily_catchup", title:"ばったり会って世間話",
+    turns:[
+      { npc:{ en:"Hey! Long time no see!", ja:"やあ！久しぶりだね！" },
+        choices:[
+          { style:"school", en:"Yes, it has been a long time.", ja:"はい、久しぶりですね。" },
+          { style:"natural", en:"Hey! Yeah, it's been a while!", ja:"やあ！ほんと久しぶり！",
+            point:"友達同士のカジュアルな再会では、短くテンション高めに返すのが自然です。" }
+        ] },
+      { npc:{ en:"How have you been?", ja:"元気にしてた？" },
+        choices:[
+          { style:"school", en:"I have been fine, thank you.", ja:"元気にしていました、ありがとう。" },
+          { style:"natural", en:"Pretty good! Just busy with work.", ja:"まあまあ元気だよ！仕事で忙しくてね。",
+            point:"近況をひとこと添えると、会話が自然に広がります。" }
+        ] },
+      { npc:{ en:"What have you been up to lately?", ja:"最近何してるの？" },
+        choices:[
+          { style:"school", en:"I have been working every day.", ja:"毎日働いています。" },
+          { style:"natural", en:"Not much, just the usual. How about you?", ja:"特には、いつも通りだよ。そっちは？",
+            point:"聞き返すことで、会話のキャッチボールが続きます。" }
+        ] },
+      { npc:{ en:"Do you want to grab lunch sometime?", ja:"今度お昼でも一緒にどう？" },
+        choices:[
+          { style:"school", en:"Yes, I want to grab lunch.", ja:"はい、お昼を食べたいです。" },
+          { style:"natural", en:"Sure, that sounds great! When works for you?", ja:"いいね、それいいな！いつが都合いい？",
+            point:"誘いには前向きな反応＋日程を聞き返すのが自然です。" }
+        ] },
+      { npc:{ en:"How about this Saturday?", ja:"今週の土曜日はどう？" },
+        choices:[
+          { style:"school", en:"Yes, Saturday is okay.", ja:"はい、土曜日で大丈夫です。" },
+          { style:"natural", en:"Saturday works for me!", ja:"土曜日、大丈夫だよ！",
+            point:"<b>works for me</b>は「都合が合う」ことを伝える自然な決まり文句です。" }
+        ] },
+      { npc:{ en:"Great, see you Saturday then! Take care!", ja:"やった、じゃあ土曜日にね！またね！" },
+        choices:[
+          { style:"school", en:"Yes, see you then.", ja:"はい、その時に会いましょう。" },
+          { style:"natural", en:"Sounds good, see you then! Take care!", ja:"いいね、また土曜日に！じゃあね！",
+            point:"別れ際は相手の言葉をそのまま返すと、自然に会話を締めくくれます。" }
+        ] },
+    ]
+  }],
+  tom: [{
+    id:"tom_cafe", title:"カフェで注文する",
+    turns:[
+      { npc:{ en:"Hi there! What can I get for you today?", ja:"いらっしゃい！今日は何にしますか？" },
+        choices:[
+          { style:"school", en:"I want a coffee.", ja:"コーヒーが欲しいです。" },
+          { style:"natural", en:"Hi! Can I get a medium latte, please?", ja:"こんにちは！Mサイズのラテをお願いできますか？",
+            point:"<b>Can I get ~, please?</b>は注文のときの定番の丁寧な言い方です。" }
+        ] },
+      { npc:{ en:"For here or to go?", ja:"店内でお召し上がりですか、お持ち帰りですか？" },
+        choices:[
+          { style:"school", en:"I will drink here.", ja:"ここで飲みます。" },
+          { style:"natural", en:"For here, please.", ja:"店内で、お願いします。",
+            point:"フルセンテンスにせず、短く答えるのが自然です。" }
+        ] },
+      { npc:{ en:"Would you like anything else, like a pastry?", ja:"他に何か、ペストリーなどいかがですか？" },
+        choices:[
+          { style:"school", en:"No, I do not want anything else.", ja:"いいえ、他は要りません。" },
+          { style:"natural", en:"No, that's all for now, thanks.", ja:"いいえ、今のところそれだけで大丈夫です、ありがとう。",
+            point:"<b>That's all for now</b>は「今はそれだけ」という柔らかい断り方です。" }
+        ] },
+      { npc:{ en:"That'll be $4.50. How would you like to pay?", ja:"4.50ドルになります。お支払いはどうされますか？" },
+        choices:[
+          { style:"school", en:"I will pay by card.", ja:"カードで払います。" },
+          { style:"natural", en:"I'll pay by card, thanks.", ja:"カードでお願いします。",
+            point:"<b>thanks</b>を添えると、会計のやりとりが柔らかくなります。" }
+        ] },
+      { npc:{ en:"Great, it'll be ready in a few minutes.", ja:"かしこまりました、数分でご用意します。" },
+        choices:[
+          { style:"school", en:"Thank you, I will wait.", ja:"ありがとう、待ちます。" },
+          { style:"natural", en:"Perfect, thank you!", ja:"いいですね、ありがとう！",
+            point:"<b>Perfect</b>は軽い相槌として使える便利な万能フレーズです。" }
+        ] },
+      { npc:{ en:"Here you go, enjoy your coffee! Have a great day!", ja:"どうぞ、コーヒーをお楽しみください！良い一日を！" },
+        choices:[
+          { style:"school", en:"Thank you, you too.", ja:"ありがとう、あなたも。" },
+          { style:"natural", en:"Thanks so much, you too!", ja:"ありがとう、あなたも良い一日を！",
+            point:"別れ際のあいさつは、お互いに返し合うのが自然です。" }
+        ] },
+    ]
+  }],
+  grace: [{
+    id:"grace_chat", title:"立ち話で体調と近況を話す",
+    turns:[
+      { npc:{ en:"Oh, hello dear! It's so nice to see you.", ja:"あら、こんにちは！会えて嬉しいわ。" },
+        choices:[
+          { style:"school", en:"Hello. It is nice to see you too.", ja:"こんにちは。私もお会いできて嬉しいです。" },
+          { style:"natural", en:"Hi! It's great to see you too!", ja:"こんにちは！私も会えて嬉しいです！",
+            point:"親しみを込めた場面では、短くテンポよく返すのが自然です。" }
+        ] },
+      { npc:{ en:"How have you been feeling lately?", ja:"最近、体調はどう？" },
+        choices:[
+          { style:"school", en:"I have been feeling fine.", ja:"元気にしています。" },
+          { style:"natural", en:"Pretty good, thanks for asking!", ja:"おかげさまで元気です、聞いてくれてありがとう！",
+            point:"<b>thanks for asking</b>は気にかけてくれたことへの感謝を伝える温かい表現です。" }
+        ] },
+      { npc:{ en:"It's been quite cold lately, hasn't it?", ja:"最近すごく寒いですね。" },
+        choices:[
+          { style:"school", en:"Yes, it has been cold.", ja:"はい、寒いです。" },
+          { style:"natural", en:"It really has! Make sure you stay warm.", ja:"本当にそうですね！暖かくしてくださいね。",
+            point:"相手を気遣うひとことを返すと、温かい会話になります。" }
+        ] },
+      { npc:{ en:"How is your family doing?", ja:"ご家族はお元気？" },
+        choices:[
+          { style:"school", en:"My family is doing well.", ja:"家族は元気です。" },
+          { style:"natural", en:"Everyone's doing well, thank you for asking.", ja:"みんな元気にしています、聞いてくれてありがとう。",
+            point:"<b>thank you for asking</b>を添えると、丁寧で温かい印象になります。" }
+        ] },
+      { npc:{ en:"That's wonderful to hear. Please tell them I said hello.", ja:"それは良かったわ。皆さんによろしく伝えてね。" },
+        choices:[
+          { style:"school", en:"Yes, I will tell them.", ja:"はい、伝えます。" },
+          { style:"natural", en:"I will! Thank you so much.", ja:"伝えますね！本当にありがとうございます。",
+            point:"感謝を強調すると、より温かいやりとりになります。" }
+        ] },
+      { npc:{ en:"Take care of yourself, dear. See you again soon!", ja:"お体に気をつけてね。また近いうちに会いましょう！" },
+        choices:[
+          { style:"school", en:"Yes, see you again.", ja:"はい、また会いましょう。" },
+          { style:"natural", en:"You too! Take care, see you soon!", ja:"あなたもね！お元気で、またすぐに会いましょう！",
+            point:"別れ際は相手の気遣いをそのまま返すと、温かく締めくくれます。" }
+        ] },
+    ]
+  }],
+};
 
 /* ===== 状態・保存 ===== */
 const LS = {
@@ -1455,7 +1704,7 @@ function togglePronunciation(host, modelText){
 /* =========================================================================
    会話パネル
    ========================================================================= */
-const EXAMPLES = ["ペンを持っていますか","お疲れ様です","これはいくらですか","How are you?","駅はどこですか","よろしくお願いします"];
+const EXAMPLES = ["こんにちは","ペンを持っていますか","お疲れ様です","これはいくらですか","How are you?","駅はどこですか"];
 function renderExampleChips(){
   const host = $("#exampleChips"); host.innerHTML="";
   EXAMPLES.forEach(x=>{
@@ -1518,6 +1767,98 @@ function toggleMic(){
     btn.classList.add("rec");
     toast(settings.voiceLang==="ja-JP"?"日本語で話してください":"Speak in English");
   }catch(e){ /* 連続startのガード */ }
+}
+
+/* =========================================================================
+   キャラと話す（台本式の会話）
+   ========================================================================= */
+let chatState = null; // { charId, convo, turnIndex }
+
+function renderChatHome(){
+  const host = $("#chatArea"); host.innerHTML="";
+  host.appendChild(el("div","section-title","キャラと話す"));
+  host.appendChild(el("div","section-sub","3人のキャラクターから選んで、あいさつから会話を始めてみましょう。"));
+  CHARACTERS.forEach(c=>{
+    const card = el("div","char-card");
+    card.style.setProperty("--char-accent", c.accent);
+    card.innerHTML = `<span class="char-avatar">${c.avatar}</span>
+      <div class="char-txt"><b>${esc(c.name)}</b><span class="char-role">${esc(c.role)}</span><span class="char-desc">${esc(c.desc)}</span></div>
+      <span class="char-arrow">›</span>`;
+    card.onclick = ()=> startChat(c.id);
+    host.appendChild(card);
+  });
+}
+
+function startChat(charId){
+  const convo = CONVERSATIONS[charId][0];
+  chatState = { charId, convo, turnIndex:0 };
+  renderChatScreen();
+  pushNpcTurn();
+}
+
+function renderChatScreen(){
+  const host = $("#chatArea"); host.innerHTML="";
+  const c = CHARACTERS.find(x=>x.id===chatState.charId);
+  const bar = el("div","chat-topbar");
+  bar.style.setProperty("--char-accent", c.accent);
+  bar.innerHTML = `<button class="link-btn" id="chatBackBtn">‹ キャラ一覧</button>
+    <div class="chat-who"><span class="char-avatar sm">${c.avatar}</span><b>${esc(c.name)}</b><span class="char-role">${esc(c.role)}</span></div>`;
+  host.appendChild(bar);
+  const log = el("div","chat-log"); log.id="chatLog";
+  host.appendChild(log);
+  $("#chatBackBtn").onclick = ()=>{ chatState=null; renderChatHome(); };
+}
+
+function chatBubble(kind, en, ja){
+  const b = el("div","chat-bubble "+kind);
+  const body = el("div","bubble-body");
+  body.innerHTML = `<div class="bubble-en">${esc(en)}</div><div class="bubble-ja">${esc(ja)}</div>`;
+  b.appendChild(body);
+  if(kind==="npc"){
+    const spk = el("button","mini bubble-speak","🔊");
+    spk.onclick = ()=> speak(en, 1);
+    b.appendChild(spk);
+  }
+  return b;
+}
+
+function pushNpcTurn(){
+  const log = $("#chatLog");
+  const turn = chatState.convo.turns[chatState.turnIndex];
+  if(!turn){
+    const done = el("div","chat-end");
+    done.innerHTML = `<div class="chat-end-emoji">🎉</div><div>会話が終わりました！おつかれさまです。</div>`;
+    const again = el("button","btn btn-primary","もう一度この会話をする");
+    again.style.marginTop="12px";
+    again.onclick = ()=> startChat(chatState.charId);
+    done.appendChild(again);
+    log.appendChild(done);
+    log.scrollTop = log.scrollHeight;
+    return;
+  }
+  log.appendChild(chatBubble("npc", turn.npc.en, turn.npc.ja));
+  const choiceWrap = el("div","chat-choices");
+  turn.choices.forEach(choice=>{
+    const btn = el("div","chat-choice "+choice.style);
+    btn.innerHTML = `<div class="lbl">${choice.style==="school"?"🏫 学校で習う返し方":"💡 実際に伝わる返し方"}</div>
+      <div class="en">${esc(choice.en)}</div><div class="ja">${esc(choice.ja)}</div>`;
+    btn.onclick = ()=> chooseResponse(choice, choiceWrap);
+    choiceWrap.appendChild(btn);
+  });
+  log.appendChild(choiceWrap);
+  log.scrollTop = log.scrollHeight;
+}
+
+function chooseResponse(choice, choiceWrap){
+  const log = $("#chatLog");
+  choiceWrap.remove();
+  log.appendChild(chatBubble("you", choice.en, choice.ja));
+  if(choice.point){
+    log.appendChild(el("div","point chat-point", `📝 ${choice.point}`));
+  }
+  log.scrollTop = log.scrollHeight;
+  chatState.turnIndex++;
+  setTimeout(()=>{ pushNpcTurn(); }, 500);
 }
 
 /* =========================================================================
@@ -1654,6 +1995,7 @@ function switchTab(tab){
   document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
   $("#panel-"+tab).classList.add("active");
   document.querySelectorAll("nav.tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.tab===tab));
+  if(tab==="chat") renderChatHome();
   if(tab==="scenes") renderScenes();
   if(tab==="fav") renderFav();
   if(tab==="history") renderHistory();
