@@ -3,8 +3,9 @@
 #   リポジトリの Settings → Pages → "Build and deployment" の Source を
 #   「GitHub Actions」に設定してください。あとは push で自動公開されます。
 # 公開URL（例）:
-#   トップ      … https://karasui1014.github.io/-/
-#   おかいもの  … https://karasui1014.github.io/-/shopping/
+#   トップ        … https://karasui1014.github.io/-/
+#   おかいもの    … https://karasui1014.github.io/-/shopping/
+#   つたわる英語  … https://karasui1014.github.io/-/english/
 name: Deploy to GitHub Pages
 
 on:
@@ -12,6 +13,7 @@ on:
     branches:
       - main
       - claude/shopping-list-app-plan-5m97bw
+      - claude/elegant-hawking-6pazkw
   workflow_dispatch:
 
 # Pages デプロイに必要な権限
@@ -41,6 +43,8 @@ jobs:
           mkdir -p _site
           # おかいものメモ（本体）
           cp -r shopping _site/shopping
+          # つたわる英語（日常英会話アプリ）
+          [ -d english ] && cp -r english _site/english || true
           # 既存の公開物も残す（あるものだけコピー）
           [ -f index.html ] && cp index.html _site/index.html || true
           [ -f glasses_prescription_calculator.html ] && cp glasses_prescription_calculator.html _site/ || true

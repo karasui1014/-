@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e7490">
+<meta name="description" content="意図が伝わる英語を学ぶ日常英会話アプリ。学校式の返答と、実際に伝わる返答の2つを比べて学べます。音声入力・発音再生・復習クイズ対応。端末内保存・ログイン不要・無料。">
+<title>つたわる英語 - 意図が伝わる日常英会話</title>
+<style>
+  :root{
+    --bg1:#ecfeff; --bg2:#eef2ff; --bg3:#f5f3ff;
+    --ink:#1f2937; --sub:#64748b; --line:#e2e8f0;
+    --brand:#0e7490; --brand2:#0891b2; --brand-soft:#cffafe;
+    --school:#f59e0b; --school-soft:#fef3c7;
+    --natural:#059669; --natural-soft:#d1fae5;
+    --card:#ffffff; --shadow:0 6px 24px rgba(15,23,42,.08);
+    --radius:20px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+    background-attachment:fixed;
+    min-height:100vh;
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));
+    line-height:1.6;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:16px;}
+  header.app{
+    text-align:center; padding:14px 12px 6px;
+  }
+  header.app .logo{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:1.5rem; font-weight:800; color:var(--brand);
+    letter-spacing:.02em;
+  }
+  header.app .logo .mark{
+    width:38px;height:38px;border-radius:12px;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));
+    color:#fff; display:grid; place-items:center; font-size:1.2rem;
+    box-shadow:var(--shadow);
+  }
+  header.app p.tag{margin:6px 0 0; color:var(--sub); font-size:.82rem;}
+
+  /* ==== パネル切替 ==== */
+  .panel{display:none; animation:fade .25s ease;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);}to{opacity:1; transform:none;}}
+
+  /* ==== 入力エリア ==== */
+  .searchbox{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px; margin-bottom:14px;
+  }
+  .searchbox textarea{
+    width:100%; border:2px solid var(--line); border-radius:14px;
+    padding:12px 14px; font-size:1rem; resize:none; font-family:inherit;
+    color:var(--ink); background:#fbfdff; min-height:56px;
+  }
+  .searchbox textarea:focus{outline:none; border-color:var(--brand2); background:#fff;}
+  .controls{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;}
+  .seg{display:inline-flex; background:#eef2f7; border-radius:999px; padding:3px;}
+  .seg button{
+    border:none; background:transparent; padding:6px 12px; border-radius:999px;
+    font-size:.82rem; color:var(--sub); cursor:pointer; font-weight:600;
+  }
+  .seg button.on{background:#fff; color:var(--brand); box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .btn{
+    border:none; cursor:pointer; font-family:inherit; font-weight:700;
+    border-radius:14px; padding:11px 16px; font-size:.95rem; transition:transform .1s, box-shadow .2s;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; box-shadow:var(--shadow); flex:1;}
+  .btn-mic{
+    background:#fff; color:var(--brand); border:2px solid var(--brand-soft);
+    width:48px; height:48px; border-radius:50%; font-size:1.25rem; display:grid; place-items:center; padding:0;
+  }
+  .btn-mic.rec{background:#ef4444; color:#fff; border-color:#ef4444; animation:pulse 1s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.5);}70%{box-shadow:0 0 0 12px rgba(239,68,68,0);}100%{box-shadow:0 0 0 0 rgba(239,68,68,0);}}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .chip{
+    background:#fff; border:1px solid var(--line); border-radius:999px;
+    padding:6px 12px; font-size:.8rem; color:var(--brand); cursor:pointer; font-weight:600;
+  }
+  .chip:active{background:var(--brand-soft);}
+  .hint{font-size:.75rem; color:var(--sub); margin-top:8px;}
+
+  /* ==== 結果カード ==== */
+  .notice{
+    background:#fff7ed; border:1px solid #fed7aa; color:#9a3412;
+    border-radius:14px; padding:10px 14px; font-size:.82rem; margin-bottom:12px;
+  }
+  .empty{
+    text-align:center; color:var(--sub); padding:36px 16px; font-size:.9rem;
+  }
+  .empty .big{font-size:2.4rem; display:block; margin-bottom:8px;}
+
+  .card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px; margin-bottom:14px; overflow:hidden;
+  }
+  .card .cat{
+    display:inline-block; font-size:.7rem; font-weight:700; color:var(--brand);
+    background:var(--brand-soft); padding:3px 10px; border-radius:999px; margin-bottom:8px;
+  }
+  .card .prompt-en{font-size:1.15rem; font-weight:800; color:var(--ink); margin:2px 0;}
+  .card .prompt-ja{font-size:.86rem; color:var(--sub); margin:0 0 6px;}
+  .card .situation{
+    font-size:.82rem; color:#0f766e; background:#f0fdfa; border-radius:12px;
+    padding:8px 12px; margin:8px 0 12px;
+  }
+  .answer{
+    border-radius:14px; padding:12px 14px; margin-bottom:10px; position:relative;
+  }
+  .answer.school{background:var(--school-soft); border:1px solid #fde68a;}
+  .answer.natural{background:var(--natural-soft); border:1px solid #a7f3d0;}
+  .answer .lbl{font-size:.72rem; font-weight:800; letter-spacing:.03em; margin-bottom:4px; display:flex; align-items:center; gap:6px;}
+  .answer.school .lbl{color:#b45309;}
+  .answer.natural .lbl{color:#047857;}
+  .answer .en{font-size:1.05rem; font-weight:700; color:var(--ink); padding-right:4px;}
+  .answer .ja{font-size:.83rem; color:var(--sub); margin-top:2px;}
+  .answer .tools{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .mini{
+    border:none; cursor:pointer; font-family:inherit; font-weight:700; font-size:.76rem;
+    background:#ffffffaa; border:1px solid rgba(0,0,0,.06); color:var(--ink);
+    padding:6px 10px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;
+  }
+  .mini:active{transform:scale(.95);}
+  .point{
+    background:#eff6ff; border-left:4px solid #3b82f6; border-radius:8px;
+    padding:10px 12px; font-size:.83rem; color:#1e3a8a; margin-top:6px;
+  }
+  .point b{color:#1d4ed8;}
+  .card .card-foot{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .fav-btn{
+    border:none; background:transparent; cursor:pointer; font-size:1.25rem; color:#cbd5e1; padding:4px;
+  }
+  .fav-btn.on{color:#f59e0b;}
+
+  .related{margin-top:4px;}
+  .related .related-lbl{font-size:.78rem; color:var(--sub); margin-bottom:6px; font-weight:600;}
+
+  /* 折りたたみ（場面別） */
+  .accordion-head{
+    cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  }
+  .accordion-head .arrow{transition:transform .2s; color:var(--sub);}
+  .card.open .accordion-head .arrow{transform:rotate(90deg);}
+  .accordion-body{display:none; margin-top:12px;}
+  .card.open .accordion-body{display:block;}
+
+  /* セクション見出し */
+  .section-title{font-size:1.05rem; font-weight:800; color:var(--ink); margin:6px 4px 12px;}
+  .section-sub{font-size:.8rem; color:var(--sub); margin:-8px 4px 14px;}
+
+  .cat-tile{
+    background:var(--card); border-radius:16px; box-shadow:var(--shadow);
+    padding:14px 16px; margin-bottom:10px; cursor:pointer; display:flex; align-items:center; gap:12px;
+  }
+  .cat-tile:active{transform:scale(.99);}
+  .cat-tile .ico{font-size:1.6rem;}
+  .cat-tile .txt b{display:block; font-size:1rem;}
+  .cat-tile .txt span{font-size:.78rem; color:var(--sub);}
+  .cat-tile .count{margin-left:auto; font-size:.78rem; color:var(--brand); font-weight:700;}
+
+  /* クイズ */
+  .quiz-card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 16px; text-align:center;}
+  .quiz-card .q-ja{font-size:1.25rem; font-weight:800; margin:10px 0 4px;}
+  .quiz-card .q-sit{font-size:.82rem; color:var(--sub); margin-bottom:16px;}
+  .quiz-reveal{margin-top:14px; text-align:left;}
+  .quiz-progress{font-size:.78rem; color:var(--sub); margin-bottom:6px;}
+  .quiz-grade{display:flex; gap:10px; margin-top:14px;}
+  .quiz-grade .btn{flex:1;}
+  .btn-ok{background:#059669; color:#fff;}
+  .btn-ng{background:#f1f5f9; color:#475569;}
+
+  /* トースト */
+  .toast{
+    position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
+    background:#0f172a; color:#fff; padding:10px 18px; border-radius:999px; font-size:.85rem;
+    opacity:0; pointer-events:none; transition:.25s; z-index:60; box-shadow:var(--shadow);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ボトムナビ */
+  nav.tabbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    display:flex; padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.tabbar button{
+    flex:1; border:none; background:transparent; cursor:pointer; color:var(--sub);
+    font-family:inherit; font-size:.68rem; font-weight:600; padding:6px 2px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  nav.tabbar button .i{font-size:1.25rem; line-height:1;}
+  nav.tabbar button.on{color:var(--brand);}
+  nav.tabbar button .badge{
+    position:absolute; transform:translate(14px,-6px); background:#ef4444; color:#fff;
+    font-size:.6rem; min-width:16px; height:16px; border-radius:8px; padding:0 4px; line-height:16px;
+  }
+
+  .list-empty{text-align:center; color:var(--sub); padding:40px 16px;}
+  .list-empty .big{font-size:2.2rem; display:block; margin-bottom:8px;}
+
+  .row-item{
+    background:var(--card); border-radius:14px; box-shadow:var(--shadow);
+    padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:10px; cursor:pointer;
+  }
+  .row-item .r-txt{flex:1; min-width:0;}
+  .row-item .r-txt b{display:block; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row-item .r-txt span{font-size:.76rem; color:var(--sub);}
+  .row-item .r-del{border:none; background:transparent; color:#cbd5e1; font-size:1.1rem; cursor:pointer; padding:4px;}
+
+  .toolbar{display:flex; justify-content:flex-end; margin-bottom:10px;}
+  .link-btn{background:transparent; border:none; color:var(--brand); font-weight:700; font-size:.8rem; cursor:pointer;}
+
+  /* 発音練習 */
+  .rec-box{background:#fff7fb; border:1px solid #fbcfe8; border-radius:12px; padding:10px 12px; margin-top:8px;}
+  .rec-box .rec-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .rec-box .rec-status{font-size:.76rem; color:var(--sub); margin-top:6px;}
+
+  footer.app{text-align:center; color:var(--sub); font-size:.72rem; padding:18px 12px 6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="logo"><span class="mark">💬</span>つたわる英語</div>
+    <p class="tag">「文法的に正しい英語」より「意図が伝わる英語」を。</p>
+  </header>
+
+  <!-- ===== 会話（自由入力）===== -->
+  <section id="panel-talk" class="panel active">
+    <div class="searchbox">
+      <textarea id="queryInput" rows="2" placeholder="日本語でも英語でもOK。例：ペンを持っていますか / お疲れ様です / How are you?"></textarea>
+      <div class="controls">
+        <div class="seg" id="langSeg" title="音声入力の言語">
+          <button data-lang="ja-JP" class="on">🎙 日本語</button>
+          <button data-lang="en-US">🎙 English</button>
+        </div>
+        <button class="btn-mic" id="micBtn" title="音声で入力" aria-label="音声で入力">🎤</button>
+        <button class="btn btn-primary" id="searchBtn">調べる</button>
+      </div>
+      <div class="chips" id="exampleChips"></div>
+      <div class="hint">💡 相手のひと言（例: Do you have a pen?）や、言いたい日本語（例: これいくらですか）を入れてみてください。</div>
+    </div>
+    <div id="talkResult"></div>
+  </section>
+
+  <!-- ===== 場面別 ===== -->
+  <section id="panel-scenes" class="panel">
+    <div class="section-title">場面から探す</div>
+    <div class="section-sub">よく使う場面ごとに、伝わる返し方をまとめています。</div>
+    <div id="sceneList"></div>
+  </section>
+
+  <!-- ===== クイズ ===== -->
+  <section id="panel-quiz" class="panel">
+    <div class="section-title">復習クイズ</div>
+    <div class="section-sub">日本語を見て「伝わる英語」を思い出しましょう。</div>
+    <div id="quizArea"></div>
+  </section>
+
+  <!-- ===== お気に入り ===== -->
+  <section id="panel-fav" class="panel">
+    <div class="section-title">お気に入り</div>
+    <div class="section-sub">⭐ を付けた表現がここに集まります。</div>
+    <div id="favList"></div>
+  </section>
+
+  <!-- ===== 履歴 ===== -->
+  <section id="panel-history" class="panel">
+    <div class="section-title">履歴</div>
+    <div class="toolbar"><button class="link-btn" id="clearHistory">すべて消す</button></div>
+    <div id="historyList"></div>
+  </section>
+
+  <footer class="app">
+    端末内に保存・ログイン不要・無料 ／ 音声は端末の機能を利用します
+  </footer>
+</div>
+
+<nav class="tabbar">
+  <button data-tab="talk" class="on"><span class="i">💬</span>会話</button>
+  <button data-tab="scenes"><span class="i">📚</span>場面別</button>
+  <button data-tab="quiz"><span class="i">🎯</span>クイズ</button>
+  <button data-tab="fav"><span class="i">⭐</span>お気に入り</button>
+  <button data-tab="history"><span class="i">🕘</span>履歴</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   つたわる英語 — 意図が伝わる日常英会話アプリ（単一HTML・無料・オフライン）
+   データ構造（枠組み）: 1エントリ = 1つの場面
+     id        : 一意なID
+     category  : greeting | shopping | travel | business
+     prompt    : {en, ja}  相手のひと言 / 言いたいこと
+     situation : その場面の説明（意図のヒント）
+     keywords  : マッチング用キーワード（日英まぜてOK）
+     school    : {en, ja}  学校で習う形の返答・訳
+     natural   : {en, ja}  実際に伝わる返答・訳
+     point     : なぜそう返す/言うのかの解説
+   ここに追記するだけで例文を増やせます。
+   ========================================================================= */
+const CATEGORIES = {
+  greeting: { label:"あいさつ・雑談", icon:"👋", desc:"あいさつ・自己紹介・体調・天気など" },
+  shopping: { label:"買い物・飲食店", icon:"🛍️", desc:"お店・注文・会計・値段の聞き方" },
+  travel:   { label:"旅行・移動・道案内", icon:"✈️", desc:"道を尋ねる/教える・交通・ホテル" },
+  business: { label:"仕事・ビジネス", icon:"💼", desc:"依頼・会議・メール的なやりとり" },
+};
+
+const PHRASES = [
+  /* ---------- あいさつ・雑談 ---------- */
+  {
+    id:"g_pen", category:"greeting",
+    prompt:{ en:"Do you have a pen?", ja:"ペンを持っていますか？" },
+    situation:"相手はペンを『借りたい』。持っているか事実を聞きたいわけではありません。",
+    keywords:["pen","ペン","持ってい","貸し","borrow"],
+    school:{ en:"Yes, I have a pen.", ja:"はい、ペンを持っています。" },
+    natural:{ en:"Sure! You can use this one.", ja:"どうぞ、これ使ってください。" },
+    point:"相手の意図は『ペンを貸してほしい』。<b>持っているかの事実確認</b>ではなく、<b>貸す申し出</b>をするのが自然です。"
+  },
+  {
+    id:"g_howareyou", category:"greeting",
+    prompt:{ en:"How are you?", ja:"元気ですか？（調子どう？）" },
+    situation:"軽いあいさつ。本当に体調を細かく聞いているわけではありません。",
+    keywords:["how are you","元気","調子","how are"],
+    school:{ en:"I'm fine, thank you. And you?", ja:"元気です、ありがとう。あなたは？" },
+    natural:{ en:"Pretty good, thanks! How about you?", ja:"まあまあ元気だよ、ありがとう！そっちは？" },
+    point:"『I'm fine, thank you』は決まり文句すぎて硬い印象。<b>Good / Pretty good / Not bad</b> と軽く返し、<b>相手にも聞き返す</b>と会話が続きます。"
+  },
+  {
+    id:"g_whatdoyoudo", category:"greeting",
+    prompt:{ en:"What do you do?", ja:"お仕事は何をされていますか？" },
+    situation:"『今なにしてるの？』ではなく、職業をたずねています。",
+    keywords:["what do you do","仕事","職業","occupation"],
+    school:{ en:"I am an office worker.", ja:"私は会社員です。" },
+    natural:{ en:"I work in sales at a food company.", ja:"食品会社で営業をしています。" },
+    point:"聞かれているのは<b>職業</b>。『office worker』でも通じますが、<b>何の仕事か</b>を一言添えると会話が広がります。"
+  },
+  {
+    id:"g_thanks", category:"greeting",
+    prompt:{ en:"Thank you so much!", ja:"本当にありがとう！" },
+    situation:"お礼を言われたときの返し。",
+    keywords:["thank you","thanks","ありがとう","お礼"],
+    school:{ en:"You're welcome.", ja:"どういたしまして。" },
+    natural:{ en:"No problem! Anytime.", ja:"全然いいよ！いつでもどうぞ。" },
+    point:"『You're welcome』も正解ですが、日常では少し丁寧すぎることも。<b>No problem / Sure / Anytime</b> が気軽で自然です。"
+  },
+  {
+    id:"g_otsukare", category:"greeting",
+    prompt:{ en:"(お疲れ様です)", ja:"お疲れ様です" },
+    situation:"日本語独特のあいさつ。直訳できる英語はありません。",
+    keywords:["お疲れ","おつかれ","otsukare","ご苦労"],
+    school:{ en:"You must be tired.", ja:"お疲れでしょう。（直訳）" },
+    natural:{ en:"Hi! / Thanks for your hard work. / Great job today!", ja:"（場面次第で）やあ！／お疲れさま（ねぎらい）／今日はよく頑張ったね！" },
+    point:"『お疲れ様』に<b>ぴったりの英語はありません</b>。すれ違いの挨拶なら <b>Hi</b>、ねぎらいなら <b>Thanks for your hard work / Great job</b> と場面で使い分けます。"
+  },
+  {
+    id:"g_bless", category:"greeting",
+    prompt:{ en:"(相手がくしゃみをした)", ja:"相手がくしゃみをした" },
+    situation:"誰かがくしゃみをしたとき、英語圏では声をかける習慣があります。",
+    keywords:["くしゃみ","sneeze","bless"],
+    school:{ en:"(何も言わない)", ja:"（特に何も言わない）" },
+    natural:{ en:"Bless you!", ja:"（くしゃみに）お大事に！" },
+    point:"英語圏ではくしゃみに <b>Bless you</b> と声をかけるのが自然。言われたら <b>Thanks</b> と返します。"
+  },
+
+  /* ---------- 買い物・飲食店 ---------- */
+  {
+    id:"s_helpyou", category:"shopping",
+    prompt:{ en:"Hi, can I help you?", ja:"いらっしゃいませ、何かお探しですか？" },
+    situation:"店員の声かけ。見ているだけなら断ってOK。",
+    keywords:["can i help you","help you","いらっしゃい","店員","お探し"],
+    school:{ en:"Yes, please.", ja:"はい、お願いします。" },
+    natural:{ en:"I'm just looking, thanks.", ja:"見ているだけです、ありがとう。" },
+    point:"買う気が固まっていないなら <b>Just looking, thanks</b> でOK。断っても失礼になりません。探し物があれば <b>I'm looking for ~</b>。"
+  },
+  {
+    id:"s_forhere", category:"shopping",
+    prompt:{ en:"For here or to go?", ja:"店内でお召し上がりですか、お持ち帰りですか？" },
+    situation:"カフェやファストフードでの定番質問。",
+    keywords:["for here","to go","take out","持ち帰り","店内"],
+    school:{ en:"I will eat here.", ja:"ここで食べます。" },
+    natural:{ en:"To go, please. / For here, please.", ja:"持ち帰りで。／店内で。" },
+    point:"文で答えなくてOK。<b>To go / For here</b> に <b>please</b> を付けるだけで十分伝わります。"
+  },
+  {
+    id:"s_howmuch", category:"shopping",
+    prompt:{ en:"(これはいくらですか)", ja:"これはいくらですか？" },
+    situation:"値段をたずねたいとき。",
+    keywords:["いくら","値段","how much","price","これ"],
+    school:{ en:"How much is this?", ja:"これはいくらですか？" },
+    natural:{ en:"Excuse me, how much is this?", ja:"すみません、これはいくらですか？" },
+    point:"文法はこれで正解。実際は最初に <b>Excuse me</b> を付けると印象が柔らかく、店員も気づきやすいです。"
+  },
+  {
+    id:"s_discount", category:"shopping",
+    prompt:{ en:"(少し安くなりますか)", ja:"少し安くなりますか？" },
+    situation:"市場やフリマなどで値引き交渉をしたいとき。",
+    keywords:["安く","値引き","discount","cheaper","負け"],
+    school:{ en:"Please make it cheaper.", ja:"安くしてください。" },
+    natural:{ en:"Is there any chance of a discount?", ja:"少しお安くなったりしますか？" },
+    point:"『Make it cheaper』は命令口調でぶっきらぼう。<b>Is there any chance of a discount?</b> なら丁寧にお願いできます。"
+  },
+  {
+    id:"s_bag", category:"shopping",
+    prompt:{ en:"Do you need a bag?", ja:"袋はご入用ですか？" },
+    situation:"会計時の定番。",
+    keywords:["need a bag","袋","bag","レジ袋"],
+    school:{ en:"No, I don't need a bag.", ja:"いいえ、袋は要りません。" },
+    natural:{ en:"No, I'm good, thanks. / Yes, please.", ja:"大丈夫です、ありがとう。／はい、お願いします。" },
+    point:"断るときは <b>I'm good, thanks</b> が自然でやわらかい言い方。要るときは <b>Yes, please</b>。"
+  },
+
+  /* ---------- 旅行・移動・道案内 ---------- */
+  {
+    id:"t_station", category:"travel",
+    prompt:{ en:"(駅はどこですか)", ja:"駅はどこですか？" },
+    situation:"知らない人に道をたずねるとき。",
+    keywords:["駅","どこ","station","道","where","get to"],
+    school:{ en:"Where is the station?", ja:"駅はどこですか？" },
+    natural:{ en:"Excuse me, could you tell me how to get to the station?", ja:"すみません、駅への行き方を教えていただけますか？" },
+    point:"通じますが、いきなり Where〜 だと少しぶっきらぼう。<b>Excuse me, could you tell me ~?</b> と切り出すと丁寧で自然です。"
+  },
+  {
+    id:"t_photo", category:"travel",
+    prompt:{ en:"(写真を撮ってもらえますか)", ja:"写真を撮ってもらえますか？" },
+    situation:"通りがかりの人にシャッターをお願いしたいとき。",
+    keywords:["写真","撮って","picture","photo","take a"],
+    school:{ en:"Please take a picture.", ja:"写真を撮ってください。" },
+    natural:{ en:"Excuse me, could you take a photo of us?", ja:"すみません、私たちの写真を撮っていただけますか？" },
+    point:"『Please take a picture』は指示っぽい。<b>Could you take a photo of us?</b> とお願い形にすると気持ちよく頼めます。"
+  },
+  {
+    id:"t_wherefrom", category:"travel",
+    prompt:{ en:"Where are you from?", ja:"どちらのご出身ですか？" },
+    situation:"旅先での定番の雑談。",
+    keywords:["where are you from","出身","from","どこから"],
+    school:{ en:"I am from Japan.", ja:"私は日本出身です。" },
+    natural:{ en:"I'm from Japan. How about you?", ja:"日本から来ました。あなたは？" },
+    point:"答えたら <b>How about you?</b> と聞き返すと会話が続きます。都市名を足す（<b>from Osaka, Japan</b>）のも自然。"
+  },
+  {
+    id:"t_chicken", category:"travel",
+    prompt:{ en:"Chicken or beef?", ja:"チキンとビーフ、どちらになさいますか？" },
+    situation:"機内食などでの二択の質問。",
+    keywords:["chicken","beef","機内食","二択","or"],
+    school:{ en:"I want to eat chicken.", ja:"チキンを食べたいです。" },
+    natural:{ en:"Chicken, please.", ja:"チキンをお願いします。" },
+    point:"フルセンテンスは不要。<b>Chicken, please</b> と一言でスマートに伝わります。"
+  },
+  {
+    id:"t_declare", category:"travel",
+    prompt:{ en:"Anything to declare?", ja:"申告するものはありますか？" },
+    situation:"税関での質問。",
+    keywords:["declare","税関","申告","customs"],
+    school:{ en:"No, I have nothing to declare.", ja:"いいえ、申告するものはありません。" },
+    natural:{ en:"No, nothing.", ja:"いいえ、何もありません。" },
+    point:"短く <b>No, nothing</b> で十分。かしこまりすぎず、はっきり答えるのがコツです。"
+  },
+
+  /* ---------- 仕事・ビジネス ---------- */
+  {
+    id:"b_sendfile", category:"business",
+    prompt:{ en:"Could you send me the file?", ja:"ファイルを送ってもらえますか？" },
+    situation:"依頼への返事。",
+    keywords:["send","file","送っ","依頼","ファイル"],
+    school:{ en:"Yes, I will send it.", ja:"はい、送ります。" },
+    natural:{ en:"Sure, I'll send it right away.", ja:"了解です、すぐに送りますね。" },
+    point:"『Yes, I will』でも通じますが、<b>Sure / Of course</b> ＋ <b>right away（すぐに）</b> を添えると前向きで感じが良いです。"
+  },
+  {
+    id:"b_yoroshiku", category:"business",
+    prompt:{ en:"(よろしくお願いします)", ja:"よろしくお願いします" },
+    situation:"日本語独特の万能フレーズ。直訳英語はありません。",
+    keywords:["よろしく","yoroshiku","お願いします"],
+    school:{ en:"Please treat me well.", ja:"よく扱ってください。（直訳・不自然）" },
+    natural:{ en:"I'm looking forward to working with you. / Thanks in advance.", ja:"一緒にお仕事できるのを楽しみにしています。／（先に）よろしくお願いします。" },
+    point:"直訳は通じません。初対面なら <b>Looking forward to working with you</b>、依頼の締めなら <b>Thanks in advance</b> と場面で言い換えます。"
+  },
+  {
+    id:"b_meeting", category:"business",
+    prompt:{ en:"Can you make it to the meeting?", ja:"会議に来られますか？" },
+    situation:"『会議に出席できるか』を聞かれています。",
+    keywords:["make it","meeting","会議","出席","来られ"],
+    school:{ en:"Yes, I can go to the meeting.", ja:"はい、会議に行けます。" },
+    natural:{ en:"Yes, I can make it.", ja:"はい、参加できます。" },
+    point:"『make it』は<b>都合をつけて参加する</b>という意味。返すときも <b>I can make it</b> と同じ表現を使うと自然です。"
+  },
+  {
+    id:"b_thatwork", category:"business",
+    prompt:{ en:"Does Friday work for you?", ja:"金曜日はご都合いかがですか？" },
+    situation:"日程調整。都合が合うか聞かれています。",
+    keywords:["work for you","都合","日程","friday","schedule"],
+    school:{ en:"Yes, Friday is OK.", ja:"はい、金曜は大丈夫です。" },
+    natural:{ en:"Yes, Friday works for me.", ja:"はい、金曜で大丈夫です。" },
+    point:"『work for you（都合が合う）』で聞かれたら <b>works for me</b> と返すのが自然。合わなければ <b>Friday doesn't work for me, but ~</b>。"
+  },
+  {
+    id:"b_letmecheck", category:"business",
+    prompt:{ en:"(確認させてください)", ja:"確認させてください" },
+    situation:"その場で即答せず、いったん確かめたいとき。",
+    keywords:["確認","check","confirm","調べ","let me"],
+    school:{ en:"I will confirm it.", ja:"確認します。" },
+    natural:{ en:"Let me check and get back to you.", ja:"確認して、あらためてご連絡します。" },
+    point:"<b>Let me check</b> で『ちょっと確認しますね』、<b>get back to you</b> で『後で連絡します』。セットで使うとスマートです。"
+  },
+];
+
+/* ===== 状態・保存 ===== */
+const LS = {
+  fav:"tsutawaru.fav.v1",
+  hist:"tsutawaru.hist.v1",
+  set:"tsutawaru.set.v1",
+};
+const store = {
+  get(k, def){ try{ return JSON.parse(localStorage.getItem(k)) ?? def; }catch(e){ return def; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+};
+let favorites = store.get(LS.fav, []);         // [id...]
+let history   = store.get(LS.hist, []);        // [{q, id, t}]
+let settings  = store.get(LS.set, { voiceLang:"ja-JP" });
+
+const byId = id => PHRASES.find(p=>p.id===id);
+const $ = s => document.querySelector(s);
+const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1600); }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* =========================================================================
+   マッチングエンジン（用意した例文集から一番近いものを探す）
+   ========================================================================= */
+function normalize(s){
+  return String(s||"").toLowerCase()
+    .replace(/[.,!?;:"'()\[\]、。！？「」『』]/g," ")
+    .replace(/\s+/g," ").trim();
+}
+function scoreEntry(query, e){
+  const qRaw = query.trim();
+  const q = normalize(query);
+  if(!q) return 0;
+  const enHay = normalize([e.prompt.en, e.school.en, e.natural.en, e.keywords.join(" ")].join(" "));
+  const jaHay = [e.prompt.ja, e.situation, e.keywords.join(" ")].join(" ");
+  let score = 0;
+
+  // 完全 or 部分の丸ごと一致（英語）
+  if(enHay.includes(q)) score += 10;
+  const promptEnN = normalize(e.prompt.en);
+  if(promptEnN && (promptEnN === q)) score += 40;
+
+  // 丸ごと一致（日本語生テキスト）
+  if(qRaw && jaHay.includes(qRaw)) score += 10;
+  if(normalize(e.prompt.ja) && qRaw && (e.prompt.ja.replace(/[（(].*?[)）]/g,"").includes(qRaw) || qRaw.includes(e.prompt.ja.replace(/[（(].*?[)）]/g,"")))) score += 20;
+
+  // キーワード一致（日英まぜ）
+  for(const k of e.keywords){
+    const kn = normalize(k);
+    if(kn && q.includes(kn)) score += Math.max(3, Math.ceil(kn.length/3));
+    if(k && qRaw.includes(k)) score += Math.max(3, Math.ceil(k.length/2)); // 日本語キーワードの素直な部分一致
+  }
+
+  // 英単語の重なり
+  const qWords = q.split(" ").filter(w=>w.length>=2);
+  const enWords = new Set(enHay.split(" "));
+  for(const w of qWords){ if(enWords.has(w)) score += 2; }
+
+  // 日本語 n-gram の重なり（2〜3文字）
+  const jaQuery = qRaw.replace(/[a-zA-Z0-9\s]/g,"");
+  for(let n=3;n>=2;n--){
+    for(let i=0;i+n<=jaQuery.length;i++){
+      const g = jaQuery.slice(i,i+n);
+      if(g && jaHay.includes(g)) score += n;
+    }
+  }
+  return score;
+}
+function search(query){
+  const ranked = PHRASES
+    .map(e=>({ e, s:scoreEntry(query,e) }))
+    .filter(x=>x.s>0)
+    .sort((a,b)=>b.s-a.s);
+  return ranked;
+}
+const MATCH_STRONG = 8; // これ以上なら「ぴったり」扱い
+
+/* =========================================================================
+   カード描画
+   ========================================================================= */
+function speak(text, rate){
+  if(!("speechSynthesis" in window)){ toast("この端末は音声読み上げに未対応です"); return; }
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = rate || 1;
+    const v = window.speechSynthesis.getVoices().find(v=>/en(-|_)?US/i.test(v.lang)) ||
+              window.speechSynthesis.getVoices().find(v=>/^en/i.test(v.lang));
+    if(v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  }catch(e){ toast("読み上げに失敗しました"); }
+}
+function answerBlock(kind, label, data, entryId){
+  const cls = kind==="school" ? "school" : "natural";
+  const icon = kind==="school" ? "🏫" : "💡";
+  const wrap = el("div","answer "+cls);
+  wrap.innerHTML =
+    `<div class="lbl">${icon} ${label}</div>
+     <div class="en">${esc(data.en)}</div>
+     <div class="ja">${esc(data.ja)}</div>
+     <div class="tools">
+       <button class="mini" data-act="speak" data-rate="1">🔊 聞く</button>
+       <button class="mini" data-act="speak" data-rate="0.65">🐢 ゆっくり</button>
+       <button class="mini" data-act="rec">🎙️ 発音練習</button>
+     </div>
+     <div class="rec-host"></div>`;
+  wrap.querySelectorAll('[data-act="speak"]').forEach(b=>{
+    b.onclick = ()=> speak(data.en, parseFloat(b.dataset.rate));
+  });
+  wrap.querySelector('[data-act="rec"]').onclick = (ev)=> togglePronunciation(ev.target.closest(".answer").querySelector(".rec-host"), data.en);
+  return wrap;
+}
+function renderCard(e, opts={}){
+  const card = el("div","card");
+  const cat = CATEGORIES[e.category];
+  const isFav = favorites.includes(e.id);
+  card.innerHTML = `<span class="cat">${cat.icon} ${cat.label}</span>
+    <div class="prompt-en">${esc(e.prompt.en)}</div>
+    <div class="prompt-ja">${esc(e.prompt.ja)}</div>
+    <div class="situation">🧭 ${esc(e.situation)}</div>`;
+  card.appendChild(answerBlock("school","学校で習う返し方（文法的にはOK）", e.school, e.id));
+  card.appendChild(answerBlock("natural","実際に伝わる返し方（おすすめ）", e.natural, e.id));
+  card.appendChild(el("div","point", `📝 <b>ここがポイント</b>：${e.point}`));
+  const foot = el("div","card-foot");
+  const fav = el("button","fav-btn"+(isFav?" on":""), isFav?"⭐":"☆");
+  fav.title="お気に入り";
+  fav.onclick = ()=>{ toggleFav(e.id); fav.classList.toggle("on"); fav.textContent = favorites.includes(e.id)?"⭐":"☆"; refreshBadges(); };
+  foot.appendChild(fav);
+  foot.appendChild(el("span","",""));
+  card.appendChild(foot);
+  return card;
+}
+
+/* ===== 発音練習（録音して聞き比べ）===== */
+let activeRecorder = null;
+function togglePronunciation(host, modelText){
+  if(host.dataset.open==="1"){ host.innerHTML=""; host.dataset.open="0"; return; }
+  host.dataset.open="1";
+  const supported = !!(navigator.mediaDevices && window.MediaRecorder);
+  const box = el("div","rec-box");
+  if(!supported){
+    box.innerHTML = `<div class="rec-status">この端末は録音に未対応です。お手本の🔊で発音を確認しましょう。</div>`;
+    host.innerHTML=""; host.appendChild(box); return;
+  }
+  box.innerHTML = `<div class="rec-row">
+      <button class="mini" data-r="model">🔊 お手本</button>
+      <button class="mini" data-r="start">⏺️ 録音</button>
+      <button class="mini" data-r="play" disabled>▶️ 自分の声</button>
+    </div><div class="rec-status">「⏺️ 録音」→ 発音 →「⏹️ 停止」→ お手本と聞き比べ。</div>`;
+  host.innerHTML=""; host.appendChild(box);
+  const status = box.querySelector(".rec-status");
+  const btnStart = box.querySelector('[data-r="start"]');
+  const btnPlay  = box.querySelector('[data-r="play"]');
+  box.querySelector('[data-r="model"]').onclick = ()=> speak(modelText, 0.85);
+  let chunks=[], mediaRec=null, url=null, stream=null;
+  btnStart.onclick = async ()=>{
+    if(mediaRec && mediaRec.state==="recording"){
+      mediaRec.stop(); return;
+    }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRec = new MediaRecorder(stream); chunks=[];
+      mediaRec.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+      mediaRec.onstop = ()=>{
+        const blob = new Blob(chunks, {type:chunks[0]?.type||"audio/webm"});
+        if(url) URL.revokeObjectURL(url);
+        url = URL.createObjectURL(blob);
+        btnPlay.disabled=false; btnStart.textContent="⏺️ 録音"; btnStart.classList.remove("rec");
+        status.textContent="録音できました。▶️で自分の声、🔊でお手本を聞き比べましょう。";
+        stream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRec.start();
+      btnStart.textContent="⏹️ 停止"; btnStart.classList.add("rec");
+      status.textContent="録音中… はっきり発音してみましょう。";
+    }catch(err){ status.textContent="マイクを使えませんでした（権限をご確認ください）。"; }
+  };
+  btnPlay.onclick = ()=>{ if(url){ const a=new Audio(url); a.play(); } };
+}
+
+/* =========================================================================
+   会話パネル
+   ========================================================================= */
+const EXAMPLES = ["ペンを持っていますか","お疲れ様です","これはいくらですか","How are you?","駅はどこですか","よろしくお願いします"];
+function renderExampleChips(){
+  const host = $("#exampleChips"); host.innerHTML="";
+  EXAMPLES.forEach(x=>{
+    const c = el("button","chip", esc(x));
+    c.onclick = ()=>{ $("#queryInput").value = x; doSearch(); };
+    host.appendChild(c);
+  });
+}
+function doSearch(){
+  const q = $("#queryInput").value.trim();
+  const host = $("#talkResult"); host.innerHTML="";
+  if(!q){ toast("調べたい言葉を入れてください"); return; }
+  const ranked = search(q);
+  if(ranked.length===0){
+    host.appendChild(el("div","empty",
+      `<span class="big">🔍</span>ぴったりの例文がまだありません。<br>下の例をタップするか、言い方を変えて試してみてください。`));
+    renderExampleChips();
+    return;
+  }
+  const best = ranked[0];
+  if(best.s < MATCH_STRONG){
+    host.appendChild(el("div","notice","🔎 ぴったりの例文が見つからなかったので、<b>近い場面</b>を表示しています。"));
+  }
+  host.appendChild(renderCard(best.e));
+  addHistory(q, best.e.id);
+
+  const related = ranked.slice(1,4);
+  if(related.length){
+    const rel = el("div","related");
+    rel.appendChild(el("div","related-lbl","こんな場面も見てみる？"));
+    related.forEach(r=>{
+      const c = el("button","chip", esc(r.e.prompt.ja || r.e.prompt.en));
+      c.onclick = ()=>{ host.querySelectorAll('.related').forEach(n=>n.remove()); host.insertBefore(renderCard(r.e), rel); window.scrollTo({top:0,behavior:"smooth"}); };
+      rel.appendChild(c);
+    });
+    host.appendChild(rel);
+  }
+}
+
+/* ===== 音声入力（Web Speech API）===== */
+let recognition=null;
+function setupRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ return null; }
+  const r = new SR();
+  r.interimResults=false; r.maxAlternatives=1;
+  r.onresult = ev=>{ const t = ev.results[0][0].transcript; $("#queryInput").value = t; doSearch(); };
+  r.onerror = ev=>{ toast(ev.error==="not-allowed"?"マイクの使用が許可されていません":"音声認識に失敗しました"); };
+  r.onend = ()=>{ $("#micBtn").classList.remove("rec"); };
+  return r;
+}
+function toggleMic(){
+  if(!recognition) recognition = setupRecognition();
+  if(!recognition){ toast("この端末は音声入力に未対応です（Chrome推奨）"); return; }
+  const btn = $("#micBtn");
+  if(btn.classList.contains("rec")){ recognition.stop(); return; }
+  try{
+    recognition.lang = settings.voiceLang;
+    recognition.start();
+    btn.classList.add("rec");
+    toast(settings.voiceLang==="ja-JP"?"日本語で話してください":"Speak in English");
+  }catch(e){ /* 連続startのガード */ }
+}
+
+/* =========================================================================
+   場面別パネル
+   ========================================================================= */
+function renderScenes(){
+  const host = $("#sceneList"); host.innerHTML="";
+  Object.keys(CATEGORIES).forEach(key=>{
+    const c = CATEGORIES[key];
+    const items = PHRASES.filter(p=>p.category===key);
+    const tile = el("div","cat-tile");
+    tile.innerHTML = `<span class="ico">${c.icon}</span>
+      <div class="txt"><b>${c.label}</b><span>${c.desc}</span></div>
+      <span class="count">${items.length}件 ›</span>`;
+    tile.onclick = ()=> openCategory(key);
+    host.appendChild(tile);
+  });
+}
+function openCategory(key){
+  const c = CATEGORIES[key];
+  const host = $("#sceneList"); host.innerHTML="";
+  const back = el("button","link-btn","‹ 場面一覧にもどる"); back.onclick=renderScenes;
+  const bar = el("div","toolbar"); bar.style.justifyContent="flex-start"; bar.appendChild(back);
+  host.appendChild(bar);
+  host.appendChild(el("div","section-title", `${c.icon} ${c.label}`));
+  PHRASES.filter(p=>p.category===key).forEach(e=>{
+    const card = renderCard(e);
+    card.classList.add("collapsed");
+    // 折りたたみ表示にする
+    const head = el("div","accordion-head");
+    head.innerHTML = `<div><div class="prompt-en">${esc(e.prompt.en)}</div><div class="prompt-ja">${esc(e.prompt.ja)}</div></div><span class="arrow">›</span>`;
+    // カードの中身を body に移す
+    const body = el("div","accordion-body");
+    while(card.children.length) body.appendChild(card.children[0]);
+    // 先頭の cat バッジは head の上に残したいので作り直し
+    card.innerHTML="";
+    card.appendChild(el("span","cat", `${c.icon} ${c.label}`));
+    card.appendChild(head);
+    card.appendChild(body);
+    head.onclick = (ev)=>{ if(ev.target.closest(".mini,.fav-btn,.rec-box")) return; card.classList.toggle("open"); };
+    host.appendChild(card);
+  });
+}
+
+/* =========================================================================
+   お気に入り / 履歴
+   ========================================================================= */
+function toggleFav(id){
+  if(favorites.includes(id)){ favorites = favorites.filter(x=>x!==id); toast("お気に入りから外しました"); }
+  else{ favorites.unshift(id); toast("お気に入りに追加しました ⭐"); }
+  store.set(LS.fav, favorites);
+}
+function renderFav(){
+  const host = $("#favList"); host.innerHTML="";
+  if(!favorites.length){ host.appendChild(el("div","list-empty",`<span class="big">⭐</span>お気に入りはまだありません。<br>カードの ☆ を押すとここに追加されます。`)); return; }
+  favorites.map(byId).filter(Boolean).forEach(e=> host.appendChild(renderCard(e)));
+}
+function addHistory(q, id){
+  history.unshift({ q, id, t:Date.now() });
+  history = history.slice(0,50);
+  store.set(LS.hist, history);
+  refreshBadges();
+}
+function renderHistory(){
+  const host = $("#historyList"); host.innerHTML="";
+  if(!history.length){ host.appendChild(el("div","list-empty",`<span class="big">🕘</span>まだ履歴はありません。`)); return; }
+  history.forEach((h,idx)=>{
+    const e = byId(h.id); if(!e) return;
+    const row = el("div","row-item");
+    const d = new Date(h.t);
+    const time = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    row.innerHTML = `<div class="r-txt"><b>${esc(h.q)}</b><span>${esc(e.prompt.en)} ・ ${time}</span></div><button class="r-del">✕</button>`;
+    row.querySelector(".r-txt").onclick = ()=>{ switchTab("talk"); $("#queryInput").value=h.q; doSearch(); };
+    row.querySelector(".r-del").onclick = (ev)=>{ ev.stopPropagation(); history.splice(idx,1); store.set(LS.hist,history); renderHistory(); refreshBadges(); };
+    host.appendChild(row);
+  });
+}
+
+/* =========================================================================
+   復習クイズ
+   ========================================================================= */
+let quizPool=[], quizIdx=0, quizScore=0;
+function startQuiz(){
+  const source = favorites.length>=3 ? favorites.map(byId).filter(Boolean) : PHRASES.slice();
+  quizPool = source.sort(()=>Math.random()-0.5).slice(0, Math.min(10, source.length));
+  quizIdx=0; quizScore=0;
+  renderQuiz();
+}
+function renderQuiz(){
+  const host = $("#quizArea"); host.innerHTML="";
+  if(!quizPool.length){ startQuiz(); return; }
+  if(quizIdx>=quizPool.length){
+    host.appendChild(el("div","quiz-card",
+      `<div style="font-size:2.4rem">🎉</div>
+       <div class="q-ja">おつかれさま！</div>
+       <div class="q-sit">${quizPool.length}問中 <b>${quizScore}</b> 問できました。</div>
+       <button class="btn btn-primary" style="margin-top:14px" onclick="startQuiz()">もう一度</button>`));
+    return;
+  }
+  const e = quizPool[quizIdx];
+  const card = el("div","quiz-card");
+  card.innerHTML = `<div class="quiz-progress">${quizIdx+1} / ${quizPool.length}${favorites.length>=3?"（お気に入りから出題）":""}</div>
+    <div class="q-sit">🧭 ${esc(e.situation)}</div>
+    <div class="q-ja">「${esc(e.prompt.ja)}」</div>
+    <div class="q-sit">この場面で “伝わる英語” は？</div>
+    <button class="btn btn-primary" id="revealBtn" style="margin-top:10px">答えを見る</button>
+    <div class="quiz-reveal" id="reveal"></div>`;
+  host.appendChild(card);
+  $("#revealBtn").onclick = ()=>{
+    $("#revealBtn").style.display="none";
+    const r = $("#reveal");
+    r.appendChild(answerBlock("natural","伝わる英語", e.natural, e.id));
+    r.appendChild(answerBlock("school","学校式", e.school, e.id));
+    r.appendChild(el("div","point",`📝 ${e.point}`));
+    const grade = el("div","quiz-grade");
+    const ok = el("button","btn btn-ok","○ 言えた");
+    const ng = el("button","btn btn-ng","△ あやしい");
+    ok.onclick = ()=>{ quizScore++; quizIdx++; renderQuiz(); };
+    ng.onclick = ()=>{ quizIdx++; renderQuiz(); };
+    grade.appendChild(ok); grade.appendChild(ng);
+    r.appendChild(grade);
+  };
+}
+
+/* =========================================================================
+   タブ・初期化
+   ========================================================================= */
+function switchTab(tab){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  $("#panel-"+tab).classList.add("active");
+  document.querySelectorAll("nav.tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.tab===tab));
+  if(tab==="scenes") renderScenes();
+  if(tab==="fav") renderFav();
+  if(tab==="history") renderHistory();
+  if(tab==="quiz") startQuiz();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function refreshBadges(){
+  // 履歴タブにバッジは付けず、ここは将来拡張用のフック
+}
+function initLangSeg(){
+  const seg = $("#langSeg");
+  seg.querySelectorAll("button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.lang===settings.voiceLang);
+    b.onclick = ()=>{
+      settings.voiceLang=b.dataset.lang; store.set(LS.set, settings);
+      seg.querySelectorAll("button").forEach(x=>x.classList.toggle("on", x===b));
+    };
+  });
+}
+function init(){
+  renderExampleChips();
+  initLangSeg();
+  $("#searchBtn").onclick = doSearch;
+  $("#micBtn").onclick = toggleMic;
+  $("#queryInput").addEventListener("keydown", e=>{ if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){ doSearch(); } });
+  $("#clearHistory").onclick = ()=>{ if(confirm("履歴をすべて消しますか？")){ history=[]; store.set(LS.hist,history); renderHistory(); } };
+  document.querySelectorAll("nav.tabbar button").forEach(b=> b.onclick=()=>switchTab(b.dataset.tab));
+  // 音声リストの遅延ロード対策
+  if("speechSynthesis" in window){ window.speechSynthesis.onvoiceschanged = ()=>{}; window.speechSynthesis.getVoices(); }
+}
+window.startQuiz = startQuiz; // インラインonclick用
+init();
+</script>
+</body>
+</html>
