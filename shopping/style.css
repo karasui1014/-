@@ -4,6 +4,8 @@
  * ========================================================================= */
 
 :root {
+  color-scheme: light;
+
   /* パステル配色 */
   --pink:        #ffb6c8;
   --pink-soft:   #ffe3ea;
@@ -17,8 +19,33 @@
   --ink:         #6b5b53;     /* やさしい茶系の文字色 */
   --ink-soft:    #9c8d84;
   --line:        #f0e2d8;
-  --white:       #ffffff;
+  --white:       #ffffff;     /* カード等の面（ダークでは暗い面に切り替わる） */
   --warn:        #ff8aa0;
+
+  /* テーマで切り替わるセマンティックカラー */
+  --bg-mid:      #fff4ee;                       /* 背景グラデの中間色 */
+  --bg-end:      #fdeee7;                       /* 背景グラデの終端色 */
+  --header-1:    #ffb6c8;                       /* ヘッダーのグラデ */
+  --header-2:    #ffc6d4;
+  --addbar-bg:   rgba(255, 249, 243, 0.94);     /* 追加バー（すりガラス） */
+  --tabbar-bg:   rgba(255, 255, 255, 0.92);     /* タブバー（すりガラス） */
+  --toast-bg:    #6b5b53;                       /* トースト */
+  --toast-text:  #ffffff;
+  --toast-undo:  #ffd9a0;                       /* トースト内「元に戻す」 */
+  --gold-bg:     #fff3d9;                       /* 買い忘れ・位置情報ガイド */
+  --gold-line:   #ffe6ad;
+  --mintbg:      #eafaf3;                       /* ルート・tl-1バッジ */
+  --mint-line:   #c8efde;
+  --cook-bg:     #fff3ea;                       /* クックパッド導線 */
+  --cook-line:   #ffd9bf;
+  --cook-ink:    #ff7a2f;
+  --share-ink:   #1f7d63;                       /* シェアボタン文字 */
+  --sky-soft:    #e9f3ff;                       /* tl-2バッジ */
+  --lav-soft:    #f1eafc;                       /* tl-3バッジ */
+  --tl4-1:       #fff7ea;                       /* tl-4バッジ */
+  --tl4-2:       #ffe6c2;
+  --tl4-ink:     #8a5a1e;
+  --focus-ring:  rgba(255, 143, 172, 0.5);      /* キーボード操作のフォーカス輪 */
 
   --radius:      20px;
   --radius-sm:   14px;
@@ -47,6 +74,7 @@ html {
   /* Androidのプル更新やバウンスでアプリ感が崩れないように */
   overscroll-behavior-y: none;
   height: 100%;
+  background: var(--cream);   /* バウンス時にテーマ色が見えるように */
 }
 
 html, body {
@@ -56,7 +84,7 @@ html, body {
   color: var(--ink);
   background:
     radial-gradient(1200px 400px at 50% -200px, var(--pink-soft), transparent),
-    linear-gradient(180deg, var(--cream), #fff4ee 60%, #fdeee7);
+    linear-gradient(180deg, var(--cream), var(--bg-mid) 60%, var(--bg-end));
   min-height: 100vh;
   font-weight: 500;
   -webkit-font-smoothing: antialiased;
@@ -77,7 +105,7 @@ body {
   gap: 12px;
   padding: 10px 16px calc(10px) 14px;
   padding-top: calc(10px + env(safe-area-inset-top));
-  background: linear-gradient(180deg, var(--pink), #ffc6d4);
+  background: linear-gradient(180deg, var(--header-1), var(--header-2));
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
   box-shadow: var(--shadow);
@@ -130,7 +158,7 @@ body {
   gap: 10px;
   margin: 12px 14px 0;
   padding: 11px 12px 11px 14px;
-  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  background: linear-gradient(180deg, var(--white), var(--pink-soft));
   border: 2px solid var(--pink-soft);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
@@ -259,7 +287,7 @@ body {
   text-align: right;
   background: var(--cream);
 }
-.item-price-input:focus { outline: none; border-color: var(--pink); background: #fff; }
+.item-price-input:focus { outline: none; border-color: var(--pink); background: var(--white); }
 .item-prev-price { color: var(--ink-soft); font-weight: 700; }
 .item-prev-price.is-up { color: var(--warn); }
 .item-prev-price.is-down { color: var(--mint-deep); }
@@ -332,8 +360,8 @@ body {
 .due-area {
   margin: 12px 0 4px;
   padding: 12px 14px;
-  background: linear-gradient(180deg, #fff, #fff3d9);
-  border: 2px solid #ffe6ad;
+  background: linear-gradient(180deg, var(--white), var(--gold-bg));
+  border: 2px solid var(--gold-line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
 }
@@ -347,7 +375,7 @@ body {
   color: var(--ink-soft); font-size: 0.85rem; cursor: pointer; border-radius: 8px;
 }
 .due-close:active { background: rgba(0,0,0,0.05); }
-.due-area .chip { border-color: #ffe6ad; }
+.due-area .chip { border-color: var(--gold-line); }
 .due-area .chip .chip-sub { font-size: 0.7rem; color: var(--ink-soft); margin-left: 2px; }
 
 /* ====== コンプリート演出 ====== */
@@ -355,7 +383,7 @@ body {
   margin: 12px 0 16px;
   padding: 22px 18px;
   text-align: center;
-  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  background: linear-gradient(180deg, var(--white), var(--pink-soft));
   border: 2px solid var(--pink);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -459,8 +487,8 @@ body {
 .recipe-steps-none { font-size: 0.76rem; color: var(--ink-soft); font-weight: 700; margin: 0 0 8px; }
 .recipe-cookpad {
   display: block; text-align: center;
-  font-size: 0.8rem; font-weight: 900; color: #ff7a2f;
-  background: #fff3ea; border: 2px solid #ffd9bf; border-radius: 12px;
+  font-size: 0.8rem; font-weight: 900; color: var(--cook-ink);
+  background: var(--cook-bg); border: 2px solid var(--cook-line); border-radius: 12px;
   padding: 9px; text-decoration: none;
 }
 .recipe-cookpad:active { transform: scale(0.98); }
@@ -579,8 +607,8 @@ body {
 .route-area {
   margin: 10px 4px;
   padding: 12px 14px;
-  background: linear-gradient(180deg, #fff, #eafaf3);
-  border: 2px solid #c8efde;
+  background: linear-gradient(180deg, var(--white), var(--mintbg));
+  border: 2px solid var(--mint-line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
 }
@@ -598,7 +626,7 @@ body {
 .route-total { margin-top: 8px; font-weight: 900; font-size: 0.86rem; color: var(--mint-deep); text-align: right; }
 
 /* 店内の回り方（売り場順） */
-.instore-route { margin-top: 12px; padding-top: 12px; border-top: 2px dashed #c8efde; }
+.instore-route { margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--mint-line); }
 .instore-head { font-weight: 900; font-size: 0.9rem; margin-bottom: 8px; }
 .instore-empty { font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; margin: 4px 0; }
 .instore-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
@@ -710,8 +738,9 @@ body {
   left: 0; right: 0;
   bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   z-index: 25;
-  background: rgba(255, 249, 243, 0.96);
-  backdrop-filter: blur(6px);
+  background: var(--addbar-bg);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
   padding: 9px 12px;
 }
@@ -788,11 +817,14 @@ body {
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
-  background: var(--white);
+  background: var(--tabbar-bg);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
   box-shadow: 0 -2px 12px rgba(150,120,110,0.08);
 }
 .tab-btn {
+  position: relative;
   flex: 1;
   border: none;
   background: transparent;
@@ -805,6 +837,18 @@ body {
   gap: 2px;
   padding: 8px 0;
 }
+/* 選択中タブの上に小さなインジケータバー */
+.tab-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  width: 26px; height: 4px;
+  border-radius: 0 0 999px 999px;
+  background: var(--pink-deep);
+  transform: translateX(-50%) scaleX(0);
+  transition: transform 0.25s cubic-bezier(.34,1.3,.64,1);
+}
+.tab-btn.is-active::before { transform: translateX(-50%) scaleX(1); }
 .tab-btn .tab-ico { font-size: 1.3rem; transition: transform 0.2s; }
 .tab-btn .tab-lbl { font-size: 0.68rem; font-weight: 700; }
 .tab-btn.is-active { color: var(--pink-deep); }
@@ -819,7 +863,7 @@ body {
   left: 50%;
   top: 38%;
   transform: translate(-50%, -50%) scale(0.6);
-  background: #fff;
+  background: var(--white);
   color: var(--pink-deep);
   font-weight: 900;
   font-size: 1.3rem;
@@ -861,8 +905,8 @@ body {
   bottom: calc(var(--addbar-h) + var(--tabbar-h) + 16px + env(safe-area-inset-bottom));
   transform: translateX(-50%) translateY(12px);
   z-index: 60;
-  background: var(--ink);
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--toast-text);
   font-weight: 800;
   font-size: 0.86rem;
   padding: 11px 18px;
@@ -874,7 +918,29 @@ body {
   max-width: 86vw;
   text-align: center;
 }
-.app-toast.is-show { opacity: 0.95; transform: translateX(-50%) translateY(0); }
+.app-toast.is-show { opacity: 0.97; transform: translateX(-50%) translateY(0); }
+/* 「元に戻す」ボタン付きトースト（削除の取り消し用） */
+.app-toast.has-undo {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+.app-toast:not(.is-show) { pointer-events: none; }
+.toast-undo {
+  font-family: var(--font);
+  font-weight: 900;
+  font-size: 0.88rem;
+  color: var(--toast-undo);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.toast-undo:active { opacity: 0.7; }
 
 /* ====== 称号バッジ（ヘッダー上部・作るほど豪華に） ====== */
 .title-badge {
@@ -894,11 +960,11 @@ body {
 .title-badge .tb-spark { margin-left: auto; font-size: 1.05rem; flex: 0 0 auto; animation: tb-twinkle 1.8s ease-in-out infinite; }
 @keyframes tb-twinkle { 0%,100% { opacity: 0.4; transform: scale(0.9) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(12deg); } }
 
-.title-badge.tl-0 { background: #fff; border-color: var(--pink-soft); color: var(--ink); }
-.title-badge.tl-1 { background: linear-gradient(135deg, #fff, #eafaf3); border-color: var(--mint); color: var(--ink); }
-.title-badge.tl-2 { background: linear-gradient(135deg, #fff, #e9f3ff); border-color: var(--sky); color: var(--ink); }
-.title-badge.tl-3 { background: linear-gradient(135deg, #fff, #f1eafc); border-color: var(--lav); color: var(--ink); }
-.title-badge.tl-4 { background: linear-gradient(135deg, #fff7ea, #ffe6c2); border-color: var(--peach); color: #8a5a1e; }
+.title-badge.tl-0 { background: var(--white); border-color: var(--pink-soft); color: var(--ink); }
+.title-badge.tl-1 { background: linear-gradient(135deg, var(--white), var(--mintbg)); border-color: var(--mint); color: var(--ink); }
+.title-badge.tl-2 { background: linear-gradient(135deg, var(--white), var(--sky-soft)); border-color: var(--sky); color: var(--ink); }
+.title-badge.tl-3 { background: linear-gradient(135deg, var(--white), var(--lav-soft)); border-color: var(--lav); color: var(--ink); }
+.title-badge.tl-4 { background: linear-gradient(135deg, var(--tl4-1), var(--tl4-2)); border-color: var(--peach); color: var(--tl4-ink); }
 .title-badge.tl-5 { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: #fff; color: #fff; }
 .title-badge.tl-6 { background: linear-gradient(135deg, #7fd7c4, #4fb6e8); border-color: #fff; color: #fff; }
 .title-badge.tl-7 { background: linear-gradient(135deg, #b69cf0, #8f7be8); border-color: #fff; color: #fff; }
@@ -919,7 +985,7 @@ body {
 /* ====== 称号・スタンプの進捗（献立タブ） ====== */
 .cook-progress {
   margin: 4px 4px 16px; padding: 14px;
-  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  background: linear-gradient(180deg, var(--white), var(--pink-soft));
   border: 2px solid var(--pink-soft); border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
 }
@@ -929,7 +995,7 @@ body {
 .cp-title-label { font-size: 0.66rem; font-weight: 800; color: var(--ink-soft); }
 .cp-title-name { font-size: 1.05rem; font-weight: 900; color: var(--pink-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cp-count { margin-left: auto; font-size: 0.78rem; font-weight: 800; color: var(--ink-soft); text-align: right; flex: 0 0 auto; }
-.cp-bar { height: 10px; border-radius: 999px; background: var(--white); border: 1.5px solid var(--pink-soft); overflow: hidden; margin: 12px 0 6px; }
+.cp-bar { height: 10px; border-radius: 999px; background: var(--cream); border: 1.5px solid var(--pink-soft); overflow: hidden; margin: 12px 0 6px; }
 .cp-bar-fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--pink), var(--pink-deep)); transition: width 0.4s ease; }
 .cp-next { font-size: 0.82rem; font-weight: 800; color: var(--ink); margin: 0 0 10px; }
 .stamp-row { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -959,7 +1025,7 @@ body {
   border-radius: 10px; padding: 7px 9px; border: 2px solid var(--pink-soft); background: var(--white); color: var(--ink);
 }
 .recipe-made-btn { background: var(--pink-soft); color: var(--pink-deep); border-color: var(--pink); }
-.recipe-share-btn { background: var(--mint); color: #1f7d63; border-color: var(--mint-deep); }
+.recipe-share-btn { background: var(--mint); color: var(--share-ink); border-color: var(--mint-deep); }
 .recipe-made-btn:active, .recipe-photo-btn:active, .recipe-share-btn:active { transform: scale(0.95); }
 
 /* ====== シェアシート（PCフォールバック） ====== */
@@ -1019,7 +1085,7 @@ body {
 /* ====== 作る献立（リスト上部のプラン） ====== */
 .plan-area {
   margin: 6px 0 12px; padding: 12px 14px;
-  background: linear-gradient(180deg, #fff, var(--pink-soft));
+  background: linear-gradient(180deg, var(--white), var(--pink-soft));
   border: 2px solid var(--pink); border-radius: var(--radius); box-shadow: var(--shadow-soft);
 }
 .plan-area[hidden] { display: none; }
@@ -1036,7 +1102,7 @@ body {
   width: 50px; text-align: center; font-family: var(--font); font-weight: 800; font-size: 16px;
   border: 1.5px solid var(--line); border-radius: 8px; padding: 5px 4px; background: var(--cream); color: var(--ink);
 }
-.plan-serv-input:focus { outline: none; border-color: var(--pink); background: #fff; }
+.plan-serv-input:focus { outline: none; border-color: var(--pink); background: var(--white); }
 .plan-serv-unit { font-size: 0.78rem; font-weight: 800; color: var(--ink-soft); }
 .plan-del {
   flex: 0 0 auto; width: 30px; height: 30px; border: none; background: transparent;
@@ -1071,14 +1137,14 @@ body {
   width: 56px; text-align: center; font-family: var(--font); font-weight: 800; font-size: 16px;
   border: 1.5px solid var(--line); border-radius: 8px; padding: 6px 4px; background: var(--cream); color: var(--ink);
 }
-.rr-serv-input:focus { outline: none; border-color: var(--pink); background: #fff; }
+.rr-serv-input:focus { outline: none; border-color: var(--pink); background: var(--white); }
 .rr-serv-unit { font-weight: 800; font-size: 0.84rem; color: var(--ink-soft); }
 
 /* ====== 位置情報の許可ガイド ====== */
 .perm-help {
   margin: 8px 4px; padding: 16px;
-  background: linear-gradient(180deg, #fff, #fff3d9);
-  border: 2px solid #ffe6ad; border-radius: var(--radius); box-shadow: var(--shadow-soft);
+  background: linear-gradient(180deg, var(--white), var(--gold-bg));
+  border: 2px solid var(--gold-line); border-radius: var(--radius); box-shadow: var(--shadow-soft);
 }
 .perm-title { font-weight: 900; font-size: 0.98rem; color: var(--ink); margin-bottom: 4px; }
 .perm-plat { font-weight: 800; font-size: 0.8rem; color: var(--pink-deep); margin-bottom: 8px; }
@@ -1108,7 +1174,7 @@ body {
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   background:
     radial-gradient(900px 360px at 50% -120px, var(--pink-soft), transparent),
-    linear-gradient(180deg, var(--cream), #fff4ee 60%, #fdeee7);
+    linear-gradient(180deg, var(--cream), var(--bg-mid) 60%, var(--bg-end));
   transition: opacity 0.45s ease, visibility 0.45s ease;
   animation: lsSafety 0.6s ease 6.5s forwards;   /* JSが動かない時の保険 */
 }
@@ -1176,3 +1242,113 @@ body {
   0%, 100% { transform: scale(0.5); opacity: 0.2; }
   50%      { transform: scale(1.1); opacity: 1; }
 }
+
+/* =========================================================================
+ * v2.0 デザイン強化
+ *  - リスト上部ツール（のこり点数・共有）／テーマ切替UI
+ *  - マイクロインタラクション（チェックのポップ・ホバー・フォーカス輪）
+ *  - ダークモード（theme.js が <html data-theme> を設定）
+ * ========================================================================= */
+
+/* ---------- リスト上部ツール ---------- */
+.list-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 2px 0;
+}
+.lt-count { font-size: 0.78rem; font-weight: 800; color: var(--ink-soft); }
+.lt-share {
+  margin-left: auto;
+  font-family: var(--font);
+  font-weight: 900;
+  font-size: 0.78rem;
+  color: var(--pink-deep);
+  background: var(--white);
+  border: 2px solid var(--pink-soft);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  white-space: nowrap;
+}
+.lt-share:active { transform: scale(0.95); }
+
+/* ---------- テーマ切替（設定タブ） ---------- */
+.theme-seg { display: flex; gap: 8px; margin: 8px 4px 16px; }
+
+/* ---------- チェックした瞬間にぽよんと弾む ---------- */
+@keyframes ckPop {
+  0%   { transform: scale(0.55); }
+  60%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.is-checked .check-btn { animation: ckPop 0.3s cubic-bezier(.34,1.56,.64,1); }
+
+/* ---------- キーボード操作のフォーカス表示（アクセシビリティ） ---------- */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- PC・マウス操作時のホバー ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover, .lt-share:hover, .pill-btn:hover, .ghost-btn:hover, .big-btn:hover,
+  .recipe-add-btn:hover, .recipe-how-btn:hover, .seg-btn:hover, .ib-btn:hover,
+  .store-save:hover, .rr-sim:hover { filter: brightness(1.05); }
+  .item-card:hover, .recipe-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .tab-btn:hover { color: var(--pink-deep); }
+  .suggest-item:hover, .rs-item:hover { background: var(--pink-soft); }
+}
+
+/* ---------- ダークモード ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --pink-soft:   #4b3240;
+  --cream:       #1f171e;
+  --mint:        #2f5a4b;
+  --lav:         #7a68a8;
+  --sky:         #4a6a8c;
+  --ink:         #f3e9e2;
+  --ink-soft:    #b9a8a1;
+  --line:        #4a3a44;
+  --white:       #2e242c;      /* カード等の面 */
+
+  --bg-mid:      #251b23;
+  --bg-end:      #2a1e27;
+  --header-1:    #4a2f3d;
+  --header-2:    #3f2835;
+  --addbar-bg:   rgba(31, 23, 30, 0.92);
+  --tabbar-bg:   rgba(46, 36, 44, 0.94);
+  --toast-bg:    #f3e9e2;      /* ダークでは明るいトーストで目立たせる */
+  --toast-text:  #3a2a34;
+  --toast-undo:  #c2417a;
+  --gold-bg:     #3d301b;
+  --gold-line:   #5f4b28;
+  --mintbg:      #22382f;
+  --mint-line:   #3a5c4c;
+  --cook-bg:     #3b2a20;
+  --cook-line:   #5f4433;
+  --cook-ink:    #ffa365;
+  --share-ink:   #a5eed5;
+  --sky-soft:    #22344a;
+  --lav-soft:    #302544;
+  --tl4-1:       #3a2f1a;
+  --tl4-2:       #55431f;
+  --tl4-ink:     #ffd9a0;
+  --focus-ring:  rgba(255, 150, 179, 0.55);
+
+  --shadow:      0 6px 18px rgba(0, 0, 0, 0.40);
+  --shadow-soft: 0 3px 10px rgba(0, 0, 0, 0.30);
+}
+/* ダークでは白ベースの影・text-shadow を控えめに */
+:root[data-theme="dark"] .app-title h1 { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
+:root[data-theme="dark"] .tab-bar { box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.35); }
+:root[data-theme="dark"] .mofu-svg { filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35)); }
+:root[data-theme="dark"] .mofu-shadow { opacity: 0.25; }
+/* 地図は明るいタイルのままなので、枠でなじませる */
+:root[data-theme="dark"] .map-wrap { border: 2px solid var(--line); }

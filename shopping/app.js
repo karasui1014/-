@@ -227,6 +227,8 @@
     it.checked = !it.checked;
     if (it.checked) {
       it.checkedAt = Date.now();
+      // 対応端末では、カゴに入れた手応えを小さな振動で返す（Android等）。
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
       recordPurchase(it.name);   // 在庫・購入周期を学習
       if (!isAllComplete()) reward();   // 全部完了する瞬間はコンプリート演出にまとめる
     }
@@ -257,9 +259,22 @@
   }
 
   function removeItem(id) {
-    state.items = state.items.filter(function (it) { return it.id !== id; });
+    var idx = -1, removed = null;
+    for (var i = 0; i < state.items.length; i++) {
+      if (state.items[i].id === id) { idx = i; removed = state.items[i]; break; }
+    }
+    if (!removed) return;
+    state.items.splice(idx, 1);
     persist();
     render();
+    // うっかり削除に備えて「元に戻す」を出す。
+    toast('「' + removed.name + '」を消したよ', {
+      undo: function () {
+        state.items.splice(Math.min(idx, state.items.length), 0, removed);
+        persist();
+        render();
+      }
+    });
   }
 
   function clearChecked() {
@@ -310,6 +325,19 @@
       return;
     }
     emptyState.hidden = true;
+
+    // リスト上部のツール（のこり点数＋家族に送る）
+    var remaining = state.items.filter(function (i) { return !i.checked; }).length;
+    var tools = el('div', 'list-tools');
+    tools.appendChild(el('span', 'lt-count',
+      remaining > 0
+        ? '🧺 のこり ' + remaining + '点 / 全' + state.items.length + '点'
+        : '🎉 全部カゴに入れたよ！'));
+    var shareListBtn = el('button', 'lt-share', '📤 リストを送る');
+    shareListBtn.type = 'button';
+    shareListBtn.addEventListener('click', shareList);
+    tools.appendChild(shareListBtn);
+    listArea.appendChild(tools);
 
     if (state.settings.sortByAisle) {
       renderByAisle();
@@ -1485,19 +1513,101 @@
     document.body.appendChild(backdrop);
   }
 
-  /* ---------- 小さなトースト ---------- */
+  /* =====================================================================
+   * 買い物リストをテキストで共有（家族にLINE等で送る）
+   *  - スマホは Web Share API、それ以外はクリップボードにコピー
+   * ===================================================================== */
+  function buildListText() {
+    if (!state.items.length) return '';
+    var lines = ['🧺 おかいものリスト'];
+    if (state.plans.length) {
+      lines.push('🍳 献立：' + state.plans.map(function (p) {
+        return p.name + '（' + (p.servings || 2) + '人前）';
+      }).join('、'));
+    }
+    // 未購入の品を売り場順にまとめる（送られた人が店内を回りやすい順）。
+    var unchecked = state.items.filter(function (i) { return !i.checked; });
+    var groups = {};
+    unchecked.forEach(function (it) {
+      var key = it.category || 'other';
+      (groups[key] = groups[key] || []).push(it);
+    });
+    CAT.list.slice().sort(function (a, b) { return a.order - b.order; }).forEach(function (cat) {
+      var arr = groups[cat.key];
+      if (!arr || !arr.length) return;
+      lines.push('');
+      lines.push(cat.emoji + ' ' + cat.label);
+      arr.forEach(function (it) {
+        lines.push('・' + it.name + (it.qty > 1 ? ' ×' + it.qty : ''));
+      });
+    });
+    var checkedCount = state.items.length - unchecked.length;
+    if (checkedCount > 0) {
+      lines.push('');
+      lines.push('✅ カゴに入れた ' + checkedCount + '点');
+    }
+    return lines.join('\n');
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (ok) resolve(); else reject(new Error('copy failed'));
+    });
+  }
+
+  function shareList() {
+    var text = buildListText();
+    if (!text) { toast('リストはまだ空っぽだよ'); return; }
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function () {});
+      return;
+    }
+    copyText(text).then(function () {
+      toast('📋 リストをコピーしたよ！LINEなどに貼ってね');
+    }).catch(function () {
+      toast('コピーできませんでした😢');
+    });
+  }
+
+  /* ---------- 小さなトースト（opts.undo で「元に戻す」ボタン付きに） ---------- */
   var toastTimer = null;
-  function toast(msg) {
+  function toast(msg, opts) {
     var t = document.getElementById('appToast');
     if (!t) {
       t = el('div', 'app-toast');
       t.id = 'appToast';
+      t.setAttribute('role', 'status');
       document.body.appendChild(t);
     }
-    t.textContent = msg;
+    t.innerHTML = '';
+    var hasUndo = !!(opts && opts.undo);
+    t.classList.toggle('has-undo', hasUndo);
+    t.appendChild(el('span', null, msg));
+    if (hasUndo) {
+      var undoBtn = el('button', 'toast-undo', '元に戻す');
+      undoBtn.type = 'button';
+      undoBtn.addEventListener('click', function () {
+        t.classList.remove('is-show');
+        opts.undo();
+      });
+      t.appendChild(undoBtn);
+    }
     t.classList.add('is-show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.classList.remove('is-show'); }, 1900);
+    // 取り消しできるトーストは、押す余裕があるよう長めに表示する。
+    toastTimer = setTimeout(function () { t.classList.remove('is-show'); }, hasUndo ? 5000 : 1900);
   }
   window.okaimonoToast = toast;   // stores.js（お店タブ）からも使う
 
@@ -1680,11 +1790,107 @@
 
   $('#clearCheckedBtn').addEventListener('click', function () {
     if (state.items.some(function (i) { return i.checked; })) {
-      if (confirm('完了したものをリストから消しますか？')) clearChecked();
+      if (confirm('完了したものをリストから消しますか？')) {
+        var before = state.items.slice();
+        clearChecked();
+        toast('完了したものを消したよ', {
+          undo: function () { state.items = before; persist(); render(); }
+        });
+      }
     }
   });
   $('#clearAllBtn').addEventListener('click', function () {
-    if (state.items.length && confirm('リストを全部消しますか？（取り消せません）')) clearAll();
+    if (state.items.length && confirm('リストを全部消しますか？')) {
+      var beforeItems = state.items.slice();
+      var beforePlans = state.plans.slice();
+      state.items = [];
+      state.plans = [];   // 献立プランも一緒に片付ける（材料が再生成されないように）
+      persist();
+      render();
+      toast('リストを全部消したよ', {
+        undo: function () {
+          state.items = beforeItems;
+          state.plans = beforePlans;
+          persist();
+          render();
+        }
+      });
+    }
+  });
+
+  /* ---------- テーマ（ライト/ダーク）切り替え ---------- */
+  var themeBtns = document.querySelectorAll('.theme-btn');
+  function renderThemeSeg() {
+    var cur = state.settings.theme || 'auto';
+    themeBtns.forEach(function (b) {
+      b.classList.toggle('is-active', b.dataset.themeVal === cur);
+    });
+  }
+  themeBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      state.settings.theme = b.dataset.themeVal;
+      save(KEYS.settings, state.settings);
+      if (window.okaimonoTheme) window.okaimonoTheme.set(state.settings.theme);
+      renderThemeSeg();
+    });
+  });
+  renderThemeSeg();
+
+  /* ---------- バックアップ（書き出し／復元） ---------- */
+  function exportData() {
+    var payload = { app: 'okaimono-memo', format: 1, exportedAt: new Date().toISOString(), data: {} };
+    Object.keys(KEYS).forEach(function (k) {
+      try {
+        var raw = localStorage.getItem(KEYS[k]);
+        if (raw != null) payload.data[KEYS[k]] = JSON.parse(raw);
+      } catch (e) { /* 壊れたキーはスキップ */ }
+    });
+    var d = new Date();
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var fname = 'okaimono-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json';
+    var url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+    toast('💾 バックアップを保存したよ');
+  }
+
+  function importData(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var payload = null;
+      try { payload = JSON.parse(String(reader.result)); } catch (e) {}
+      if (!payload || payload.app !== 'okaimono-memo' ||
+          !payload.data || typeof payload.data !== 'object') {
+        toast('このファイルは復元できません😢');
+        return;
+      }
+      if (!confirm('今のデータを、ファイルの内容でまるごと置き換えます。よろしいですか？')) return;
+      Object.keys(payload.data).forEach(function (k) {
+        if (k.indexOf('okaimono.') !== 0) return;   // アプリのキー以外は書き込まない（安全のため）
+        try { localStorage.setItem(k, JSON.stringify(payload.data[k])); } catch (e) {}
+      });
+      toast('📂 復元したよ！読み込み直します…');
+      setTimeout(function () { location.reload(); }, 700);
+    };
+    reader.readAsText(file);
+  }
+
+  var exportBtn = $('#exportBtn');
+  var importBtn = $('#importBtn');
+  var importFile = $('#importFile');
+  if (exportBtn) exportBtn.addEventListener('click', exportData);
+  if (importBtn) importBtn.addEventListener('click', function () { if (importFile) importFile.click(); });
+  if (importFile) importFile.addEventListener('change', function () {
+    var f = importFile.files && importFile.files[0];
+    if (f) importData(f);
+    importFile.value = '';   // 同じファイルをもう一度選べるように
   });
 
   // 「いつもの」登録
