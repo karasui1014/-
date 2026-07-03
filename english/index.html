@@ -499,6 +499,13 @@ const CATEGORIES = {
   season:   { label:"天気・季節・行事", icon:"🌦️", desc:"天気の世間話・新年や誕生日のあいさつ" },
   hobby:    { label:"趣味・雑談のきっかけ", icon:"🎨", desc:"趣味・映画・スポーツ・旅行の話題" },
   kindness: { label:"ほめる・お祝い・気遣い", icon:"💐", desc:"褒め言葉・お祝い・お悔やみ・謝罪" },
+  opinion:  { label:"意見・賛成・反対", icon:"💭", desc:"意見を言う・賛成する・やんわり反対する" },
+  request:  { label:"お願い・許可", icon:"🙏", desc:"頼みごと・借りる・許可を取る・断る" },
+  plans:    { label:"誘い・予定・約束", icon:"📅", desc:"誘う・受ける・断る・日程調整・遅刻連絡" },
+  time:     { label:"時間・日付", icon:"⏰", desc:"時刻・曜日・所要時間・営業時間" },
+  dining:   { label:"食卓・おもてなし", icon:"🍽️", desc:"食事中の会話・家に招く/招かれる" },
+  emergency:{ label:"緊急・トラブル", icon:"🚨", desc:"紛失・盗難・急病・助けを呼ぶ" },
+  tech:     { label:"スマホ・SNS・ネット", icon:"📱", desc:"連絡先交換・Wi-Fi・写真・充電" },
 };
 
 const PHRASES = [
@@ -1392,6 +1399,574 @@ const PHRASES = [
     natural:{ en:"Nice to meet you too! / Great to meet you!", ja:"こちらこそ！お会いできてうれしいです！" },
     point:"<b>too</b>を忘れずに付けると「こちらこそ」のニュアンスが伝わります。<b>Great to meet you</b>もよく使われます。"
   },
+  {
+    id:"g_whatsyourname", category:"greeting",
+    prompt:{ en:"(お名前を聞きたい)", ja:"お名前は何ですか？" },
+    situation:"初対面で名前をたずねる・名乗るとき。",
+    keywords:["お名前","名前は","what's your name","名乗る","なまえ"],
+    school:{ en:"What is your name?", ja:"あなたの名前は何ですか？" },
+    natural:{ en:"I'm Ken, by the way. What's your name?", ja:"ちなみに私はケンです。お名前は？" },
+    point:"いきなり<b>What is your name?</b>は尋問っぽく聞こえることも。<b>先に自分から名乗って</b>から聞くと自然で感じが良いです。"
+  },
+
+  /* ---------- 意見・賛成・反対 ---------- */
+  {
+    id:"op_whatdoyouthink", category:"opinion",
+    prompt:{ en:"What do you think?", ja:"どう思う？" },
+    situation:"意見を求められたとき。",
+    keywords:["what do you think","どう思う","意見","思いますか"],
+    school:{ en:"I think it is good.", ja:"良いと思います。" },
+    natural:{ en:"I think it's a great idea. What made you think of it?", ja:"すごくいいと思う。どうして思いついたの？",
+    },
+    point:"意見＋<b>質問を返す</b>と会話が深まります。迷うときは <b>Hmm, let me think.</b>（うーん、ちょっと考えさせて）も自然です。"
+  },
+  {
+    id:"op_agree", category:"opinion",
+    prompt:{ en:"This place is amazing!", ja:"ここ最高だね！" },
+    situation:"相手の感想に強く同意するとき。",
+    keywords:["賛成","同意","agree","そうだね","たしかに","わかる"],
+    school:{ en:"I agree with you.", ja:"あなたに同意します。" },
+    natural:{ en:"Totally! / I know, right?", ja:"ほんとそれ！／だよね！" },
+    point:"<b>I agree</b>は会議向きの硬さ。友達との会話では<b>Totally!</b>や<b>I know, right?</b>（だよね!）が定番です。"
+  },
+  {
+    id:"op_disagree", category:"opinion",
+    prompt:{ en:"I think cats are better than dogs.", ja:"犬より猫のほうがいいと思うな。" },
+    situation:"やんわり反対したいとき。",
+    keywords:["反対","違うと思う","disagree","そう思わない","やんわり"],
+    school:{ en:"I do not agree with you.", ja:"私はあなたに同意しません。" },
+    natural:{ en:"I see your point, but I'm more of a dog person.", ja:"言いたいことはわかるけど、私はどちらかというと犬派かな。" },
+    point:"<b>I don't agree</b>は直球すぎて角が立ちがち。<b>I see your point, but ~</b>（わかるけど〜）で受け止めてから返すと柔らかいです。"
+  },
+  {
+    id:"op_soundsgood", category:"opinion",
+    prompt:{ en:"Let's meet at seven.", ja:"7時に集合にしよう。" },
+    situation:"提案に「いいね」と返すとき。",
+    keywords:["いいね","いいよ","sounds good","賛成です","OK"],
+    school:{ en:"That is a good idea.", ja:"それは良い考えです。" },
+    natural:{ en:"Sounds good!", ja:"いいね！" },
+    point:"提案への返事は<b>Sounds good!</b>が万能。より乗り気なら<b>Sounds great! / Perfect!</b>。"
+  },
+  {
+    id:"op_notsure", category:"opinion",
+    prompt:{ en:"Which one should we choose?", ja:"どっちにするべきかな？" },
+    situation:"すぐに意見が出ない・決めかねているとき。",
+    keywords:["わからない","迷う","not sure","どちらとも","決められない"],
+    school:{ en:"I do not know.", ja:"わかりません。" },
+    natural:{ en:"I'm not sure, honestly. What do you think?", ja:"正直迷うなあ。あなたはどう思う？" },
+    point:"<b>I don't know</b>だけだと突き放した印象に。<b>I'm not sure</b>＋<b>聞き返し</b>で会話が続きます。"
+  },
+  {
+    id:"op_depends", category:"opinion",
+    prompt:{ en:"Do you like spicy food?", ja:"辛い食べ物は好き？" },
+    situation:"「場合による」と答えたいとき。",
+    keywords:["場合による","時と場合","depends","ものによる"],
+    school:{ en:"Sometimes yes, sometimes no.", ja:"はいのときも、いいえのときもあります。" },
+    natural:{ en:"It depends. If it's not too hot, I love it.", ja:"ものによるかな。辛すぎなければ大好きだよ。" },
+    point:"<b>It depends.</b>（場合による）はとても便利な決まり文句。続けて条件を言うと具体的になります。"
+  },
+  {
+    id:"op_prefer", category:"opinion",
+    prompt:{ en:"Coffee or tea?", ja:"コーヒーと紅茶、どっちがいい？" },
+    situation:"二択でどちらが好きか聞かれたとき。",
+    keywords:["どっちが好き","どちらか","prefer","二択","選ぶ"],
+    school:{ en:"I like coffee better than tea.", ja:"紅茶よりコーヒーのほうが好きです。" },
+    natural:{ en:"I'd go with coffee.", ja:"コーヒーかな。" },
+    point:"<b>I'd go with ~</b>（〜にしようかな）は選ぶときのこなれた言い方。<b>Coffee, please.</b>と即答してもOK。"
+  },
+  {
+    id:"op_letmethink", category:"opinion",
+    prompt:{ en:"Do you want to join us?", ja:"一緒にやらない？（即答できない）" },
+    situation:"すぐに決められず、少し考えたいとき。",
+    keywords:["考えさせて","考えておく","think about it","検討"],
+    school:{ en:"I will think about it.", ja:"考えておきます。" },
+    natural:{ en:"Let me think about it and get back to you.", ja:"ちょっと考えて、あとで返事するね。" },
+    point:"<b>Let me think about it</b>＋<b>get back to you</b>（後で返事する）のセットで、保留を感じよく伝えられます。"
+  },
+
+  /* ---------- お願い・許可 ---------- */
+  {
+    id:"req_help", category:"request",
+    prompt:{ en:"(手伝ってほしい)", ja:"手伝ってもらえますか？" },
+    situation:"ちょっとした手助けを頼むとき。",
+    keywords:["手伝って","助けて","help me","ヘルプ","お願い"],
+    school:{ en:"Please help me.", ja:"私を手伝ってください。" },
+    natural:{ en:"Could you give me a hand?", ja:"ちょっと手を貸してもらえる？" },
+    point:"<b>Please help me</b>は緊急事態のように響くことも。軽い頼みごとは<b>give me a hand</b>（手を貸す）が自然です。"
+  },
+  {
+    id:"req_doyoumind", category:"request",
+    prompt:{ en:"Do you mind if I open the window?", ja:"窓を開けてもいいですか？（Do you mind〜で聞かれた）" },
+    situation:"Do you mind ~? への返事は要注意の定番場面。",
+    keywords:["do you mind","構いません","かまいません","気にしますか"],
+    school:{ en:"Yes, you can open it.", ja:"はい、開けていいですよ。（※実は誤解される返事）" },
+    natural:{ en:"Not at all, go ahead.", ja:"全然かまいませんよ、どうぞ。" },
+    point:"<b>Do you mind ~?</b>は「嫌ですか？」という意味なので、<b>Yes</b>と答えると「嫌です」になってしまう有名な罠。OKなら<b>Not at all / Go ahead</b>と返します。"
+  },
+  {
+    id:"req_borrow", category:"request",
+    prompt:{ en:"(充電器を借りたい)", ja:"充電器を借りてもいいですか？" },
+    situation:"物を借りたいとき。",
+    keywords:["借りたい","貸して","borrow","charger","充電器"],
+    school:{ en:"Please lend me your charger.", ja:"充電器を貸してください。" },
+    natural:{ en:"Could I borrow your charger for a sec?", ja:"ちょっと充電器借りてもいい？" },
+    point:"<b>for a sec</b>（ちょっとだけ）を添えると頼みやすく、相手も貸しやすくなります。borrow=借りる／lend=貸す。"
+  },
+  {
+    id:"req_favor", category:"request",
+    prompt:{ en:"(お願いごとがある)", ja:"ちょっとお願いがあるんだけど" },
+    situation:"頼みごとを切り出すとき。",
+    keywords:["お願いがある","頼みたい","favor","頼みごと"],
+    school:{ en:"I have a request for you.", ja:"あなたにお願いがあります。" },
+    natural:{ en:"Could you do me a favor?", ja:"ひとつお願いを聞いてもらえる？" },
+    point:"<b>Do me a favor</b>は頼みごとの定番の切り出し方。相手は<b>Sure, what is it?</b>（いいよ、何？）と返してくれます。"
+  },
+  {
+    id:"req_wait", category:"request",
+    prompt:{ en:"(少し待ってほしい)", ja:"ちょっと待って！" },
+    situation:"とっさに待ってほしいとき。",
+    keywords:["待って","ちょっと待って","wait","待ってください"],
+    school:{ en:"Please wait a moment.", ja:"少々お待ちください。" },
+    natural:{ en:"Hang on a sec!", ja:"ちょい待って！" },
+    point:"友達同士なら<b>Hang on! / Just a sec!</b>が自然。丁寧に言うなら<b>Could you give me a moment?</b>。"
+  },
+  {
+    id:"req_photo_ok", category:"request",
+    prompt:{ en:"(写真を撮っていいか聞きたい)", ja:"ここで写真を撮ってもいいですか？" },
+    situation:"店内や施設で撮影許可を取るとき。",
+    keywords:["写真撮っていい","撮影","take a picture","photo ok","撮ってもいい"],
+    school:{ en:"May I take a picture?", ja:"写真を撮ってもよろしいですか？" },
+    natural:{ en:"Is it okay to take photos here?", ja:"ここって写真OKですか？" },
+    point:"<b>Is it okay to ~?</b>（〜しても大丈夫ですか）はカジュアルに許可を取る定番。丁寧さが必要なら May I ~? でもOK。"
+  },
+  {
+    id:"req_ask", category:"request",
+    prompt:{ en:"(質問したい)", ja:"ちょっと聞いてもいいですか？" },
+    situation:"質問を切り出すとき。",
+    keywords:["聞いてもいい","質問","ask you something","たずねたい"],
+    school:{ en:"May I ask a question?", ja:"質問してもよろしいですか？" },
+    natural:{ en:"Can I ask you something?", ja:"ちょっと聞いてもいい？" },
+    point:"<b>Can I ask you something?</b>は日常での質問の切り出しの定番。授業や会議なら<b>I have a question.</b>も使えます。"
+  },
+  {
+    id:"req_decline", category:"request",
+    prompt:{ en:"Can you work this Saturday?", ja:"今週の土曜、出勤できる？（断りたい）" },
+    situation:"頼まれごとを感じよく断るとき。",
+    keywords:["断る","できません","無理","お断り","difficult"],
+    school:{ en:"No, I cannot.", ja:"いいえ、できません。" },
+    natural:{ en:"I'm sorry, I can't this time. I already have plans.", ja:"ごめんなさい、今回は難しいです。先約があって。" },
+    point:"<b>No, I can't</b>だけだと冷たい印象。<b>sorry＋理由</b>を添えるとカドが立ちません。日本語の「難しいです」を<b>difficult</b>と直訳すると断りが伝わらないので注意。"
+  },
+
+  /* ---------- 誘い・予定・約束 ---------- */
+  {
+    id:"pl_free", category:"plans",
+    prompt:{ en:"Are you free tonight?", ja:"今夜ひま？" },
+    situation:"予定を聞かれたとき（誘いの前振り）。",
+    keywords:["ひま","暇","free tonight","予定ある","あいてる"],
+    school:{ en:"Yes, I am free.", ja:"はい、暇です。" },
+    natural:{ en:"Yeah, I'm free! What's up?", ja:"うん、あいてるよ！どうしたの？" },
+    point:"<b>What's up?</b>（どうしたの？）と用件を聞き返すのが自然な流れ。予定があるなら<b>Sorry, I have plans tonight.</b>"
+  },
+  {
+    id:"pl_invite", category:"plans",
+    prompt:{ en:"(映画に誘いたい)", ja:"週末、映画に行かない？" },
+    situation:"友達を誘うとき。",
+    keywords:["誘う","行かない？","一緒に行こう","誘いたい","映画行こう"],
+    school:{ en:"Let us go to see a movie.", ja:"映画を見に行きましょう。" },
+    natural:{ en:"Do you want to see a movie this weekend?", ja:"週末、映画観に行かない？" },
+    point:"誘いの定番は<b>Do you want to ~?</b>（〜しない？）。もっと軽くは<b>Wanna see a movie?</b>。Let us は現代会話ではほぼ使いません。"
+  },
+  {
+    id:"pl_accept", category:"plans",
+    prompt:{ en:"Want to come to my birthday party?", ja:"誕生日パーティー来ない？" },
+    situation:"誘いをよろこんで受けるとき。",
+    keywords:["喜んで","ぜひ","行きたい","受ける","参加します"],
+    school:{ en:"Yes, I will go.", ja:"はい、行きます。" },
+    natural:{ en:"I'd love to! Thanks for inviting me.", ja:"ぜひ行きたい！誘ってくれてありがとう。" },
+    point:"<b>I'd love to!</b>（ぜひ！）は誘いを受けるときの一番うれしい返し方。感謝もひとこと添えましょう。"
+  },
+  {
+    id:"pl_decline", category:"plans",
+    prompt:{ en:"Do you want to join us for dinner?", ja:"一緒に夕食どう？（断りたい）" },
+    situation:"誘いを感じよく断るとき。",
+    keywords:["行けない","断りたい","残念だけど","都合が悪い","先約"],
+    school:{ en:"No, I cannot go.", ja:"いいえ、行けません。" },
+    natural:{ en:"I wish I could, but I have plans that day. Maybe next time!", ja:"行きたかったんだけど、その日は予定があって。また今度ぜひ！" },
+    point:"<b>I wish I could</b>（行けたらよかったんだけど）＋<b>Maybe next time</b>で、断っても関係が続く感じよい返しになります。"
+  },
+  {
+    id:"pl_reschedule", category:"plans",
+    prompt:{ en:"(予定を変更したい)", ja:"予定をずらしてもらえますか？" },
+    situation:"約束の日時を変更したいとき。",
+    keywords:["予定変更","リスケ","ずらして","reschedule","日程変更"],
+    school:{ en:"Please change the schedule.", ja:"予定を変更してください。" },
+    natural:{ en:"Something came up. Could we reschedule for next week?", ja:"用事ができちゃって。来週にずらしてもらえる？" },
+    point:"<b>Something came up</b>（用事ができた）は理由をぼかしつつ伝える便利な決まり文句。<b>reschedule</b>=日程を組み直す。"
+  },
+  {
+    id:"pl_when", category:"plans",
+    prompt:{ en:"(いつがいいか聞きたい)", ja:"いつが都合いいですか？" },
+    situation:"日程を決めるとき。",
+    keywords:["いつがいい","都合","日程","when works","何時がいい"],
+    school:{ en:"When shall we meet?", ja:"いつ会いましょうか？" },
+    natural:{ en:"When works for you?", ja:"いつが都合いい？" },
+    point:"<b>When works for you?</b>は日程調整の定番。返事は<b>Anytime after 6 works.</b>（6時以降ならいつでも）のように。"
+  },
+  {
+    id:"pl_late", category:"plans",
+    prompt:{ en:"(遅れそうと連絡したい)", ja:"ごめん、10分くらい遅れそう！" },
+    situation:"待ち合わせに遅れそうなとき。",
+    keywords:["遅れる","遅刻","running late","遅れそう","先に行ってて"],
+    school:{ en:"I am sorry. I will be late.", ja:"すみません。遅れます。" },
+    natural:{ en:"Sorry, I'm running about 10 minutes late!", ja:"ごめん、10分くらい遅れてる！" },
+    point:"<b>I'm running late</b>は「遅れつつある」を表す定番表現。<b>about 10 minutes</b>と目安を伝えると相手も動きやすいです。"
+  },
+  {
+    id:"pl_raincheck", category:"plans",
+    prompt:{ en:"(今回は見送って次回にしたい)", ja:"今回はやめておく、また今度誘って" },
+    situation:"今回は行けないが、次はぜひ行きたいと伝えるとき。",
+    keywords:["また今度","次の機会","rain check","今回はパス"],
+    school:{ en:"I cannot go this time. Please invite me again.", ja:"今回は行けません。また誘ってください。" },
+    natural:{ en:"Can I take a rain check?", ja:"また今度でもいい？（次はぜひ）" },
+    point:"<b>take a rain check</b>は「今回は無理だけど次回ぜひ」という便利なイディオム。雨天順延券が語源です。"
+  },
+
+  /* ---------- 時間・日付 ---------- */
+  {
+    id:"tm_time", category:"time",
+    prompt:{ en:"(時間を聞きたい)", ja:"今何時ですか？" },
+    situation:"人に時刻をたずねるとき。",
+    keywords:["何時","時間を聞く","what time","いま何時"],
+    school:{ en:"What time is it now?", ja:"今、何時ですか？" },
+    natural:{ en:"Do you have the time?", ja:"時間わかりますか？" },
+    point:"<b>Do you have the time?</b>が丁寧な聞き方。<b>the</b>を落として<b>Do you have time?</b>と言うと「暇ある？」になる有名な罠に注意！"
+  },
+  {
+    id:"tm_date", category:"time",
+    prompt:{ en:"(今日の日付・曜日を聞きたい)", ja:"今日って何日？何曜日？" },
+    situation:"日付や曜日を確認するとき。",
+    keywords:["何日","何曜日","日付","what day","today's date"],
+    school:{ en:"What is the date today?", ja:"今日の日付は何ですか？" },
+    natural:{ en:"What's the date today? / What day is it?", ja:"今日何日だっけ？／何曜日だっけ？" },
+    point:"日付は<b>What's the date?</b>、曜日は<b>What day is it?</b>。使い分けがポイントです。"
+  },
+  {
+    id:"tm_howlong", category:"time",
+    prompt:{ en:"(所要時間を聞きたい)", ja:"そこまでどのくらいかかりますか？" },
+    situation:"移動や作業にかかる時間をたずねるとき。",
+    keywords:["どのくらいかかる","所要時間","how long","時間かかる"],
+    school:{ en:"How much time is needed?", ja:"どれだけの時間が必要ですか？" },
+    natural:{ en:"How long does it take to get there?", ja:"そこまでどのくらいかかる？" },
+    point:"所要時間は<b>How long does it take?</b>が定番。答えは<b>It takes about 20 minutes.</b>（20分くらい）。"
+  },
+  {
+    id:"tm_open", category:"time",
+    prompt:{ en:"(営業時間を聞きたい)", ja:"何時まで開いていますか？" },
+    situation:"お店や施設の営業時間をたずねるとき。",
+    keywords:["何時まで","営業時間","open until","閉店","開いてる"],
+    school:{ en:"Until what time is this shop open?", ja:"この店は何時まで開いていますか？" },
+    natural:{ en:"How late are you open?", ja:"何時までやってますか？" },
+    point:"<b>How late are you open?</b>は営業時間を聞く自然な言い方。開店は<b>What time do you open?</b>。"
+  },
+  {
+    id:"tm_confirm", category:"time",
+    prompt:{ en:"Is three o'clock okay for you?", ja:"3時で大丈夫ですか？" },
+    situation:"提案された時間に返事するとき。",
+    keywords:["3時","時間の確認","大丈夫です","その時間で"],
+    school:{ en:"Yes, three o'clock is okay.", ja:"はい、3時で大丈夫です。" },
+    natural:{ en:"Three works for me. See you then!", ja:"3時で大丈夫。じゃあその時に！" },
+    point:"時間の合意も<b>works for me</b>が便利。<b>See you then!</b>（じゃあその時に）で締めるとスマートです。"
+  },
+  {
+    id:"tm_almost", category:"time",
+    prompt:{ en:"(もうすぐ着くと伝えたい)", ja:"もうすぐ着きます！" },
+    situation:"待ち合わせ相手に到着間近と伝えるとき。",
+    keywords:["もうすぐ着く","あと少し","almost there","向かってる"],
+    school:{ en:"I will arrive soon.", ja:"まもなく到着します。" },
+    natural:{ en:"I'm almost there!", ja:"もうすぐ着くよ！" },
+    point:"<b>I'm almost there!</b>は待ち合わせの定番フレーズ。今向かっている最中なら<b>I'm on my way!</b>（今向かってる）。"
+  },
+
+  /* ---------- 食卓・おもてなし ---------- */
+  {
+    id:"dn_comein", category:"dining",
+    prompt:{ en:"Come on in!", ja:"どうぞ入って！（お呼ばれ）" },
+    situation:"相手の家に招かれて玄関に入るとき。",
+    keywords:["おじゃまします","お邪魔します","come in","招かれた","入って"],
+    school:{ en:"Thank you. Excuse me.", ja:"ありがとうございます。失礼します。" },
+    natural:{ en:"Thanks for having me!", ja:"お招きありがとう！（おじゃまします）" },
+    point:"「おじゃまします」に当たる決まり文句が<b>Thanks for having me</b>。帰り際にも同じ表現が使えます。"
+  },
+  {
+    id:"dn_makeyourself", category:"dining",
+    prompt:{ en:"Make yourself at home.", ja:"くつろいでね。" },
+    situation:"「自分の家だと思ってくつろいで」と言われたとき。",
+    keywords:["くつろいで","楽にして","make yourself at home"],
+    school:{ en:"Thank you very much.", ja:"どうもありがとうございます。" },
+    natural:{ en:"Thanks! You have a lovely place.", ja:"ありがとう！素敵なお家ですね。" },
+    point:"招かれたら<b>家を褒める</b>のが英語圏のマナー。<b>You have a lovely place!</b>はその定番です。"
+  },
+  {
+    id:"dn_helpyourself", category:"dining",
+    prompt:{ en:"Help yourself to anything.", ja:"ご自由に取ってね。" },
+    situation:"料理を自由に取ってと勧められたとき。",
+    keywords:["ご自由に","取って食べて","help yourself","セルフ"],
+    school:{ en:"Thank you. I will eat.", ja:"ありがとうございます。いただきます。" },
+    natural:{ en:"Thanks, everything looks amazing!", ja:"ありがとう、どれも美味しそう！" },
+    point:"<b>Help yourself</b>=「ご自由にどうぞ」。返しは感謝＋<b>looks amazing</b>のように料理を褒めるのが自然です。"
+  },
+  {
+    id:"dn_itadakimasu", category:"dining",
+    prompt:{ en:"(いただきます)", ja:"いただきます" },
+    situation:"食事を始めるときのひとこと。英語に直訳はありません。",
+    keywords:["いただきます","食べ始め","dig in"],
+    school:{ en:"Let us eat.", ja:"食べましょう。（直訳調）" },
+    natural:{ en:"This looks great! / Let's dig in!", ja:"美味しそう！／さあ食べよう！" },
+    point:"「いただきます」に<b>ぴったりの英語はありません</b>。<b>Let's dig in!</b>（さあ食べよう）や料理を褒める一言がその役割を果たします。"
+  },
+  {
+    id:"dn_gochisosama", category:"dining",
+    prompt:{ en:"(ごちそうさまでした)", ja:"ごちそうさまでした" },
+    situation:"食事を終えたときの感謝。",
+    keywords:["ごちそうさま","ご馳走様","食べ終わり"],
+    school:{ en:"Thank you for the meal.", ja:"食事をありがとうございました。" },
+    natural:{ en:"That was delicious, thank you so much!", ja:"すごく美味しかった、ありがとう！" },
+    point:"「ごちそうさま」も直訳なし。<b>That was delicious!</b>＋感謝で気持ちがしっかり伝わります。"
+  },
+  {
+    id:"dn_pass", category:"dining",
+    prompt:{ en:"(塩を取ってほしい)", ja:"お塩を取ってもらえますか？" },
+    situation:"食卓で遠くの物を取ってほしいとき。",
+    keywords:["取って","塩","pass the salt","回して"],
+    school:{ en:"Please give me the salt.", ja:"塩をください。" },
+    natural:{ en:"Could you pass the salt, please?", ja:"お塩を取ってもらえますか？" },
+    point:"食卓では<b>pass</b>（回す・手渡す）を使うのが定番。<b>give</b>より自然に聞こえます。"
+  },
+  {
+    id:"dn_seconds", category:"dining",
+    prompt:{ en:"Would you like some more?", ja:"おかわりはいかが？" },
+    situation:"おかわりを勧められたとき。",
+    keywords:["おかわり","もう少し","some more","もう一杯"],
+    school:{ en:"Yes, please give me more.", ja:"はい、もっとください。" },
+    natural:{ en:"Yes, please! It's so good. / I'm good, thanks — it was delicious.", ja:"ぜひ！すごく美味しい。／もう大丈夫、ごちそうさま。" },
+    point:"受けるなら<b>Yes, please!</b>＋ひとこと感想。断るなら<b>I'm good, thanks</b>＋褒め言葉で角が立ちません。"
+  },
+  {
+    id:"dn_full", category:"dining",
+    prompt:{ en:"(お腹いっぱいと伝えたい)", ja:"もうお腹いっぱいです。" },
+    situation:"満腹で食べきれないとき。",
+    keywords:["お腹いっぱい","満腹","full","stuffed","食べられない"],
+    school:{ en:"I am full.", ja:"満腹です。" },
+    natural:{ en:"I'm stuffed! Everything was amazing.", ja:"お腹いっぱい！全部美味しかった。" },
+    point:"<b>I'm stuffed</b>（パンパンだ）はカジュアルな満腹表現。褒め言葉を添えると「残すの？」と思われません。"
+  },
+
+  /* ---------- 緊急・トラブル ---------- */
+  {
+    id:"em_lost_wallet", category:"emergency",
+    prompt:{ en:"(財布をなくした)", ja:"財布をなくしてしまいました" },
+    situation:"財布や貴重品を紛失したとき。",
+    keywords:["財布","なくした","紛失","lost my wallet","落とした"],
+    school:{ en:"I lost my wallet.", ja:"財布をなくしました。" },
+    natural:{ en:"I think I lost my wallet. What should I do?", ja:"財布をなくしたみたいなんです。どうしたらいいですか？" },
+    point:"<b>I think</b>で状況を伝え、<b>What should I do?</b>（どうすれば？）で相手の助けを引き出せます。"
+  },
+  {
+    id:"em_leftontrain", category:"emergency",
+    prompt:{ en:"(電車に忘れ物をした)", ja:"電車にスマホを忘れました" },
+    situation:"乗り物に物を置き忘れたとき。",
+    keywords:["忘れ物","電車に忘れ","置き忘れ","left my phone","忘れた"],
+    school:{ en:"I forgot my phone in the train.", ja:"電車の中に電話を忘れました。" },
+    natural:{ en:"I left my phone on the train. Where's the lost and found?", ja:"電車にスマホを忘れました。忘れ物窓口はどこですか？" },
+    point:"置き忘れは<b>forget</b>ではなく<b>leave</b>を使うのがポイント。<b>lost and found</b>=忘れ物窓口。"
+  },
+  {
+    id:"em_stolen", category:"emergency",
+    prompt:{ en:"(バッグを盗まれた)", ja:"バッグを盗まれました！" },
+    situation:"盗難に遭ったとき。",
+    keywords:["盗まれた","盗難","スリ","stolen","泥棒"],
+    school:{ en:"My bag was stolen.", ja:"私のバッグが盗まれました。" },
+    natural:{ en:"Someone stole my bag! Please call the police!", ja:"バッグを盗まれました！警察を呼んでください！" },
+    point:"緊急時は<b>Someone stole ~!</b>と能動態で叫ぶほうが即座に伝わります。<b>Call the police!</b>もセットで。"
+  },
+  {
+    id:"em_ambulance", category:"emergency",
+    prompt:{ en:"(急に具合が悪くなった)", ja:"気分がすごく悪いです、助けてください" },
+    situation:"外出先で急に体調が悪化したとき。",
+    keywords:["救急車","具合が悪い","倒れそう","ambulance","気分が悪い","めまい"],
+    school:{ en:"I am sick. Please call a doctor.", ja:"具合が悪いです。医者を呼んでください。" },
+    natural:{ en:"I feel really sick. Could you call an ambulance?", ja:"すごく気分が悪いんです。救急車を呼んでもらえますか？" },
+    point:"<b>I feel really sick</b>で深刻さが伝わります。救急車は<b>ambulance</b>。米国の緊急番号は911です。"
+  },
+  {
+    id:"em_areyouok", category:"emergency",
+    prompt:{ en:"(目の前で人が転んだ)", ja:"（人が転んだ）大丈夫ですか？" },
+    situation:"困っている人・倒れた人に声をかけるとき。",
+    keywords:["大丈夫ですか","声をかける","転んだ","助けましょうか"],
+    school:{ en:"Are you injured?", ja:"けがをしていますか？" },
+    natural:{ en:"Are you okay? Do you need help?", ja:"大丈夫ですか？手を貸しましょうか？" },
+    point:"まず<b>Are you okay?</b>、続けて<b>Do you need help?</b>。この2つで大抵の「声かけ」ができます。"
+  },
+  {
+    id:"em_dontunderstand", category:"emergency",
+    prompt:{ en:"(英語が難しくて困った)", ja:"英語があまり話せません" },
+    situation:"英語が聞き取れず、正直に伝えたいとき。",
+    keywords:["英語が話せない","英語が苦手","翻訳","日本語話せる人"],
+    school:{ en:"I cannot speak English.", ja:"英語が話せません。" },
+    natural:{ en:"Sorry, my English isn't very good. Could you speak slowly?", ja:"すみません、英語があまり得意ではなくて。ゆっくり話してもらえますか？" },
+    point:"<b>I can't speak English</b>と言い切るより、<b>isn't very good</b>＋お願いをセットにすると会話が続きます。"
+  },
+  {
+    id:"em_password", category:"emergency",
+    prompt:{ en:"(道に迷って助けが必要・スマホも使えない)", ja:"困っています、助けてもらえますか？" },
+    situation:"何か困りごとがあって人に助けを求める万能の切り出し。",
+    keywords:["困っています","助けてください","トラブル","どうしよう"],
+    school:{ en:"Please help me. I am in trouble.", ja:"助けてください。困っています。" },
+    natural:{ en:"Excuse me, could you help me? I'm in a bit of trouble.", ja:"すみません、助けていただけますか？ちょっと困っていて。" },
+    point:"<b>Excuse me</b>で呼び止め→<b>Could you help me?</b>が万能の助けの求め方。<b>a bit of</b>で深刻すぎない印象に。"
+  },
+
+  /* ---------- スマホ・SNS・ネット ---------- */
+  {
+    id:"tc_wifi", category:"tech",
+    prompt:{ en:"(Wi-Fiを使いたい)", ja:"Wi-Fiはありますか？" },
+    situation:"カフェやホテルでWi-Fiを使いたいとき。",
+    keywords:["wifi","wi-fi","ワイファイ","パスワード","ネット使える"],
+    school:{ en:"Do you have Wi-Fi here?", ja:"ここにWi-Fiはありますか？" },
+    natural:{ en:"Do you have Wi-Fi? What's the password?", ja:"Wi-Fiありますか？パスワードは何ですか？" },
+    point:"あるかどうか＋<b>What's the password?</b>までセットで聞くのが実際の流れ。店員も慣れているのでスムーズです。"
+  },
+  {
+    id:"tc_number", category:"tech",
+    prompt:{ en:"(連絡先を交換したい)", ja:"連絡先を交換しませんか？" },
+    situation:"仲良くなった人と連絡先を交換するとき。",
+    keywords:["連絡先","電話番号","交換","your number","番号教えて"],
+    school:{ en:"Please tell me your phone number.", ja:"あなたの電話番号を教えてください。" },
+    natural:{ en:"Can I get your number?", ja:"連絡先教えてもらってもいい？" },
+    point:"<b>Can I get your number?</b>が定番。<b>Let's keep in touch!</b>（連絡取り合おうね）を添えるとより自然です。"
+  },
+  {
+    id:"tc_sns", category:"tech",
+    prompt:{ en:"(SNSでつながりたい)", ja:"インスタやってますか？" },
+    situation:"SNSアカウントを聞くとき。",
+    keywords:["インスタ","SNS","instagram","フォロー","アカウント"],
+    school:{ en:"Do you use social media?", ja:"ソーシャルメディアを使っていますか？" },
+    natural:{ en:"Are you on Instagram? I'll follow you!", ja:"インスタやってる？フォローするね！" },
+    point:"<b>Are you on ~?</b>（〜やってる？）がSNSの定番の聞き方。Instagram/X/TikTokなどサービス名を入れて使えます。"
+  },
+  {
+    id:"tc_sendpic", category:"tech",
+    prompt:{ en:"(写真を送ってほしい)", ja:"さっきの写真送って！" },
+    situation:"撮ってもらった写真を送ってほしいとき。",
+    keywords:["写真送って","画像","send me","シェア","photo"],
+    school:{ en:"Please send me the picture.", ja:"その写真を送ってください。" },
+    natural:{ en:"Can you send me that pic?", ja:"あの写真送ってくれる？" },
+    point:"会話では<b>pic</b>（photoのくだけた形）が頻出。送る側は<b>I'll text it to you.</b>（メッセージで送るね）。"
+  },
+  {
+    id:"tc_battery", category:"tech",
+    prompt:{ en:"(充電が切れそう)", ja:"スマホの充電が切れそう…" },
+    situation:"バッテリー残量がないとき。",
+    keywords:["充電","バッテリー","電池切れ","battery","コンセント"],
+    school:{ en:"My phone's battery is low.", ja:"電話のバッテリーが少ないです。" },
+    natural:{ en:"My phone's about to die. Is there an outlet somewhere?", ja:"スマホが切れそう。どこかコンセントないかな？" },
+    point:"電池切れは<b>die</b>（死ぬ）で表すのが日常表現。<b>My phone died.</b>=充電が切れた。コンセントは米語で<b>outlet</b>。"
+  },
+  {
+    id:"tc_text", category:"tech",
+    prompt:{ en:"(あとで連絡すると伝えたい)", ja:"あとでメッセージ送るね！" },
+    situation:"別れ際に後で連絡すると伝えるとき。",
+    keywords:["メッセージ送る","ライン送る","text you","連絡するね","メールする"],
+    school:{ en:"I will send you a message later.", ja:"あとでメッセージを送ります。" },
+    natural:{ en:"I'll text you later!", ja:"あとでメッセージするね！" },
+    point:"<b>text</b>は「メッセージを送る」という動詞として日常で最頻出。<b>Text me when you get home!</b>（着いたら連絡してね）。"
+  },
+  {
+    id:"tc_maps", category:"tech",
+    prompt:{ en:"(場所を地図アプリで調べたい)", ja:"ちょっと地図で調べるね" },
+    situation:"行き方をスマホで確認するとき。",
+    keywords:["地図で調べる","グーグルマップ","google maps","検索する","調べる"],
+    school:{ en:"I will search for it on the map.", ja:"地図でそれを検索します。" },
+    natural:{ en:"Hang on, let me check Google Maps.", ja:"ちょっと待って、グーグルマップで見てみる。" },
+    point:"<b>Let me check ~</b>（ちょっと〜を見てみるね）はスマホで調べるときの定番の前置きです。"
+  },
+
+  /* ---------- 買い物・飲食店（さらに追加） ---------- */
+  {
+    id:"s_tryon", category:"shopping",
+    prompt:{ en:"(試着したい)", ja:"これ、試着できますか？" },
+    situation:"服屋で試着したいとき。",
+    keywords:["試着","着てみたい","try on","フィッティング"],
+    school:{ en:"May I try this on?", ja:"これを試着してもよろしいですか？" },
+    natural:{ en:"Can I try this on? Where's the fitting room?", ja:"試着してもいいですか？試着室はどこですか？" },
+    point:"試着は<b>try on</b>。<b>fitting room</b>（試着室）の場所まで一緒に聞くのが実際の流れです。"
+  },
+  {
+    id:"s_recommend", category:"shopping",
+    prompt:{ en:"(おすすめを聞きたい)", ja:"おすすめは何ですか？" },
+    situation:"レストランやお店でおすすめを聞くとき。",
+    keywords:["おすすめ","オススメ","recommend","人気","何がいい"],
+    school:{ en:"What do you recommend?", ja:"何をおすすめしますか？" },
+    natural:{ en:"What do you recommend? / What's popular here?", ja:"おすすめはありますか？／ここで人気なのは？" },
+    point:"<b>What do you recommend?</b>はそのまま通じる優秀フレーズ。<b>What's good here?</b>（ここは何が美味しい？）も定番。"
+  },
+  {
+    id:"s_getcheck", category:"shopping",
+    prompt:{ en:"(お会計をお願いしたい)", ja:"お会計お願いします（レストラン）" },
+    situation:"レストランのテーブルで会計を頼むとき。",
+    keywords:["お会計","チェック","お勘定","check please","会計して"],
+    school:{ en:"Please give me the bill.", ja:"請求書をください。" },
+    natural:{ en:"Could we get the check, please?", ja:"お会計お願いできますか？" },
+    point:"米国では<b>check</b>、英国では<b>bill</b>。店員と目を合わせて<b>Check, please!</b>だけでも十分伝わります。"
+  },
+  {
+    id:"s_return", category:"shopping",
+    prompt:{ en:"(返品したい)", ja:"これを返品したいのですが" },
+    situation:"買った商品を返品・交換したいとき。",
+    keywords:["返品","交換","レシート","return","払い戻し"],
+    school:{ en:"I want to return this.", ja:"これを返品したいです。" },
+    natural:{ en:"I'd like to return this. Here's the receipt.", ja:"返品をお願いしたいです。レシートはこちらです。" },
+    point:"<b>I'd like to ~</b>で丁寧に。<b>receipt</b>（レシート）を先に出すとやりとりがスムーズ。交換なら<b>exchange</b>。"
+  },
+
+  /* ---------- 旅行・移動（さらに追加） ---------- */
+  {
+    id:"t_thisbus", category:"travel",
+    prompt:{ en:"(このバスで合っているか聞きたい)", ja:"このバスは空港に行きますか？" },
+    situation:"乗る前に行き先を確認するとき。",
+    keywords:["このバス","行きますか","乗り場","bus go to","電車はこれ"],
+    school:{ en:"Does this bus go to the airport?", ja:"このバスは空港へ行きますか？" },
+    natural:{ en:"Does this bus go to the airport?", ja:"このバス、空港行きますか？" },
+    point:"この文はそのままで自然！降りる場所が不安なら<b>Could you tell me when to get off?</b>（降りるとき教えてもらえますか）が便利。"
+  },
+  {
+    id:"t_directions_give", category:"travel",
+    prompt:{ en:"Excuse me, how do I get to the museum?", ja:"すみません、美術館へはどう行けば？（教える側）" },
+    situation:"外国人に道を聞かれて教えてあげるとき。",
+    keywords:["道を教える","まっすぐ","曲がって","案内する","turn left"],
+    school:{ en:"Go straight and turn left at the corner.", ja:"まっすぐ行って、角を左に曲がってください。" },
+    natural:{ en:"Go straight and it's on your left. You can't miss it!", ja:"まっすぐ行くと左側にありますよ。すぐわかります！" },
+    point:"<b>It's on your left/right</b>（左/右側にあります）＋<b>You can't miss it!</b>（見逃しませんよ）が道案内の定番セット。"
+  },
+  {
+    id:"t_checkin_hotel", category:"travel",
+    prompt:{ en:"(ホテルでチェックインしたい)", ja:"チェックインをお願いします" },
+    situation:"ホテルのフロントで。",
+    keywords:["チェックイン","予約してある","check in","フロント","宿泊"],
+    school:{ en:"I want to check in, please.", ja:"チェックインをしたいです。" },
+    natural:{ en:"Hi, I have a reservation under Tanaka.", ja:"予約している田中です。" },
+    point:"<b>under ＋ 名前</b>（〜の名前で予約）がホテル・レストラン共通の定番。<b>I'd like to check in.</b>を続けてもOK。"
+  },
+  {
+    id:"t_taxi", category:"travel",
+    prompt:{ en:"(タクシーで行き先を伝えたい)", ja:"この住所までお願いします" },
+    situation:"タクシーに乗って行き先を伝えるとき。",
+    keywords:["タクシー","行き先","この住所","take me to","までお願いします"],
+    school:{ en:"Please go to this hotel.", ja:"このホテルへ行ってください。" },
+    natural:{ en:"Could you take me to this address?", ja:"この住所までお願いできますか？" },
+    point:"<b>take me to ~</b>（〜まで連れて行って）がタクシーの定番。住所を見せながら言えば確実です。"
+  },
 ];
 
 /* =========================================================================
@@ -1586,16 +2161,16 @@ const WORDS = [
   { ja:"いくつ", en:"how many / how old" },
 
   /* 動詞（基本） */
-  { ja:"食べる", en:"to eat", alt:["食べたい","たべる"] },
-  { ja:"飲む", en:"to drink", alt:["飲みたい","のむ"] },
-  { ja:"行く", en:"to go", alt:["いく","行きたい"] },
+  { ja:"食べる", en:"to eat", alt:["食べたい","たべる","食べて","食べた"] },
+  { ja:"飲む", en:"to drink", alt:["飲みたい","のむ","飲んで","飲んだ"] },
+  { ja:"行く", en:"to go", alt:["いく","行きたい","行って","行った","行き"] },
   { ja:"来る", en:"to come", alt:["くる"] },
-  { ja:"見る", en:"to see / to watch / to look", alt:["みる","見たい"] },
+  { ja:"見る", en:"to see / to watch / to look", alt:["みる","見たい","見て","見た"] },
   { ja:"聞く", en:"to listen / to ask", alt:["きく"] },
   { ja:"話す", en:"to speak / to talk", alt:["はなす","しゃべる"] },
   { ja:"読む", en:"to read", alt:["よむ"] },
   { ja:"書く", en:"to write", alt:["かく"] },
-  { ja:"買う", en:"to buy", natural:"to buy / to get", alt:["かう","買いたい"] },
+  { ja:"買う", en:"to buy", natural:"to buy / to get", alt:["かう","買いたい","買って","買った"] },
   { ja:"使う", en:"to use", alt:["つかう","使いたい"] },
   { ja:"待つ", en:"to wait", alt:["まつ","待って"] },
   { ja:"会う", en:"to meet", alt:["あう","会いたい"] },
@@ -1713,6 +2288,180 @@ const WORDS = [
   { ja:"天気", en:"weather", alt:["てんき"] },
   { ja:"雨", en:"rain", alt:["あめ"] },
   { ja:"雪", en:"snow", alt:["ゆき"] },
+
+  /* 日本語特有のあいさつ・決まり文句 */
+  { ja:"いってきます", en:"I am leaving now", natural:"I'm off! / See you later!", note:"直訳はなく I'm off! が近い", alt:["行ってきます"] },
+  { ja:"いってらっしゃい", en:"Have a good day", natural:"Have a good one! / See you!", alt:["行ってらっしゃい"] },
+  { ja:"ただいま", en:"I have returned", natural:"I'm home!", note:"帰宅の定番は I'm home!" },
+  { ja:"おかえり", en:"Welcome back", natural:"Hey! Welcome back!", alt:["おかえりなさい"] },
+  { ja:"がんばって", en:"Do your best", natural:"Good luck! / You can do it!", note:"応援は Good luck / You got this", alt:["頑張って","ファイト"] },
+  { ja:"気をつけて", en:"Be careful", natural:"Take care! / Stay safe!", note:"別れ際は Take care", alt:["きをつけて"] },
+  { ja:"お大事に", en:"Please take care of your health", natural:"Get well soon! / Take care!", alt:["おだいじに"] },
+  { ja:"乾杯", en:"A toast", natural:"Cheers!", alt:["かんぱい","カンパイ"] },
+  { ja:"よろしく", en:"(直訳なし)", natural:"Nice to meet you / Thanks in advance", note:"場面で言い換える", alt:["宜しく"] },
+  { ja:"お先に失礼します", en:"Excuse me for leaving first", natural:"I'm heading out. See you tomorrow!", note:"先に帰るときは See you tomorrow が自然", alt:["お先に"] },
+  { ja:"どうぞ", en:"Please / Here you are", natural:"Go ahead / Here you go", note:"譲る=Go ahead、渡す=Here you go" },
+  { ja:"おめでとう", en:"Congratulations", natural:"Congrats!", alt:["おめでとうございます"] },
+  { ja:"久しぶり", en:"It has been a long time", natural:"Long time no see! / It's been a while!", alt:["ひさしぶり","お久しぶりです"] },
+
+  /* 動詞（追加） */
+  { ja:"作る", en:"to make / to cook", alt:["つくる","作りたい"] },
+  { ja:"走る", en:"to run", alt:["はしる"] },
+  { ja:"歩く", en:"to walk", alt:["あるく"] },
+  { ja:"泳ぐ", en:"to swim", alt:["およぐ"] },
+  { ja:"洗う", en:"to wash", alt:["あらう"] },
+  { ja:"開ける", en:"to open", alt:["あける","開けて"] },
+  { ja:"閉める", en:"to close", alt:["しめる","閉めて"] },
+  { ja:"座る", en:"to sit", natural:"Have a seat（どうぞ座って）", alt:["すわる"] },
+  { ja:"立つ", en:"to stand", alt:["たつ"] },
+  { ja:"入る", en:"to enter / to go in", alt:["はいる"] },
+  { ja:"出る", en:"to leave / to go out", alt:["でる"] },
+  { ja:"送る", en:"to send", natural:"to text（メッセージを送る）", alt:["おくる","送って"] },
+  { ja:"教える", en:"to teach / to tell", note:"道や情報を教える は tell", alt:["おしえる","教えて"] },
+  { ja:"覚える", en:"to remember / to memorize", alt:["おぼえる"] },
+  { ja:"忘れる", en:"to forget", note:"置き忘れは leave を使う", alt:["わすれる","忘れた"] },
+  { ja:"探す", en:"to look for", alt:["さがす","探して"] },
+  { ja:"見つける", en:"to find", alt:["みつける","見つけた"] },
+  { ja:"始める", en:"to start / to begin", alt:["はじめる"] },
+  { ja:"終わる", en:"to finish / to end", natural:"I'm done（終わった）", alt:["おわる","終わった"] },
+  { ja:"乗る", en:"to ride / to take (a train)", note:"電車に乗る=take the train", alt:["のる"] },
+  { ja:"降りる", en:"to get off", alt:["おりる"] },
+  { ja:"払う", en:"to pay", alt:["はらう","支払う"] },
+  { ja:"着る", en:"to wear / to put on", alt:["きる"] },
+  { ja:"住む", en:"to live", alt:["すむ","住んでいる"] },
+  { ja:"変える", en:"to change", alt:["かえる","変更"] },
+  { ja:"選ぶ", en:"to choose / to pick", alt:["えらぶ"] },
+  { ja:"予約する", en:"to make a reservation / to book", alt:["予約","よやく"] },
+  { ja:"注文する", en:"to order", alt:["注文","ちゅうもん"] },
+  { ja:"料理する", en:"to cook", alt:["料理","りょうり"] },
+  { ja:"勉強する", en:"to study", alt:["勉強","べんきょう"] },
+  { ja:"運転する", en:"to drive", alt:["運転","うんてん"] },
+  { ja:"散歩する", en:"to take a walk", alt:["散歩","さんぽ"] },
+  { ja:"旅行する", en:"to travel / to take a trip", alt:["旅行","りょこう"] },
+  { ja:"写真を撮る", en:"to take a picture", alt:["撮る","撮って","撮った","撮りたい"] },
+
+  /* 形容詞・副詞（追加） */
+  { ja:"長い", en:"long", alt:["ながい"] },
+  { ja:"短い", en:"short", alt:["みじかい"] },
+  { ja:"速い", en:"fast / quick", alt:["はやい","早い"] },
+  { ja:"遅い", en:"slow / late", note:"時間に遅い=late、動きが遅い=slow", alt:["おそい"] },
+  { ja:"近い", en:"near / close", alt:["ちかい"] },
+  { ja:"遠い", en:"far", alt:["とおい"] },
+  { ja:"強い", en:"strong", alt:["つよい"] },
+  { ja:"弱い", en:"weak", alt:["よわい"] },
+  { ja:"明るい", en:"bright / cheerful", alt:["あかるい"] },
+  { ja:"暗い", en:"dark", alt:["くらい"] },
+  { ja:"重い", en:"heavy", alt:["おもい"] },
+  { ja:"軽い", en:"light", alt:["かるい"] },
+  { ja:"痛い", en:"painful / it hurts", natural:"Ouch!（とっさの「痛い！」）", note:"〜が痛い は My ~ hurts", alt:["いたい"] },
+  { ja:"甘い", en:"sweet", alt:["あまい"] },
+  { ja:"辛い", en:"spicy / hot", alt:["からい"] },
+  { ja:"しょっぱい", en:"salty", alt:["塩辛い"] },
+  { ja:"苦い", en:"bitter", alt:["にがい"] },
+  { ja:"冷たい", en:"cold (to the touch)", alt:["つめたい"] },
+  { ja:"若い", en:"young", alt:["わかい"] },
+  { ja:"優しい", en:"kind / gentle", natural:"sweet（優しいね）", alt:["やさしい"] },
+  { ja:"親切", en:"kind / helpful", alt:["しんせつ"] },
+  { ja:"静か", en:"quiet", alt:["しずか"] },
+  { ja:"うるさい", en:"noisy / loud", alt:["騒がしい"] },
+  { ja:"危ない", en:"dangerous", natural:"Watch out!（あぶない！）", alt:["あぶない","危険"] },
+  { ja:"安全", en:"safe", alt:["あんぜん"] },
+  { ja:"すぐ", en:"soon / right away", alt:["すぐに"] },
+  { ja:"あとで", en:"later", alt:["後で"] },
+  { ja:"さっき", en:"a little while ago / earlier", alt:["先ほど"] },
+  { ja:"いつも", en:"always", alt:["常に"] },
+  { ja:"時々", en:"sometimes", alt:["ときどき","たまに"] },
+  { ja:"まだ", en:"still / not yet", note:"否定文では not yet" },
+  { ja:"もう", en:"already", note:"「もう終わった」= already done" },
+  { ja:"多分", en:"maybe / probably", alt:["たぶん"] },
+  { ja:"絶対", en:"definitely / absolutely", alt:["ぜったい","絶対に"] },
+  { ja:"一番", en:"the best / number one", natural:"my favorite（一番好き）", alt:["いちばん"] },
+
+  /* 名詞：乗り物・持ち物 */
+  { ja:"車", en:"car", alt:["くるま"] },
+  { ja:"電車", en:"train", alt:["でんしゃ"] },
+  { ja:"バス", en:"bus" },
+  { ja:"飛行機", en:"airplane / flight", alt:["ひこうき"] },
+  { ja:"自転車", en:"bicycle / bike", alt:["じてんしゃ","チャリ"] },
+  { ja:"タクシー", en:"taxi", natural:"cab", alt:["たくしー"] },
+  { ja:"切符", en:"ticket", alt:["きっぷ","チケット"] },
+  { ja:"荷物", en:"luggage / baggage", alt:["にもつ"] },
+  { ja:"財布", en:"wallet", alt:["さいふ"] },
+  { ja:"鍵", en:"key", alt:["かぎ","カギ"] },
+  { ja:"傘", en:"umbrella", alt:["かさ"] },
+  { ja:"服", en:"clothes", alt:["ふく","洋服"] },
+  { ja:"靴", en:"shoes", alt:["くつ"] },
+  { ja:"帽子", en:"hat / cap", alt:["ぼうし"] },
+  { ja:"めがね", en:"glasses", alt:["眼鏡","メガネ"] },
+  { ja:"かばん", en:"bag", alt:["鞄","バッグ"] },
+  { ja:"スマホ", en:"smartphone", natural:"phone", alt:["携帯","けいたい","スマートフォン"] },
+  { ja:"パソコン", en:"computer / laptop", alt:["PC","ノートパソコン"] },
+
+  /* 名詞：身の回り・自然 */
+  { ja:"本", en:"book", alt:["ほん"] },
+  { ja:"映画", en:"movie / film", alt:["えいが"] },
+  { ja:"音楽", en:"music", alt:["おんがく"] },
+  { ja:"歌", en:"song", alt:["うた"] },
+  { ja:"写真", en:"picture / photo", natural:"pic", alt:["しゃしん"] },
+  { ja:"ゲーム", en:"game / video game" },
+  { ja:"犬", en:"dog", alt:["いぬ"] },
+  { ja:"猫", en:"cat", alt:["ねこ"] },
+  { ja:"鳥", en:"bird", alt:["とり"] },
+  { ja:"花", en:"flower", alt:["はな"] },
+  { ja:"木", en:"tree" },
+  { ja:"山", en:"mountain", alt:["やま"] },
+  { ja:"海", en:"sea / ocean / beach", note:"海水浴なら beach", alt:["うみ"] },
+  { ja:"川", en:"river", alt:["かわ"] },
+  { ja:"空", en:"sky", alt:["そら"] },
+  { ja:"道", en:"road / street / way", alt:["みち"] },
+  { ja:"部屋", en:"room", alt:["へや"] },
+  { ja:"ドア", en:"door", alt:["扉"] },
+  { ja:"窓", en:"window", alt:["まど"] },
+  { ja:"机", en:"desk", alt:["つくえ","テーブル"] },
+  { ja:"椅子", en:"chair", alt:["いす","イス"] },
+  { ja:"ベッド", en:"bed" },
+  { ja:"お風呂", en:"bath", alt:["風呂","ふろ"] },
+  { ja:"シャワー", en:"shower" },
+  { ja:"薬", en:"medicine", alt:["くすり"] },
+  { ja:"熱", en:"fever", note:"熱がある = I have a fever", alt:["ねつ"] },
+  { ja:"風邪", en:"a cold", note:"風邪をひいた = I caught a cold", alt:["かぜ"] },
+  { ja:"頭", en:"head", note:"頭が痛い = I have a headache", alt:["あたま"] },
+  { ja:"お腹", en:"stomach", note:"お腹が痛い = My stomach hurts", alt:["おなか","腹"] },
+  { ja:"目", en:"eye" },
+  { ja:"耳", en:"ear", alt:["みみ"] },
+  { ja:"手", en:"hand" },
+  { ja:"足", en:"foot / leg", note:"足首から下=foot、脚全体=leg", alt:["あし"] },
+
+  /* 名詞：人・家族（追加） */
+  { ja:"兄", en:"older brother", alt:["お兄さん","あに"] },
+  { ja:"弟", en:"younger brother", alt:["おとうと"] },
+  { ja:"姉", en:"older sister", alt:["お姉さん","あね"] },
+  { ja:"妹", en:"younger sister", alt:["いもうと"] },
+  { ja:"夫", en:"husband", alt:["おっと","旦那"] },
+  { ja:"妻", en:"wife", alt:["つま","嫁"] },
+  { ja:"祖父", en:"grandfather / grandpa", alt:["おじいちゃん","おじいさん"] },
+  { ja:"祖母", en:"grandmother / grandma", alt:["おばあちゃん","おばあさん"] },
+  { ja:"息子", en:"son", alt:["むすこ"] },
+  { ja:"娘", en:"daughter", alt:["むすめ"] },
+  { ja:"孫", en:"grandchild", alt:["まご"] },
+
+  /* 色・方向・位置 */
+  { ja:"赤", en:"red", alt:["あか","赤い"] },
+  { ja:"青", en:"blue", alt:["あお","青い"] },
+  { ja:"白", en:"white", alt:["しろ","白い"] },
+  { ja:"黒", en:"black", alt:["くろ","黒い"] },
+  { ja:"緑", en:"green", alt:["みどり"] },
+  { ja:"黄色", en:"yellow", alt:["きいろ"] },
+  { ja:"右", en:"right", alt:["みぎ"] },
+  { ja:"左", en:"left", alt:["ひだり"] },
+  { ja:"上", en:"up / above / on", alt:["うえ"] },
+  { ja:"下", en:"down / under / below" },
+  { ja:"前", en:"front / before", alt:["まえ"] },
+  { ja:"後ろ", en:"behind / back", alt:["うしろ"] },
+  { ja:"中", en:"inside / in", alt:["なか"] },
+  { ja:"外", en:"outside", alt:["そと"] },
+  { ja:"隣", en:"next to", alt:["となり"] },
+  { ja:"近く", en:"nearby / near here", alt:["ちかく"] },
 ];
 
 /* 検索用インデックス（長い語から優先してマッチ） */
