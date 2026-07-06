@@ -2140,7 +2140,7 @@ const WORDS = [
   /* 代名詞・指示 */
   { ja:"私", en:"I / me", alt:["わたし","僕","俺","ぼく","おれ"] },
   { ja:"あなた", en:"you", alt:["きみ","君"] },
-  { ja:"彼", en:"he / him", alt:["かれ"] },
+  { ja:"彼", en:"he / him" },
   { ja:"彼女", en:"she / her", alt:["かのじょ"] },
   { ja:"私たち", en:"we / us", alt:["わたしたち","僕たち"] },
   { ja:"これ", en:"this" },
@@ -2150,7 +2150,7 @@ const WORDS = [
   { ja:"そこ", en:"there" },
 
   /* 疑問詞 */
-  { ja:"何", en:"what", alt:["なに","なん"] },
+  { ja:"何", en:"what", alt:["なに"] },
   { ja:"誰", en:"who", alt:["だれ"] },
   { ja:"いつ", en:"when" },
   { ja:"どこ", en:"where" },
@@ -2220,7 +2220,7 @@ const WORDS = [
   { ja:"美味しい", en:"delicious", natural:"really good / tasty", note:"日常では really good もよく使う", alt:["おいしい"] },
 
   /* 時間 */
-  { ja:"今", en:"now", alt:["いま"] },
+  { ja:"今", en:"now" },
   { ja:"今日", en:"today", alt:["きょう"] },
   { ja:"明日", en:"tomorrow", alt:["あした","あす"] },
   { ja:"昨日", en:"yesterday", alt:["きのう"] },
@@ -2267,7 +2267,7 @@ const WORDS = [
 
   /* 人・家族 */
   { ja:"家族", en:"family", alt:["かぞく"] },
-  { ja:"父", en:"father / dad", alt:["お父さん","ちち"] },
+  { ja:"父", en:"father / dad", alt:["お父さん"] },
   { ja:"母", en:"mother / mom", alt:["お母さん","はは"] },
   { ja:"子供", en:"child / kid", alt:["こども"] },
   { ja:"友達", en:"friend", alt:["ともだち","友人"] },
@@ -2390,7 +2390,7 @@ const WORDS = [
   { ja:"鍵", en:"key", alt:["かぎ","カギ"] },
   { ja:"傘", en:"umbrella", alt:["かさ"] },
   { ja:"服", en:"clothes", alt:["ふく","洋服"] },
-  { ja:"靴", en:"shoes", alt:["くつ"] },
+  { ja:"靴", en:"shoes" },
   { ja:"帽子", en:"hat / cap", alt:["ぼうし"] },
   { ja:"めがね", en:"glasses", alt:["眼鏡","メガネ"] },
   { ja:"かばん", en:"bag", alt:["鞄","バッグ"] },
@@ -2411,7 +2411,7 @@ const WORDS = [
   { ja:"木", en:"tree" },
   { ja:"山", en:"mountain", alt:["やま"] },
   { ja:"海", en:"sea / ocean / beach", note:"海水浴なら beach", alt:["うみ"] },
-  { ja:"川", en:"river", alt:["かわ"] },
+  { ja:"川", en:"river" },
   { ja:"空", en:"sky", alt:["そら"] },
   { ja:"道", en:"road / street / way", alt:["みち"] },
   { ja:"部屋", en:"room", alt:["へや"] },
@@ -2693,11 +2693,11 @@ function renderExampleChips(){
   });
 }
 /* 入力に含まれる語句ごとの英語（学校式／日常会話式）を表示 */
-function renderWordBreakdown(query){
+function renderWordBreakdown(query, heading){
   const words = breakIntoWords(query).slice(0,16);
   if(!words.length) return null;
   const box = el("div","word-break");
-  box.appendChild(el("div","related-lbl","🔤 入力に含まれる語句の英語（学校式／💬日常会話式）"));
+  box.appendChild(el("div","related-lbl", heading || "🔤 入力に含まれる語句の英語（学校式／💬日常会話式）"));
   const list = el("div","word-list");
   words.forEach(w=>{
     const item = el("div","word-item");
@@ -2715,43 +2715,92 @@ function renderWordBreakdown(query){
   return box;
 }
 
+/* 入力が例文の場面と「本当に一致しているか」を厳密に判定する。
+   単語1個がたまたま一致しただけの誤マッチを、ぴったり扱いしないための関門。 */
+function stripJa(s){ return String(s||"").replace(/[（(].*?[)）]/g,"").replace(/[\s、。，．！？!?.,「」『』…～ー]/g,""); }
+// 最長共通部分列の長さ（語順を保った文字の重なり＝類似度の指標）
+function lcsLen(a, b){
+  const n=a.length, m=b.length;
+  if(!n || !m) return 0;
+  let prev = new Array(m+1).fill(0);
+  for(let i=1;i<=n;i++){
+    const cur = new Array(m+1).fill(0);
+    for(let j=1;j<=m;j++){
+      cur[j] = a[i-1]===b[j-1] ? prev[j-1]+1 : Math.max(prev[j], cur[j-1]);
+    }
+    prev = cur;
+  }
+  return prev[m];
+}
+function isExactMatch(query, entry){
+  const nq = normalize(query);
+  // 英語の完全一致
+  if(nq && normalize(entry.prompt.en) === nq) return true;
+  const qj = stripJa(query);
+  const pj = stripJa(entry.prompt.ja);
+  if(qj.length < 4 || pj.length < 3) return false;
+  // 実質同一（1〜2文字の言い回し違いを許容：例「開いてます／開いています」）
+  if(lcsLen(qj, pj) / Math.max(qj.length, pj.length) >= 0.8) return true;
+  // 入力が例文にそのまま含まれる（十分長いフレーズのとき：例「気をつけてね」⊂「寒いから気をつけてね」）
+  if(qj.length >= 5 && (pj.includes(qj) || qj.includes(pj))) return true;
+  return false;
+}
+
+/* 関連しそうな例文を、控えめなチップで提示（タップで展開） */
+function renderRelatedChips(host, items, label){
+  const list = items.filter(r=>r.s>0);
+  if(!list.length) return;
+  const rel = el("div","related");
+  rel.appendChild(el("div","related-lbl", label));
+  list.forEach(r=>{
+    const c = el("button","chip", esc(r.e.prompt.ja || r.e.prompt.en));
+    c.onclick = ()=>{ host.querySelectorAll('.related').forEach(n=>n.remove()); host.insertBefore(renderCard(r.e), rel); window.scrollTo({top:0,behavior:"smooth"}); };
+    rel.appendChild(c);
+  });
+  host.appendChild(rel);
+}
+
 function doSearch(){
   const q = $("#queryInput").value.trim();
   const host = $("#talkResult"); host.innerHTML="";
   if(!q){ toast("調べたい言葉を入れてください"); return; }
-  const ranked = search(q);
+  const ranked = search(q).filter(r=>r.s>0);
   const best = ranked[0];
-  const strong = best && best.s >= MATCH_STRONG;
+  const exact = best && isExactMatch(q, best.e);
+  const wb = renderWordBreakdown(q, "🔤 入力の語句を英語で（学校式／💬日常会話式）");
 
-  if(best){
-    if(!strong){
-      host.appendChild(el("div","notice","🔎 ぴったりの例文が見つからなかったので、<b>近い場面</b>と<b>語句ごとの英語</b>を表示しています。"));
-    }
+  if(exact){
+    // 本当に一致 → 例文カードを主役に
     host.appendChild(renderCard(best.e));
     addHistory(q, best.e.id);
-
-    const related = ranked.slice(1,4).filter(r=>r.s>0);
-    if(related.length){
-      const rel = el("div","related");
-      rel.appendChild(el("div","related-lbl","こんな場面も見てみる？"));
-      related.forEach(r=>{
-        const c = el("button","chip", esc(r.e.prompt.ja || r.e.prompt.en));
-        c.onclick = ()=>{ host.querySelectorAll('.related').forEach(n=>n.remove()); host.insertBefore(renderCard(r.e), rel); window.scrollTo({top:0,behavior:"smooth"}); };
-        rel.appendChild(c);
-      });
-      host.appendChild(rel);
-    }
+    if(wb) host.appendChild(wb);
+    renderRelatedChips(host, ranked.slice(1,4), "こんな場面も見てみる？");
+    return;
   }
 
-  // 例文にぴったりが無くても、含まれる語句ごとに英語を返す
-  const wb = renderWordBreakdown(q);
-  if(wb) host.appendChild(wb);
-
-  if(!best && !wb){
-    host.appendChild(el("div","empty",
-      `<span class="big">🔍</span>この言葉はまだ収録されていません。<br>下の例をタップするか、言い方を変えて試してみてください。`));
-    renderExampleChips();
+  if(wb){
+    // 決まり文句に一致しない自由な文 → 語句ごとの英語を主役に（正確な内容を返す）
+    host.appendChild(el("div","notice",
+      "💬 ぴったりの決まり文句は見つかりませんでしたが、入力の<b>語句ごとの英語</b>を表示します。"));
+    host.appendChild(wb);
+    if(best) addHistory(q, best.e.id);
+    // 例文は「関連するかも」として控えめに
+    renderRelatedChips(host, ranked.slice(0,3), "🔎 関連しそうな例文（タップで表示）");
+    return;
   }
+
+  if(best){
+    // 語句も拾えないが、近い例文だけはある
+    host.appendChild(el("div","notice","🔎 ぴったりは見つかりませんでした。近いかもしれない例文です。"));
+    host.appendChild(renderCard(best.e));
+    addHistory(q, best.e.id);
+    return;
+  }
+
+  // 何も拾えなかった
+  host.appendChild(el("div","empty",
+    `<span class="big">🔍</span>この言葉はまだ収録されていません。<br>下の例をタップするか、言い方を変えて試してみてください。`));
+  renderExampleChips();
 }
 
 /* ===== 音声入力（Web Speech API）===== */
