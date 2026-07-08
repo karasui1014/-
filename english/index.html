@@ -506,6 +506,7 @@ const CATEGORIES = {
   dining:   { label:"食卓・おもてなし", icon:"🍽️", desc:"食事中の会話・家に招く/招かれる" },
   emergency:{ label:"緊急・トラブル", icon:"🚨", desc:"紛失・盗難・急病・助けを呼ぶ" },
   tech:     { label:"スマホ・SNS・ネット", icon:"📱", desc:"連絡先交換・Wi-Fi・写真・充電" },
+  homestay: { label:"ホームステイ・留学", icon:"🏡", desc:"ホストファミリーとの生活・お願い・家のルール" },
 };
 
 const PHRASES = [
@@ -1967,6 +1968,224 @@ const PHRASES = [
     natural:{ en:"Could you take me to this address?", ja:"この住所までお願いできますか？" },
     point:"<b>take me to ~</b>（〜まで連れて行って）がタクシーの定番。住所を見せながら言えば確実です。"
   },
+
+  /* ---------- ホームステイ・留学 ---------- */
+  {
+    id:"hs_welcome", category:"homestay",
+    prompt:{ en:"Welcome to our home!", ja:"ようこそ我が家へ！" },
+    situation:"ホストファミリーと初対面。到着したときの歓迎への返事。",
+    keywords:["ようこそ","welcome","歓迎","到着","glad to have you","初対面"],
+    school:{ en:"Thank you very much.", ja:"どうもありがとうございます。" },
+    natural:{ en:"Thank you for having me! I'm so happy to be here.", ja:"受け入れてくださってありがとうございます！ここに来られてすごくうれしいです。" },
+    point:"<b>Thank you for having me</b>は「お世話になります」に一番近い決まり文句。滞在の最初と最後、どちらでも使えます。"
+  },
+  {
+    id:"hs_showaround", category:"homestay",
+    prompt:{ en:"Let me show you around the house.", ja:"家の中を案内するね。" },
+    situation:"ホストが家の中を案内してくれるとき。",
+    keywords:["案内","部屋を見せて","show you around","家の中","この部屋"],
+    school:{ en:"Yes, please.", ja:"はい、お願いします。" },
+    natural:{ en:"Thanks! What a lovely house!", ja:"ありがとうございます！素敵なお家ですね！" },
+    point:"案内してもらったら<b>家を褒める</b>のがマナー。<b>lovely / beautiful / cozy</b>（居心地いい）が使いやすい褒め言葉です。"
+  },
+  {
+    id:"hs_sleepwell", category:"homestay",
+    prompt:{ en:"Did you sleep well?", ja:"よく眠れた？" },
+    situation:"朝、ホストに眠れたか聞かれたとき。",
+    keywords:["眠れた","よく寝れた","sleep well","ぐっすり","眠れましたか"],
+    school:{ en:"Yes, I slept well.", ja:"はい、よく眠れました。" },
+    natural:{ en:"Yes, really well, thanks! The bed is so comfy.", ja:"はい、ぐっすり！ベッドがすごく快適で。" },
+    point:"<b>comfy</b>は<b>comfortable</b>（快適）のくだけた形。ひとこと感想を返すと会話が温かくなります。"
+  },
+  {
+    id:"hs_shower", category:"homestay",
+    prompt:{ en:"(シャワーを使いたい)", ja:"シャワーを浴びてもいいですか？" },
+    situation:"ホストの家でシャワーを使いたいとき。",
+    keywords:["シャワー","浴びたい","take a shower","シャワー使っていい","お湯"],
+    school:{ en:"May I take a shower?", ja:"シャワーを浴びてもよろしいですか？" },
+    natural:{ en:"Is it okay if I take a shower now?", ja:"今シャワー浴びても大丈夫ですか？" },
+    point:"シャワーは<b>take a shower</b>。<b>now</b>を付けて「今いい？」とタイミングを確認するのが同居のマナーです。"
+  },
+  {
+    id:"hs_bath", category:"homestay",
+    prompt:{ en:"(お風呂に入りたい)", ja:"お風呂に入ってもいいですか？" },
+    situation:"湯船につかりたいとき（欧米はシャワー文化が主流）。",
+    keywords:["お風呂","風呂に入","take a bath","湯船","入浴"],
+    school:{ en:"May I take a bath?", ja:"お風呂に入ってもよろしいですか？" },
+    natural:{ en:"Could I take a bath tonight?", ja:"今夜、お風呂（湯船）に入ってもいいですか？" },
+    point:"湯船は<b>take a bath</b>、シャワーは<b>take a shower</b>で別物。欧米はシャワーだけの家も多いので、聞いてみるのが安心です。"
+  },
+  {
+    id:"hs_laundry", category:"homestay",
+    prompt:{ en:"(洗濯したい)", ja:"洗濯したいのですが" },
+    situation:"洗濯物が溜まってきたとき。",
+    keywords:["洗濯","洗いたい","laundry","洗濯物","服を洗"],
+    school:{ en:"I want to wash my clothes.", ja:"服を洗いたいです。" },
+    natural:{ en:"Could I do my laundry? Where should I put my dirty clothes?", ja:"洗濯してもいいですか？汚れた服はどこに置けばいいですか？" },
+    point:"洗濯は<b>do (the/my) laundry</b>が決まった言い方。置き場所まで聞くと、家のルールがわかって安心です。"
+  },
+  {
+    id:"hs_washer", category:"homestay",
+    prompt:{ en:"(洗濯機の使い方を知りたい)", ja:"洗濯機の使い方を教えてもらえますか？" },
+    situation:"家電の使い方がわからないとき（洗濯機以外にも応用可）。",
+    keywords:["洗濯機","使い方","washing machine","家電","どうやって使う"],
+    school:{ en:"How do I use the washing machine?", ja:"洗濯機はどうやって使いますか？" },
+    natural:{ en:"Could you show me how to use the washing machine?", ja:"洗濯機の使い方を見せてもらえますか？" },
+    point:"<b>show me how to use ~</b>（使い方を見せて）なら実演してもらえて確実。電子レンジ(microwave)などにも使い回せます。"
+  },
+  {
+    id:"hs_curfew", category:"homestay",
+    prompt:{ en:"(門限を確認したい)", ja:"何時までに帰ればいいですか？" },
+    situation:"外出前に門限・帰宅時間のルールを確認するとき。",
+    keywords:["門限","門限は何時","何時までに帰","帰る時間","curfew","帰ればいい"],
+    school:{ en:"By what time should I come home?", ja:"何時までに帰宅するべきですか？" },
+    natural:{ en:"What time should I be home by?", ja:"何時までに帰ってくればいいですか？" },
+    point:"<b>be home by ~</b>（〜までに家にいる）が門限の定番表現。ルールを先に聞く姿勢はとても好印象です。"
+  },
+  {
+    id:"hs_breakfast", category:"homestay",
+    prompt:{ en:"(朝食の時間を知りたい)", ja:"朝ごはんは何時ですか？" },
+    situation:"生活リズムを合わせるために食事の時間を聞くとき。",
+    keywords:["朝ごはん何時","朝食の時間","breakfast time","何時に食べ","ご飯の時間"],
+    school:{ en:"What time is breakfast?", ja:"朝食は何時ですか？" },
+    natural:{ en:"What time do you usually have breakfast?", ja:"いつも何時ごろ朝ごはんを食べますか？" },
+    point:"<b>usually</b>を入れると「この家の習慣」を尋ねる形になり、合わせようとする気持ちが伝わります。"
+  },
+  {
+    id:"hs_helpdishes", category:"homestay",
+    prompt:{ en:"(食後に手伝いを申し出たい)", ja:"お皿洗い、手伝いましょうか？" },
+    situation:"食事のあとに手伝いを申し出るとき。",
+    keywords:["皿洗い","手伝いましょうか","help with the dishes","片付け","お手伝い"],
+    school:{ en:"Shall I wash the dishes?", ja:"お皿を洗いましょうか？" },
+    natural:{ en:"Can I help with the dishes?", ja:"お皿洗い、手伝ってもいいですか？" },
+    point:"<b>Can I help with ~?</b>（〜を手伝ってもいい？）は申し出の万能形。ホームステイで一番喜ばれるひとことです。"
+  },
+  {
+    id:"hs_gift", category:"homestay",
+    prompt:{ en:"(日本からのお土産を渡したい)", ja:"日本からのお土産です。どうぞ！" },
+    situation:"到着日にお土産を渡すとき。",
+    keywords:["お土産","おみやげ","souvenir","日本から","プレゼント渡す"],
+    school:{ en:"This is a present from Japan.", ja:"これは日本からのプレゼントです。" },
+    natural:{ en:"This is a little something from Japan. I hope you like it!", ja:"日本からのちょっとしたものです。気に入ってもらえるとうれしいです！" },
+    point:"<b>a little something</b>（ちょっとしたもの）は贈り物を謙遜して渡す定番。<b>I hope you like it</b>で気持ちを添えましょう。"
+  },
+  {
+    id:"hs_callhome", category:"homestay",
+    prompt:{ en:"(家族に電話したい)", ja:"家族に電話してもいいですか？" },
+    situation:"日本の家族に連絡したいとき。",
+    keywords:["家族に電話","親に電話","call my parents","連絡したい","電話していい"],
+    school:{ en:"May I call my family?", ja:"家族に電話してもよろしいですか？" },
+    natural:{ en:"Is it okay if I call my parents? I promised to tell them I arrived safely.", ja:"親に電話してもいいですか？無事に着いたと知らせる約束をしていて。" },
+    point:"理由をひとこと添えると快く受けてもらえます。<b>arrived safely</b>（無事に着いた）は留学の定番語。"
+  },
+  {
+    id:"hs_homesick", category:"homestay",
+    prompt:{ en:"(少し寂しくなってきた)", ja:"ちょっとホームシックかも…" },
+    situation:"家族が恋しくなったとき。我慢せず伝えてよい場面。",
+    keywords:["ホームシック","寂しい","homesick","家族が恋しい","会いたい"],
+    school:{ en:"I miss my family.", ja:"家族が恋しいです。" },
+    natural:{ en:"I'm feeling a little homesick, but I'm okay. Thanks for asking.", ja:"ちょっとホームシック気味だけど、大丈夫です。気にかけてくれてありがとう。" },
+    point:"<b>homesick</b>はそのまま通じます。ホストは相談されるとむしろ喜ぶので、<b>a little</b>を付けて素直に伝えてOK。"
+  },
+  {
+    id:"hs_goodnight", category:"homestay",
+    prompt:{ en:"(寝る前のあいさつ)", ja:"おやすみなさい" },
+    situation:"寝る前にホストファミリーへひとこと。",
+    keywords:["おやすみ","寝ます","good night","もう寝る","先に寝ます"],
+    school:{ en:"Good night.", ja:"おやすみなさい。" },
+    natural:{ en:"I'm off to bed. Good night!", ja:"そろそろ寝ますね。おやすみなさい！" },
+    point:"<b>I'm off to bed</b>（もう寝るね）を前に付けると、突然去る感じにならず自然です。<b>See you in the morning!</b>も◎。"
+  },
+  {
+    id:"hs_wakeme", category:"homestay",
+    prompt:{ en:"(朝起こしてほしい)", ja:"7時に起こしてもらえますか？" },
+    situation:"寝坊が心配で起こしてほしいとき。",
+    keywords:["起こして","寝坊","wake me up","モーニングコール","朝起きられない"],
+    school:{ en:"Please wake me up at seven.", ja:"7時に起こしてください。" },
+    natural:{ en:"Could you wake me up at seven, please?", ja:"7時に起こしてもらえますか？" },
+    point:"<b>wake me up at ＋時刻</b>が定番。<b>just in case I oversleep</b>（寝坊したときのために）と添えるとより自然。"
+  },
+  {
+    id:"hs_offtoschool", category:"homestay",
+    prompt:{ en:"(登校時のあいさつ)", ja:"学校に行ってきます！" },
+    situation:"朝、家を出るときのひとこと。",
+    keywords:["行ってきます","学校に行く","出発します","off to school"],
+    school:{ en:"I am going to school now.", ja:"今から学校へ行きます。" },
+    natural:{ en:"I'm off to school. See you later!", ja:"学校行ってきます。また後で！" },
+    point:"「いってきます」は<b>I'm off (to ~)</b>＋<b>See you later!</b>のセットで表現。帰る時間も伝えるとさらに丁寧です。"
+  },
+  {
+    id:"hs_imback", category:"homestay",
+    prompt:{ en:"(帰宅時のあいさつ)", ja:"ただいま帰りました！" },
+    situation:"外出から帰ってきたときのひとこと。",
+    keywords:["ただいま","帰りました","帰ってきた","I'm home","戻りました"],
+    school:{ en:"I have returned.", ja:"戻りました。" },
+    natural:{ en:"I'm home! / Hi, I'm back!", ja:"ただいま！／戻りました！" },
+    point:"「ただいま」は<b>I'm home!</b>が定番。ホストは<b>How was your day?</b>と聞いてくるので、<b>It was great!</b>と返しましょう。"
+  },
+  {
+    id:"hs_canteat", category:"homestay",
+    prompt:{ en:"Is there anything you can't eat?", ja:"食べられないものはある？" },
+    situation:"ホストが食事の好みやアレルギーを確認してくれたとき。",
+    keywords:["食べられないもの","苦手な食べ物","アレルギーある","can't eat","好き嫌い"],
+    school:{ en:"I cannot eat raw fish.", ja:"生魚が食べられません。" },
+    natural:{ en:"I'm allergic to eggs, but other than that, I'll try anything!", ja:"卵アレルギーがあります。それ以外なら何でも挑戦します！" },
+    point:"アレルギーは<b>I'm allergic to ~</b>で必ず伝えること。<b>I'll try anything!</b>（何でも食べてみます）は最高に喜ばれるひとことです。"
+  },
+  {
+    id:"hs_dinnerready", category:"homestay",
+    prompt:{ en:"Dinner's ready!", ja:"ご飯できたよ〜！" },
+    situation:"食事に呼ばれたとき。",
+    keywords:["ご飯できた","夕食の時間","dinner's ready","ごはんだよ","呼ばれた"],
+    school:{ en:"Yes, I am coming now.", ja:"はい、今行きます。" },
+    natural:{ en:"Coming! It smells great!", ja:"今行きます！いいにおい！" },
+    point:"「今行く！」は<b>Coming!</b>のひとこと。<b>It smells great!</b>（いいにおい）を添えると食卓が明るくなります。"
+  },
+  {
+    id:"hs_kitchen", category:"homestay",
+    prompt:{ en:"(キッチンを使いたい)", ja:"キッチンを使ってもいいですか？" },
+    situation:"日本食を作るなどでキッチンを借りたいとき。",
+    keywords:["キッチン","台所","kitchen","料理していい","作ってもいい"],
+    school:{ en:"May I use the kitchen?", ja:"台所を使ってもよろしいですか？" },
+    natural:{ en:"Is it okay if I use the kitchen? I'd like to make some Japanese food for you!", ja:"キッチン使ってもいいですか？日本食を作ってあげたくて！" },
+    point:"目的（日本食を作りたい）を添えると会話が弾みます。ホームステイで日本食をふるまうのは鉄板の交流ネタ！"
+  },
+  {
+    id:"hs_goout", category:"homestay",
+    prompt:{ en:"(友達と出かけると伝えたい)", ja:"友達と出かけてきます。6時までに戻ります。" },
+    situation:"外出の予定をホストに伝えるとき。",
+    keywords:["出かけてきます","友達と遊びに","出かける","going out","出掛け"],
+    school:{ en:"I will go out with my friend.", ja:"友達と出かけます。" },
+    natural:{ en:"I'm going out with friends. I'll be back by six.", ja:"友達と出かけてきます。6時までには戻ります。" },
+    point:"<b>I'll be back by ＋時刻</b>（〜までに戻る）まで伝えるのが同居のマナー。ホストを安心させる魔法のひとことです。"
+  },
+  {
+    id:"hs_key", category:"homestay",
+    prompt:{ en:"(鍵の扱いを確認したい)", ja:"鍵は持って行ったほうがいいですか？" },
+    situation:"外出時に家の鍵をどうするか確認するとき。",
+    keywords:["鍵は持って","鍵は持って行","鍵を借り","take a key","スペアキー","鍵どうすれば"],
+    school:{ en:"Should I take a key?", ja:"鍵を持って行くべきですか？" },
+    natural:{ en:"Should I take a key with me?", ja:"鍵は持って行ったほうがいいですか？" },
+    point:"<b>Should I ~?</b>（〜したほうがいい？）は家のルールを確認する万能形。<b>with me</b>で「携帯する」ニュアンスに。"
+  },
+  {
+    id:"hs_useword", category:"homestay",
+    prompt:{ en:"(英語をもっと知りたい)", ja:"これは英語で何と言いますか？" },
+    situation:"物を指して英語での言い方を教えてもらうとき。",
+    keywords:["英語で何と言","なんて言う","how do you say","英語で何","言い方"],
+    school:{ en:"What is this called in English?", ja:"これは英語で何と呼びますか？" },
+    natural:{ en:"How do you say this in English?", ja:"これって英語でどう言うんですか？" },
+    point:"<b>How do you say ~ in English?</b>は留学生の最強フレーズ。ホストとの会話も増えて一石二鳥です。"
+  },
+  {
+    id:"hs_thanks_final", category:"homestay",
+    prompt:{ en:"(帰国の日、お礼を伝えたい)", ja:"お世話になりました。本当にありがとうございました。" },
+    situation:"ホームステイ最終日、お別れのあいさつ。",
+    keywords:["お世話になりました","お別れ","帰国","最終日","忘れません","さよなら"],
+    school:{ en:"Thank you for everything.", ja:"いろいろとありがとうございました。" },
+    natural:{ en:"Thank you so much for everything. I'll never forget my time here.", ja:"本当にお世話になりました。ここでの日々は絶対に忘れません。" },
+    point:"「お世話になりました」は<b>Thank you for everything</b>が一番近い表現。<b>I'll never forget ~</b>で気持ちがまっすぐ伝わります。"
+  },
 ];
 
 /* =========================================================================
@@ -2462,6 +2681,23 @@ const WORDS = [
   { ja:"外", en:"outside", alt:["そと"] },
   { ja:"隣", en:"next to", alt:["となり"] },
   { ja:"近く", en:"nearby / near here", alt:["ちかく"] },
+
+  /* ホームステイ・留学 */
+  { ja:"洗濯", en:"laundry", note:"洗濯する = do the laundry", alt:["せんたく","洗濯物"] },
+  { ja:"洗濯機", en:"washing machine", alt:["せんたくき"] },
+  { ja:"門限", en:"curfew", alt:["もんげん"] },
+  { ja:"お土産", en:"souvenir / gift", natural:"a little something", alt:["おみやげ","土産"] },
+  { ja:"ホームシック", en:"homesick", note:"I'm feeling homesick で「ホームシック気味」" },
+  { ja:"起こして", en:"wake me up", note:"7時に起こして = Wake me up at seven", alt:["起こす"] },
+  { ja:"キッチン", en:"kitchen", alt:["台所","だいどころ"] },
+  { ja:"出かける", en:"to go out", alt:["でかける","お出かけ"] },
+  { ja:"ホストファミリー", en:"host family" },
+  { ja:"留学", en:"studying abroad", note:"留学する = study abroad", alt:["りゅうがく","ホームステイ"] },
+  { ja:"アレルギー", en:"allergy", note:"卵アレルギー = I'm allergic to eggs", alt:["あれるぎー"] },
+  { ja:"歯ブラシ", en:"toothbrush", alt:["はぶらし"] },
+  { ja:"タオル", en:"towel" },
+  { ja:"ドライヤー", en:"hair dryer", alt:["ヘアドライヤー"] },
+  { ja:"充電器", en:"charger", alt:["じゅうでんき"] },
 ];
 
 /* 検索用インデックス（長い語から優先してマッチ） */
@@ -2743,6 +2979,12 @@ function isExactMatch(query, entry){
   if(lcsLen(qj, pj) / Math.max(qj.length, pj.length) >= 0.8) return true;
   // 入力が例文にそのまま含まれる（十分長いフレーズのとき：例「気をつけてね」⊂「寒いから気をつけてね」）
   if(qj.length >= 5 && (pj.includes(qj) || qj.includes(pj))) return true;
+  // 長めのキーワードが入力の主要部分を占める（例:「お風呂に入りたい」の「風呂に入」）
+  // 短い単語1個のかすり一致（例:「仕事」）は長さ4未満なのでここには入らない
+  for(const k of entry.keywords){
+    const kk = stripJa(k);
+    if(kk.length >= 4 && qj.includes(kk) && kk.length / qj.length >= 0.5) return true;
+  }
   return false;
 }
 
